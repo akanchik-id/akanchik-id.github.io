@@ -2047,7 +2047,16 @@
     }
 
     // ═══ VIEW PROFILE ═══
-    function clearViewProfileListener(){if(!viewProfileListener)return;try{db.ref('Users/'+viewProfileListener.uid).off('value',viewProfileListener.cb);}catch(e){}try{db.ref(`Users/${viewProfileListener.uid}/Presence`).off('value',viewProfileListener.pcb);}catch(e){}viewProfileListener=null;}
+    function clearViewProfileListener(){
+    if(!viewProfileListener) return;
+    try{
+        db.ref('Users/'+viewProfileListener.uid).off('value', viewProfileListener.cb);
+    } catch(e){}
+    try{
+        db.ref(`Users/${viewProfileListener.uid}/Presence`).off('value', viewProfileListener.pcb);
+    } catch(e){}
+    viewProfileListener = null;
+}
     function viewProfile(uid){
     if(!uid) return;
     currentViewedUid = uid;
@@ -2056,12 +2065,9 @@
 
     const cb = snap => {
         const u = snap.val() || {};
-        // --- проверка на верификацию ---
         const vBadge = u.Verify == 1
             ? '<img src="/verify.png" style="width:16px;height:16px;vertical-align:middle;margin-top:-2px;">'
             : '';
-
-        // --- имя и юзернейм ---
         document.getElementById('view-name').innerHTML = escapeHtml((u.DisplayName || 'PLAYER').toUpperCase()) + vBadge;
         document.getElementById('view-username').innerText = '@' + (u.username || 'unknown');
         document.getElementById('view-avatar').src = `/avatar${u.Avatar || 1}.png`;
@@ -2070,7 +2076,6 @@
         document.getElementById('view-count-fans').innerText = u.Fans ? Object.keys(u.Fans).length : 0;
         document.getElementById('view-count-idols').innerText = u.Idols ? Object.keys(u.Idols).length : 0;
 
-        // --- клики по фанатам/кумирам ---
         document.getElementById('view-fans-btn').onclick = () => {
             currentViewedUid = uid;
             showSection('fans');
@@ -2080,13 +2085,11 @@
             showSection('idols');
         };
 
-        // --- ЦВЕТ ПРОФИЛЯ ВЛАДЕЛЬЦА (контур аватарки и кнопок) ---
         const profileColor = u.profileColor || 'var(--accent)';
         document.getElementById('view-avatar').style.borderColor = profileColor;
         document.getElementById('view-action-btn').style.borderColor = profileColor;
         document.getElementById('view-msg-btn').style.borderColor = profileColor;
 
-        // --- кнопка действия (подписаться / стать фанатом) ---
         const isGroup = u.type === 'group' || u.type === 'channel';
         const btn = document.getElementById('view-action-btn');
 
@@ -2114,24 +2117,18 @@
             btn.onclick = () => toggleFan(uid, isFan);
         }
 
-        // --- кнопка "Написать" ---
         document.getElementById('view-msg-btn').onclick = () => openChat(uid, u);
-
-        // --- кнопка "Пожаловаться" ---
         document.getElementById('view-report-btn').onclick = () => openReportModal(uid);
 
-        // --- ссылка на профиль ---
         const profileUrl = `${location.origin}/user/${u.username || uid}`;
         document.getElementById('view-link-url').innerText = profileUrl;
         if (u.username) history.replaceState(null, '', `/user/${u.username}`);
 
-        // --- посты пользователя ---
         loadUserPosts(uid, 'view-posts-list');
     };
 
     db.ref('Users/' + uid).on('value', cb);
 
-    // --- подписка на присутствие (онлайн) ---
     const pcb = snap => {
         const p = snap.val() || {};
         const el = document.getElementById('view-presence');
@@ -2146,7 +2143,6 @@
     };
     db.ref(`Users/${uid}/Presence`).on('value', pcb);
 
-    // сохраняем слушатели для очистки
     viewProfileListener = { uid, cb, pcb };
 }
     function toggleFan(tid,isFan){
