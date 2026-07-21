@@ -1712,7 +1712,19 @@
         if(activeChatId)clearChatListeners();
         chatTargetUid=chatId;chatTargetData=chatData||{};activeChatId=chatId;chatIsGroup=true;chatGroupData=chatData||{};
         pinnedMsgKey=null;replyingTo=null;editingMsgKey=null;currentMsgsArr=[];
-        db.ref(`Chats/${chatId}/info`).once('value').then(snap=>{if(snap.exists())chatGroupData={...chatGroupData,...snap.val()};_updateChannelWriteAccess();});
+        db.ref(`Chats/${chatId}/info`).once('value').then(snap => {
+    if (snap.exists()) {
+        chatGroupData = { ...chatGroupData, ...snap.val() };
+        const newCount = chatGroupData.type === 'channel'
+            ? (chatGroupData.subscribers ? Object.keys(chatGroupData.subscribers).length : 0)
+            : (chatGroupData.memberCount || 0);
+        document.getElementById('chat-target-status').innerText =
+            `${newCount} ${chatGroupData.type === 'channel' ? 'подписчиков' : 'участников'}`;
+        _updateChannelWriteAccess();
+        // ✅ Добавляем вызов рендеринга состояния
+        renderChatState();
+    }
+});
         _openChatRoom(chatData.avatar||'/avatar1.png',chatData.name||'GROUP',false);
         const type=chatData.type==='channel'?'канал':'группа';
         const count=chatData.type==='channel'?(chatData.subscribers?Object.keys(chatData.subscribers).length:0):(chatData.memberCount||'?');
@@ -1721,14 +1733,69 @@
         db.ref(`Chats/${chatId}/pinned`).once('value').then(snap=>{const p=snap.val();if(p?.key){pinnedMsgKey=p.key;showPinnedBar(p.text||'');}else{pinnedMsgKey=null;document.getElementById('pinned-bar').classList.add('hidden');}});
         _subscribeChatMessages(chatId);_subscribeTyping(chatId,null);
     }
-    function _updateChannelWriteAccess(){
-        if(!chatIsGroup)return;
-        const canWrite = canWriteInChat();
-        const inp=document.getElementById('chat-input');if(inp)inp.disabled=!canWrite;
-        const sendBtn=document.getElementById('btn-send');if(sendBtn)sendBtn.disabled=!canWrite;
-        const attachBtn=document.getElementById('btn-attach');if(attachBtn)attachBtn.disabled=!canWrite;
-        const stickerBtn=document.getElementById('btn-sticker');if(stickerBtn)stickerBtn.disabled=!canWrite;
+    function _updateChannelWriteAccess() {
+    if (!chatIsGroup) return;
+    const canWrite = canWriteInChat();
+    const inp = document.getElementById('chat-input');
+    if (inp) inp.disabled = !canWrite;
+    const sendBtn = document.getElementById('btn-send');
+    if (sendBtn) sendBtn.disabled = !canWrite;
+    const attachBtn = document.getElementById('btn-attach');
+    if (attachBtn) attachBtn.disabled = !canWrite;
+    const stickerBtn = document.getElementById('btn-sticker');
+    if (stickerBtn) stickerBtn.disabled = !canWrite;
+    // Перерисовываем состояние кнопки/поля ввода
+    renderChatState();
+}
+    function renderChatState() {
+    if (!activeChatId || !chatIsGroup) return;
+    const g = chatGroupData;
+    if (!g || !g.type) return;
+
+    const isMember = (g.subscribers && g.subscribers[currentUser.uid]) || (g.members && g.members[currentUser.uid]);
+    const isAdmin = (g.admins && g.admins[currentUser.uid]) || g.creator === currentUser.uid;
+    const isChannel = g.type === 'channel';
+
+    const inputArea = document.querySelector('.chat-input-area');
+    let joinContainer = document.getElementById('chat-join-btn-container');
+
+    if (!inputArea) return;
+
+    // Если участник
+    if (isMember) {
+        // Скрываем кнопку, показываем поле ввода
+        if (joinContainer) joinContainer.style.display = 'none';
+        inputArea.style.display = '';
+        // Обновляем доступ к полю ввода (для каналов заблокирует у не-админов)
+        _updateChannelWriteAccess();
+    } else {
+        // Не участник: скрываем поле ввода, показываем кнопку
+        inputArea.style.display = 'none';
+        if (!joinContainer) {
+            // Создаём контейнер для кнопки
+            const container = document.createElement('div');
+            container.id = 'chat-join-btn-container';
+            container.style.cssText = 'padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border);text-align:center;';
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-accent';
+            btn.id = 'chat-join-btn';
+            btn.innerText = isChannel ? L('subscribe_btn') : L('join_btn');
+            btn.onclick = function() {
+                // Подписываемся/присоединяемся, затем обновляем состояние
+                joinOrOpenGroup(activeChatId, g);
+                // После выполнения joinOrOpenGroup чат переоткроется, но мы можем просто подождать
+                // и вызвать renderChatState() снова (но она вызовется при переоткрытии)
+            };
+            container.appendChild(btn);
+            // Вставляем контейнер перед полем ввода
+            inputArea.parentNode.insertBefore(container, inputArea);
+        } else {
+            joinContainer.style.display = '';
+            const btn = document.getElementById('chat-join-btn');
+            if (btn) btn.innerText = isChannel ? L('subscribe_btn') : L('join_btn');
+        }
     }
+}
     function _openChatRoom(av,name,verified){
         const room=document.getElementById('screen-chat-room');
         const vBadge=verified?' <img src="/verify.png" style="width:13px;height:13px;vertical-align:middle;">':'';
@@ -1939,16 +2006,112 @@
         if(!photos.length)mg.innerHTML='<div style="font-size:11px;color:var(--text3);padding:8px;">'+L('no_posts')+'</div>';
         else photos.slice(-9).forEach(m=>{const img=document.createElement('img');img.src=m.url||'';img.onclick=()=>viewPhoto(m.url||'');mg.appendChild(img);});
     }
-    function _renderGroupInfo(content){
-        const g=chatGroupData;const isCreator=g.creator===currentUser.uid;const isAdmin=g.admins&&g.admins[currentUser.uid];const canManage=isCreator||isAdmin;
-        const groupLink=`${location.origin}/${g.type||'group'}/${g.username||activeChatId}`;
-        content.innerHTML=`<div style="text-align:center;padding:20px 16px;"><img src="${escapeHtml(g.avatar||'/avatar1.png')}" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--accent);object-fit:cover;margin-bottom:10px;"><div style="font-size:18px;color:var(--text);font-weight:bold;">${escapeHtml((g.name||'GROUP').toUpperCase())}</div><div style="font-size:11px;color:var(--text3);">@${escapeHtml(g.username||'')}</div><div style="font-size:12px;color:var(--text2);margin-top:4px;">${escapeHtml(g.description||'')}</div></div><div style="padding:0 12px;margin-bottom:12px;"><div class="link-row"><span class="link-url">${escapeHtml(groupLink)}</span><button class="link-copy-btn" onclick="navigator.clipboard?.writeText('${escapeHtml(groupLink)}').then(()=>alert('${L('copy_btn')}'))">${L('copy_btn')}</button></div>${canManage?`<button class="btn btn-accent" onclick="openGroupSettings('${escapeHtml(activeChatId)}')" style="margin-top:8px;">${L('group_settings_title')}</button>`:''}${!isCreator&&!isAdmin?`<button class="btn btn-danger" onclick="leaveGroup('${escapeHtml(activeChatId)}')" style="margin-top:8px;">${L('delete_btn')}</button>`:''}</div><div style="font-size:11px;color:var(--text3);padding:0 12px;text-transform:uppercase;margin-bottom:8px;">${L('add_members')}</div><div id="group-members-list" style="padding:0 12px;"></div>`;
-        const ml=document.getElementById('group-members-list');
-        const allUids=new Set();if(g.members)Object.keys(g.members).forEach(u=>allUids.add(u));if(g.admins)Object.keys(g.admins).forEach(u=>allUids.add(u));if(g.creator)allUids.add(g.creator);
-        allUids.forEach(uid=>{db.ref(`Users/${uid}`).once('value').then(s=>{const u=s.val()||{};const role=uid===g.creator?'👑':(g.admins&&g.admins[uid])?'⭐':'';const row=document.createElement('div');row.className='user-row rounded';row.innerHTML=`<img src="/avatar${u.Avatar||1}.png" class="urow-av"><div class="urow-info"><div class="urow-name">${escapeHtml((u.DisplayName||'PLAYER').toUpperCase())} ${role}</div><div class="urow-sub">@${escapeHtml(u.username||'')}</div></div>`;row.onclick=()=>viewProfile(uid);ml.appendChild(row);});});
-    }
+    function _renderGroupInfo(content) {
+    const g = chatGroupData;
+    const isCreator = g.creator === currentUser.uid;
+    const isAdmin = g.admins && g.admins[currentUser.uid];
+    const canManage = isCreator || isAdmin;
+    const groupLink = `${location.origin}/${g.type || 'group'}/${g.username || activeChatId}`;
+
+    content.innerHTML = `
+        <div style="text-align:center;padding:20px 16px;">
+            <img src="${escapeHtml(g.avatar || '/avatar1.png')}" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--accent);object-fit:cover;margin-bottom:10px;">
+            <div style="font-size:18px;color:var(--text);font-weight:bold;">${escapeHtml((g.name || 'GROUP').toUpperCase())}</div>
+            <div style="font-size:11px;color:var(--text3);">@${escapeHtml(g.username || '')}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px;">${escapeHtml(g.description || '')}</div>
+        </div>
+        <div style="padding:0 12px;margin-bottom:12px;">
+            <div class="link-row">
+                <span class="link-url">${escapeHtml(groupLink)}</span>
+                <button class="link-copy-btn" onclick="navigator.clipboard?.writeText('${escapeHtml(groupLink)}').then(()=>alert('${L('copy_btn')}'))">${L('copy_btn')}</button>
+            </div>
+            ${canManage ? `<button class="btn btn-accent" onclick="openGroupSettings('${escapeHtml(activeChatId)}')" style="margin-top:8px;">${L('group_settings_title')}</button>` : ''}
+        </div>
+        <div style="font-size:11px;color:var(--text3);padding:0 12px;text-transform:uppercase;margin-bottom:8px;">${L('add_members')}</div>
+        <div id="group-members-list" style="padding:0 12px;"></div>
+    `;
+
+    const ml = document.getElementById('group-members-list');
+    const allUids = new Set();
+    if (g.members) Object.keys(g.members).forEach(u => allUids.add(u));
+    if (g.admins) Object.keys(g.admins).forEach(u => allUids.add(u));
+    if (g.creator) allUids.add(g.creator);
+
+    allUids.forEach(uid => {
+        db.ref(`Users/${uid}`).once('value').then(s => {
+            const u = s.val() || {};
+            const role = uid === g.creator ? '👑' : (g.admins && g.admins[uid]) ? '⭐' : '';
+            const row = document.createElement('div');
+            row.className = 'user-row rounded';
+            row.innerHTML = `
+                <img src="/avatar${u.Avatar || 1}.png" class="urow-av">
+                <div class="urow-info">
+                    <div class="urow-name">${escapeHtml((u.DisplayName || 'PLAYER').toUpperCase())} ${role}</div>
+                    <div class="urow-sub">@${escapeHtml(u.username || '')}</div>
+                </div>
+            `;
+            row.onclick = () => viewProfile(uid);
+            ml.appendChild(row);
+        });
+    });
+}
     function leaveGroup(gid){if(!confirm('Покинуть группу?'))return;const upd={[`Chats/${gid}/info/members/${currentUser.uid}`]:null,[`UserChats/${currentUser.uid}/${gid}`]:null};db.ref().update(upd).then(()=>closeChatRoom()).catch(err=>alert(err.message));}
     function blockUser(uid){if(!confirm('Заблокировать пользователя?'))return;db.ref(`Users/${currentUser.uid}/blocked/${uid}`).set(true).then(()=>closeChatInfo()).catch(err=>alert(err.message));}
+    function subscribeToCurrentChat() {
+    if (!activeChatId || !chatIsGroup) return;
+    const g = chatGroupData;
+    if (!g) return;
+
+    const updates = {};
+    if (g.type === 'channel') {
+        updates[`Chats/${activeChatId}/info/subscribers/${currentUser.uid}`] = true;
+        updates[`UserChats/${currentUser.uid}/${activeChatId}`] = {
+            name: g.name,
+            type: 'channel',
+            avatar: g.avatar || '/avatar1.png',
+            lastTime: Date.now(),
+            lastText: 'Подписался',
+            unread: 0
+        };
+    } else {
+        updates[`Chats/${activeChatId}/info/members/${currentUser.uid}`] = true;
+        updates[`Chats/${activeChatId}/info/memberCount`] = firebase.database.ServerValue.increment(1);
+        updates[`UserChats/${currentUser.uid}/${activeChatId}`] = {
+            name: g.name,
+            type: 'group',
+            avatar: g.avatar || '/avatar1.png',
+            lastTime: Date.now(),
+            lastText: 'Вступил в группу',
+            unread: 0
+        };
+    }
+
+    db.ref().update(updates).then(() => {
+        // Обновляем локальные данные
+        if (g.type === 'channel') {
+            chatGroupData.subscribers = chatGroupData.subscribers || {};
+            chatGroupData.subscribers[currentUser.uid] = true;
+        } else {
+            chatGroupData.members = chatGroupData.members || {};
+            chatGroupData.members[currentUser.uid] = true;
+            chatGroupData.memberCount = (chatGroupData.memberCount || 0) + 1;
+        }
+        // Обновляем интерфейс
+        renderChatState();
+        // Обновим статус в шапке
+        const newCount = chatGroupData.type === 'channel'
+            ? (chatGroupData.subscribers ? Object.keys(chatGroupData.subscribers).length : 0)
+            : (chatGroupData.memberCount || 0);
+        document.getElementById('chat-target-status').innerText =
+            `${newCount} ${chatGroupData.type === 'channel' ? 'подписчиков' : 'участников'}`;
+        // Обновим кэш чатов для списка
+        if (chatsCache[activeChatId]) {
+            chatsCache[activeChatId].lastText = 'Подписался';
+            chatsCache[activeChatId].lastTime = Date.now();
+        }
+        renderChatsList(); // обновить список чатов
+    }).catch(err => alert(err.message));
+}
 
     // ═══ FEED ═══
     function setFeedTab(tab){feedTab=tab;document.querySelectorAll('.feed-tab').forEach(t=>t.classList.remove('active'));document.getElementById(`ft-${tab}`).classList.add('active');loadFeed();}
