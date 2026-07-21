@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Redirect</title>
+  <script>
+    // Сохраняем полный путь (включая query и hash)
+    sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search + window.location.hash);
+    // Перенаправляем на главную
+    window.location.replace('/');
+  </script>
+</head>
+<body></body>
+</html>
