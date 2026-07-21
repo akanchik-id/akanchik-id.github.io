@@ -2049,67 +2049,106 @@
     // ═══ VIEW PROFILE ═══
     function clearViewProfileListener(){if(!viewProfileListener)return;try{db.ref('Users/'+viewProfileListener.uid).off('value',viewProfileListener.cb);}catch(e){}try{db.ref(`Users/${viewProfileListener.uid}/Presence`).off('value',viewProfileListener.pcb);}catch(e){}viewProfileListener=null;}
     function viewProfile(uid){
-        if(!uid)return;currentViewedUid=uid;clearViewProfileListener();showSection('view');
-        const cb=snap=>{
-            const u=snap.val()||{};
-            // в viewProfile внутри cb(snap) после получения u
-const vBadge=u.Verify==1?' <img src="/verify.png" style="width:16px;height:16px;vertical-align:middle;">':'';
-document.getElementById('view-name').innerHTML=escapeHtml((u.DisplayName||'PLAYER').toUpperCase())+vBadge;
-document.getElementById('view-username').innerText='@'+(u.username||'unknown');
-document.getElementById('view-avatar').src=`/avatar${u.Avatar||1}.png`;
-document.getElementById('view-status').innerText=u.Status||'';
-document.getElementById('view-coins').innerText=u.Coins||0;
-document.getElementById('view-count-fans').innerText=u.Fans?Object.keys(u.Fans).length:0;
-document.getElementById('view-count-idols').innerText=u.Idols?Object.keys(u.Idols).length:0;
-document.getElementById('view-fans-btn').onclick=()=>{currentViewedUid=uid;showSection('fans');};
-document.getElementById('view-idols-btn').onclick=()=>{currentViewedUid=uid;showSection('idols');};
-// ---------- ЦВЕТ ПРОФИЛЯ ВЛАДЕЛЬЦА ----------
-const profileColor = u.profileColor || 'var(--accent)';
-document.getElementById('view-avatar').style.borderColor = profileColor;
-document.getElementById('view-action-btn').style.borderColor = profileColor;
-// также кнопка "Написать" может получить цвет
-document.getElementById('view-msg-btn').style.borderColor = profileColor;
-// -------------------------------------------
-const isGroup = u.type=='group' || u.type=='channel';
-const btn=document.getElementById('view-action-btn');
-// ... остальной код
-            // Цвет профиля для аватарки
-            if(u.profileColor){
-                document.getElementById('view-avatar').style.borderColor = u.profileColor;
-                document.getElementById('view-action-btn').style.borderColor = u.profileColor;
-            } else {
-                document.getElementById('view-avatar').style.borderColor = 'var(--accent)';
-                document.getElementById('view-action-btn').style.borderColor = '';
-            }
-            const isGroup = u.type==='group' || u.type==='channel';
-            const btn=document.getElementById('view-action-btn');
-            if(isGroup){
-                const isSubscribed = u.subscribers && u.subscribers[currentUser.uid];
-                btn.innerText = isSubscribed ? (u.type==='channel'?L('unsubscribe_btn'):L('leave_btn')) : (u.type==='channel'?L('subscribe_btn'):L('join_btn'));
-                btn.onclick = ()=>{
-                    if(isSubscribed){
-                        const upd = {};
-                        if(u.type==='channel') upd[`Chats/${uid}/info/subscribers/${currentUser.uid}`]=null;
-                        else upd[`Chats/${uid}/info/members/${currentUser.uid}`]=null;
-                        upd[`UserChats/${currentUser.uid}/${uid}`]=null;
-                        db.ref().update(upd).then(()=>{
-                            viewProfile(uid);
-                        }).catch(err=>alert(err.message));
-                    } else {
-                        joinOrOpenGroup(uid,u);
-                    }
-                };
-            } else {
-                const isFan=!!(currentUserData.Idols&&currentUserData.Idols[uid]);
-                btn.innerText=isFan?L('unfan_btn'):L('fan_btn');btn.onclick=()=>toggleFan(uid,isFan);
-            }
-            document.getElementById('view-msg-btn').onclick=()=>openChat(uid,u);
-            document.getElementById('view-report-btn').onclick=()=>openReportModal(uid);
-            const profileUrl=`${location.origin}/user/${u.username||uid}`;
-            document.getElementById('view-link-url').innerText=profileUrl;
-            if(u.username)history.replaceState(null,'',`/user/${u.username}`);
-            loadUserPosts(uid,'view-posts-list');
+    if(!uid) return;
+    currentViewedUid = uid;
+    clearViewProfileListener();
+    showSection('view');
+
+    const cb = snap => {
+        const u = snap.val() || {};
+        // --- проверка на верификацию ---
+        const vBadge = u.Verify == 1
+            ? '<img src="/verify.png" style="width:16px;height:16px;vertical-align:middle;margin-top:-2px;">'
+            : '';
+
+        // --- имя и юзернейм ---
+        document.getElementById('view-name').innerHTML = escapeHtml((u.DisplayName || 'PLAYER').toUpperCase()) + vBadge;
+        document.getElementById('view-username').innerText = '@' + (u.username || 'unknown');
+        document.getElementById('view-avatar').src = `/avatar${u.Avatar || 1}.png`;
+        document.getElementById('view-status').innerText = u.Status || '';
+        document.getElementById('view-coins').innerText = u.Coins || 0;
+        document.getElementById('view-count-fans').innerText = u.Fans ? Object.keys(u.Fans).length : 0;
+        document.getElementById('view-count-idols').innerText = u.Idols ? Object.keys(u.Idols).length : 0;
+
+        // --- клики по фанатам/кумирам ---
+        document.getElementById('view-fans-btn').onclick = () => {
+            currentViewedUid = uid;
+            showSection('fans');
         };
+        document.getElementById('view-idols-btn').onclick = () => {
+            currentViewedUid = uid;
+            showSection('idols');
+        };
+
+        // --- ЦВЕТ ПРОФИЛЯ ВЛАДЕЛЬЦА (контур аватарки и кнопок) ---
+        const profileColor = u.profileColor || 'var(--accent)';
+        document.getElementById('view-avatar').style.borderColor = profileColor;
+        document.getElementById('view-action-btn').style.borderColor = profileColor;
+        document.getElementById('view-msg-btn').style.borderColor = profileColor;
+
+        // --- кнопка действия (подписаться / стать фанатом) ---
+        const isGroup = u.type === 'group' || u.type === 'channel';
+        const btn = document.getElementById('view-action-btn');
+
+        if (isGroup) {
+            const isSubscribed = (u.subscribers && u.subscribers[currentUser.uid]) || (u.members && u.members[currentUser.uid]);
+            if (u.type === 'channel') {
+                btn.innerText = isSubscribed ? L('unsubscribe_btn') : L('subscribe_btn');
+            } else {
+                btn.innerText = isSubscribed ? L('leave_btn') : L('join_btn');
+            }
+            btn.onclick = () => {
+                if (isSubscribed) {
+                    const upd = {};
+                    if (u.type === 'channel') upd[`Chats/${uid}/info/subscribers/${currentUser.uid}`] = null;
+                    else upd[`Chats/${uid}/info/members/${currentUser.uid}`] = null;
+                    upd[`UserChats/${currentUser.uid}/${uid}`] = null;
+                    db.ref().update(upd).then(() => { viewProfile(uid); }).catch(err => alert(err.message));
+                } else {
+                    joinOrOpenGroup(uid, u);
+                }
+            };
+        } else {
+            const isFan = !!(currentUserData.Idols && currentUserData.Idols[uid]);
+            btn.innerText = isFan ? L('unfan_btn') : L('fan_btn');
+            btn.onclick = () => toggleFan(uid, isFan);
+        }
+
+        // --- кнопка "Написать" ---
+        document.getElementById('view-msg-btn').onclick = () => openChat(uid, u);
+
+        // --- кнопка "Пожаловаться" ---
+        document.getElementById('view-report-btn').onclick = () => openReportModal(uid);
+
+        // --- ссылка на профиль ---
+        const profileUrl = `${location.origin}/user/${u.username || uid}`;
+        document.getElementById('view-link-url').innerText = profileUrl;
+        if (u.username) history.replaceState(null, '', `/user/${u.username}`);
+
+        // --- посты пользователя ---
+        loadUserPosts(uid, 'view-posts-list');
+    };
+
+    db.ref('Users/' + uid).on('value', cb);
+
+    // --- подписка на присутствие (онлайн) ---
+    const pcb = snap => {
+        const p = snap.val() || {};
+        const el = document.getElementById('view-presence');
+        if (!el) return;
+        const showOnline = (usersCache[uid] && usersCache[uid].privacy && usersCache[uid].privacy.showOnline !== false);
+        if (p.state === 'online' && showOnline) {
+            el.innerHTML = `<span class="online-dot"></span><span>${L('online')}</span>`;
+        } else {
+            const ls = fmtLastSeen(p.lastSeen);
+            el.innerText = (currentLang === 'ru' ? 'Был(а) ' : 'Last seen ') + ls;
+        }
+    };
+    db.ref(`Users/${uid}/Presence`).on('value', pcb);
+
+    // сохраняем слушатели для очистки
+    viewProfileListener = { uid, cb, pcb };
+}
         db.ref('Users/'+uid).on('value',cb);
         const pcb=snap=>{
             const p=snap.val()||{};const el=document.getElementById('view-presence');if(!el)return;
