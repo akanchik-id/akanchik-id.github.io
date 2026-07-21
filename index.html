@@ -2430,21 +2430,25 @@
         closePostCreate();loadUserPosts(currentUser.uid,'my-posts-list');
         if(currentSection==='feed')loadFeed();
     }
-    function loadUserPosts(uid,containerId){
-        const cont=document.getElementById(containerId);if(!cont)return;
-        cont.innerHTML='<div class="loader">'+L('load_err')+'</div>';
-        db.ref(`UserPosts/${uid}`).orderByKey().once('value').then(snap=>{
-            const postIds=[];snap.forEach(s=>postIds.push(s.key));
-            if(!postIds.length){cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${L('no_posts')}</div>`;return;}
-            cont.innerHTML='';
-            const promises=postIds.map(pid=>db.ref(`Posts/${pid}`).once('value'));
-            Promise.all(promises).then(snaps=>{
-                const posts=[];snaps.forEach(snap=>{if(snap.exists()){posts.push({pid:snap.key,...snap.val()});}});
-                posts.sort((a,b)=>(b.time||0)-(a.time||0));
-                posts.forEach((p,i)=>{const card=buildPostCard(p.pid,p,i);cont.appendChild(card);});
-            });
-        }).catch(err=>{cont.innerHTML=`<div style="padding:20px;color:var(--danger);font-size:12px;">${escapeHtml(err.message)}</div>`;});
-    }
+    function loadUserPosts(uid, containerId){
+    const cont=document.getElementById(containerId); if(!cont) return;
+    cont.innerHTML='<div class="loader">'+L('load_err')+'</div>';
+    // используем orderByChild('time') для сортировки по времени
+    db.ref(`UserPosts/${uid}`).once('value').then(snap=>{
+        const postIds=[]; snap.forEach(s=>postIds.push(s.key));
+        if(!postIds.length){
+            cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${L('no_posts')}</div>`;
+            return;
+        }
+        cont.innerHTML='';
+        const promises=postIds.map(pid=>db.ref(`Posts/${pid}`).once('value'));
+        Promise.all(promises).then(snaps=>{
+            const posts=[]; snaps.forEach(snap=>{ if(snap.exists()){ posts.push({pid:snap.key,...snap.val()}); } });
+            posts.sort((a,b)=>(b.time||0)-(a.time||0));
+            posts.forEach((p,i)=>{ const card=buildPostCard(p.pid,p,i); cont.appendChild(card); });
+        });
+    }).catch(err=>{ cont.innerHTML=`<div style="padding:20px;color:var(--danger);font-size:12px;">${escapeHtml(err.message)}</div>`; });
+}
     function buildPostCard(postId,data,idx=0){
         const card=document.createElement('div');card.className='post-card';card.style.animationDelay=`${idx*0.05}s`;
         const isOwn=currentUser&&data.uid===currentUser.uid;
