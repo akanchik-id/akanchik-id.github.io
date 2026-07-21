@@ -1231,23 +1231,41 @@
 
     // ═══ AUTH ═══
     auth.onAuthStateChanged(user=>{
-        if(user){
-            if(!user.emailVerified){currentUser=user;document.getElementById('nav-bar').classList.add('hidden');showSection('verify');hideSplash();return;}
-            currentUser=user;sessionStartTime=Date.now();
-            document.getElementById('nav-bar').classList.remove('hidden');
-            document.getElementById('user-uid').innerText=user.uid;
-            document.getElementById('user-date').innerText=new Date(user.metadata.creationTime).toLocaleDateString(currentLang==='ru'?'ru-RU':'en-US');
-            if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
-            syncMyData();initCarousel();initStickerPanel();setupOnlineStatus();setupChatsListener();setupNotificationListener();loadPrivacySettings();
-            initAccountFields();initProfileColorPicker();
-            handleUrlRoute();
-            showSection('account');
-        } else {
-            clearAllListeners();currentUser=null;currentUserData={};chatsCache={};notifCache=[];usersCache={};activeChatId=null;chatTargetUid=null;
-            closeChatRoomSilent();showSection('auth');document.getElementById('nav-bar').classList.add('hidden');
+    if(user){
+        if(!user.emailVerified){
+            currentUser=user;
+            document.getElementById('nav-bar').classList.add('hidden');
+            showSection('verify');
+            // автоматически проверяем подтверждение каждые 3 секунды
+            if(window._verifyInterval) clearInterval(window._verifyInterval);
+            window._verifyInterval = setInterval(()=>{
+                user.reload().then(()=>{
+                    if(user.emailVerified){
+                        clearInterval(window._verifyInterval);
+                        location.reload();
+                    }
+                }).catch(()=>{});
+            }, 3000);
+            hideSplash();
+            return;
         }
-        hideSplash();
-    });
+        clearInterval(window._verifyInterval);
+        currentUser=user; sessionStartTime=Date.now();
+        document.getElementById('nav-bar').classList.remove('hidden');
+        document.getElementById('user-uid').innerText=user.uid;
+        document.getElementById('user-date').innerText=new Date(user.metadata.creationTime).toLocaleDateString(currentLang=='ru'?'ru-RU':'en-US');
+        if('Notification' in window && Notification.permission=='default') Notification.requestPermission();
+        syncMyData();initCarousel();initStickerPanel();setupOnlineStatus();setupChatsListener();setupNotificationListener();loadPrivacySettings();
+        initAccountFields();initProfileColorPicker();
+        handleUrlRoute();
+        showSection('account');
+    } else {
+        clearInterval(window._verifyInterval);
+        clearAllListeners();currentUser=null;currentUserData={};chatsCache={};notifCache=[];usersCache={};activeChatId=null;chatTargetUid=null;
+        closeChatRoomSilent();showSection('auth');document.getElementById('nav-bar').classList.add('hidden');
+    }
+    hideSplash();
+});
     function resendVerification(){if(!currentUser)return;currentUser.sendEmailVerification().then(()=>alert('Письмо отправлено!')).catch(err=>alert(err.message));}
     function checkVerification(){if(!currentUser)return;currentUser.reload().then(()=>{if(currentUser.emailVerified){location.reload();}else{alert('Email ещё не подтверждён');}}).catch(err=>alert(err.message));}
     function handleUrlRoute(){
@@ -1395,7 +1413,15 @@
             alert('Подтвердите email!');
         }).catch(err=>alert(err.message));
     };
-    function resetPassword(){const em=document.getElementById('user-email').value;if(!em){alert('Введите email');return;}auth.sendPasswordResetEmail(em).then(()=>alert('Письмо отправлено!')).catch(err=>alert(err.message));}
+    function resetPassword(){
+    const em=document.getElementById('user-email').value;
+    if(!em){alert('Введите email');return;}
+    auth.sendPasswordResetEmail(em).then(()=>{
+        // показываем модальное окно вместо alert
+        const msg = currentLang=='ru' ? 'Письмо для сброса пароля отправлено на указанный email. Проверьте почту.' : 'Password reset email sent. Check your inbox.';
+        alert(msg);
+    }).catch(err=>alert(err.message));
+}
     function deleteAccount(){if(!confirm('Удалить аккаунт навсегда?'))return;db.ref('Users/'+currentUser.uid).remove().then(()=>currentUser.delete()).catch(err=>alert(err.message));}
     function savePromptUsername(){
         const raw=document.getElementById('prompt-username-input').value.trim();const uname=cleanUsername(raw);
