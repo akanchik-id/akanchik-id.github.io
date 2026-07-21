@@ -1301,8 +1301,8 @@ input::-webkit-credit-card-auto-fill-button {
         initAccountFields();initProfileColorPicker();
         handleUrlRoute();
         showSection('account');
-        
-        // --- Восстановление маршрута после редиректа с 404 ---
+        hideSplash(); // <-- ВАЖНО: для обычного входа
+
         const redirect = sessionStorage.getItem('redirectPath');
         if (redirect) {
             sessionStorage.removeItem('redirectPath');
@@ -1311,11 +1311,8 @@ input::-webkit-credit-card-auto-fill-button {
             if (m) {
                 const uname = m[1].toLowerCase();
                 db.ref('Users').orderByChild('username').equalTo(uname).once('value').then(snap => {
-                    if (snap.exists()) {
-                        snap.forEach(s => viewProfile(s.key));
-                    }
+                    if (snap.exists()) snap.forEach(s => viewProfile(s.key));
                 });
-                hideSplash();
                 return;
             }
             m = path.match(/^\/post\/([^/]+)/);
@@ -1324,7 +1321,6 @@ input::-webkit-credit-card-auto-fill-button {
                 db.ref(`Posts/${postId}`).once('value').then(snap => {
                     if (snap.exists()) openSinglePost(postId, snap.val());
                 });
-                hideSplash();
                 return;
             }
             m = path.match(/^\/(group|channel)\/([^/]+)/);
@@ -1333,19 +1329,12 @@ input::-webkit-credit-card-auto-fill-button {
                 db.ref('Chats').once('value').then(snap => {
                     snap.forEach(s => {
                         const info = s.val()?.info;
-                        if (info && info.username === uname) {
-                            joinOrOpenGroup(s.key, { ...info, id: s.key });
-                        }
+                        if (info && info.username === uname) joinOrOpenGroup(s.key, {...info, id: s.key });
                     });
                 });
-                hideSplash();
                 return;
             }
-            // если ничего не подошло – скрываем сплеш
-            hideSplash();
-        } // <----- ЭТА СКОБКА БЫЛА ПРОПУЩЕНА
-        // (после этого блока продолжается обычный поток, если редиректа не было)
-        
+        }
     } else {
         clearInterval(window._verifyInterval);
         clearAllListeners();currentUser=null;currentUserData={};chatsCache={};notifCache=[];usersCache={};activeChatId=null;chatTargetUid=null;
