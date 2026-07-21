@@ -1824,6 +1824,7 @@
             const arr=[];if(snap.exists())snap.forEach(s=>{const d=s.val();if(d)arr.push({key:s.key,...d});});
             if(!firstLoad&&arr.length>currentMsgsArr.length){const newest=arr[arr.length-1];if(newest?.from!==currentUser.uid){playSound('receive');}}
             firstLoad=false;currentMsgsArr=arr;renderMessages(arr);
+            checkEmptyChatGreeting(arr);
             const readReceipts=currentUserData.privacy?.readReceipts!==false;
             if(readReceipts){
                 const upd={};arr.forEach(m=>{if(m.from!==currentUser.uid&&(!m.readBy||!m.readBy[currentUser.uid]))upd[`Chats/${chatId}/messages/${m.key}/readBy/${currentUser.uid}`]=true;});
@@ -1854,6 +1855,43 @@
         arr.forEach((m,i)=>{const row=buildMsgRow(m,arr,i);if(row)cont.appendChild(row);});
         if(wasAtBottom||arr.length<=5)setTimeout(()=>cont.scrollTo({top:cont.scrollHeight,behavior:'smooth'}),30);
     }
+    // вызывать после renderMessages или в конце _subscribeChatMessages
+function checkEmptyChatGreeting(msgs){
+    const cont = document.getElementById('chat-messages');
+    if(!cont) return;
+    // если есть хоть одно сообщение – убираем приветствие
+    if(msgs && msgs.length > 0){
+        const old = cont.querySelector('.empty-greeting');
+        if(old) old.remove();
+        return;
+    }
+    // если уже есть приветствие – не дублируем
+    if(cont.querySelector('.empty-greeting')) return;
+    
+    const wrap = document.createElement('div');
+    wrap.className = 'empty-greeting';
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;color:var(--text3);font-size:12px;text-align:center;';
+    
+    const label = document.createElement('div');
+    label.innerText = currentLang=='ru' ? 'Поприветствуйте собеседника стикером 👋' : 'Greet with a sticker 👋';
+    label.style.marginBottom = '12px';
+    wrap.appendChild(label);
+    
+    // рандомный стикер (1-120)
+    const rnd = Math.floor(Math.random() * 120) + 1;
+    const img = document.createElement('img');
+    img.src = `/stickers/s${rnd}.gif`;
+    img.style.cssText = 'width:80px;height:80px;object-fit:contain;cursor:pointer;border-radius:12px;background:rgba(0,0,0,0.04);padding:6px;';
+    img.onclick = ()=>{
+        // отправляем стикер
+        sendSticker(`/stickers/s${rnd}.gif`);
+        // удаляем приветствие
+        wrap.remove();
+    };
+    img.onerror = ()=>{ wrap.remove(); };
+    wrap.appendChild(img);
+    cont.appendChild(wrap);
+}
     function buildMsgRow(m,arr,idx){
         if(!m)return null;
         const isMine=m.from===currentUser.uid;
