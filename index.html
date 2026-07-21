@@ -2052,16 +2052,27 @@
         if(!uid)return;currentViewedUid=uid;clearViewProfileListener();showSection('view');
         const cb=snap=>{
             const u=snap.val()||{};
-            const vBadge=u.Verify===1?' <img src="/verify.png" style="width:16px;height:16px;vertical-align:middle;">':'';
-            document.getElementById('view-name').innerHTML=escapeHtml((u.DisplayName||'PLAYER').toUpperCase())+vBadge;
-            document.getElementById('view-username').innerText='@'+(u.username||'unknown');
-            document.getElementById('view-avatar').src=`/avatar${u.Avatar||1}.png`;
-            document.getElementById('view-status').innerText=u.Status||'';
-            document.getElementById('view-coins').innerText=u.Coins||0;
-            document.getElementById('view-count-fans').innerText=u.Fans?Object.keys(u.Fans).length:0;
-            document.getElementById('view-count-idols').innerText=u.Idols?Object.keys(u.Idols).length:0;
-            document.getElementById('view-fans-btn').onclick=()=>{currentViewedUid=uid;showSection('fans');};
-            document.getElementById('view-idols-btn').onclick=()=>{currentViewedUid=uid;showSection('idols');};
+            // в viewProfile внутри cb(snap) после получения u
+const vBadge=u.Verify==1?' <img src="/verify.png" style="width:16px;height:16px;vertical-align:middle;">':'';
+document.getElementById('view-name').innerHTML=escapeHtml((u.DisplayName||'PLAYER').toUpperCase())+vBadge;
+document.getElementById('view-username').innerText='@'+(u.username||'unknown');
+document.getElementById('view-avatar').src=`/avatar${u.Avatar||1}.png`;
+document.getElementById('view-status').innerText=u.Status||'';
+document.getElementById('view-coins').innerText=u.Coins||0;
+document.getElementById('view-count-fans').innerText=u.Fans?Object.keys(u.Fans).length:0;
+document.getElementById('view-count-idols').innerText=u.Idols?Object.keys(u.Idols).length:0;
+document.getElementById('view-fans-btn').onclick=()=>{currentViewedUid=uid;showSection('fans');};
+document.getElementById('view-idols-btn').onclick=()=>{currentViewedUid=uid;showSection('idols');};
+// ---------- ЦВЕТ ПРОФИЛЯ ВЛАДЕЛЬЦА ----------
+const profileColor = u.profileColor || 'var(--accent)';
+document.getElementById('view-avatar').style.borderColor = profileColor;
+document.getElementById('view-action-btn').style.borderColor = profileColor;
+// также кнопка "Написать" может получить цвет
+document.getElementById('view-msg-btn').style.borderColor = profileColor;
+// -------------------------------------------
+const isGroup = u.type=='group' || u.type=='channel';
+const btn=document.getElementById('view-action-btn');
+// ... остальной код
             // Цвет профиля для аватарки
             if(u.profileColor){
                 document.getElementById('view-avatar').style.borderColor = u.profileColor;
