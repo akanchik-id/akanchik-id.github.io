@@ -891,7 +891,14 @@ input::-webkit-credit-card-auto-fill-button {
     <div class="typing-row" id="chat-typing"></div>
     <div class="chat-input-area">
         <div id="edit-indicator" class="chat-indicator hidden"><div class="ci-bar edit"></div><div class="ci-info"><div class="ci-label edit" data-lang="editing_label">Редактирование</div><div class="ci-text" id="edit-preview"></div></div><button class="ci-close" onclick="cancelEdit()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-        <div id="reply-indicator" class="chat-indicator hidden"><div class="ci-bar reply"></div><div class="ci-info"><div class="ci-label reply" data-lang="replying_label">Ответ</div><div class="ci-text" id="reply-ind-text"></div></div><button class="ci-close" onclick="cancelReply()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div id="reply-indicator" class="chat-indicator hidden">
+  <div class="ci-bar reply"></div>
+  <div class="ci-info">
+    <div class="ci-label reply"><span data-lang="replying_label">Ответ</span> <span id="reply-ind-name" style="margin-left:6px;opacity:.7;font-weight:normal;text-transform:uppercase;"></span></div>
+    <div class="ci-text" id="reply-ind-text"></div>
+  </div>
+  <button class="ci-close" onclick="cancelReply()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+</div>
         <div id="voice-recording-bar" class="voice-bar hidden">
             <span class="voice-dot"></span><span class="voice-time" id="voice-rec-time">0:00</span>
             <button class="voice-cancel" onclick="cancelRecording()">✕</button>
@@ -1380,7 +1387,7 @@ input::-webkit-credit-card-auto-fill-button {
             } else {
                 document.documentElement.style.setProperty('--profile-color', 'var(--accent)');
             }
-            if(currentSection==='account'){const cont=document.getElementById('my-posts-list');if(cont&&!cont.querySelector('.post-card'))loadUserPosts(currentUser.uid,'my-posts-list');}
+            if(currentSection==='account'){ loadUserPosts(currentUser.uid,'my-posts-list'); }
             if(currentSection==='feed')loadFeed();
         });
     }
@@ -1984,21 +1991,21 @@ function checkEmptyChatGreeting(msgs){
         if(m.replyTo){
             const rb=document.createElement('div');rb.className='reply-block';
             let rName = '';
-            if(m.replyTo.fromMe) rName = (currentUserData.DisplayName||'Я').toUpperCase();
-            else if(chatIsGroup) {
-                const u = usersCache[m.from] || {};
-                rName = (u.DisplayName||'Player').toUpperCase();
-            } else {
-                rName = (chatTargetData.DisplayName||'Player').toUpperCase();
-            }
-            rb.innerHTML=`<b>${escapeHtml(rName)}:</b> ${escapeHtml((m.replyTo.text||'').substring(0,50))}`;
-            // При клике на reply-block прокручиваем к оригинальному сообщению
-            rb.onclick = (e)=>{
-                e.stopPropagation();
-                scrollToMessage(m.replyTo.key);
-            };
-            div.appendChild(rb);
-        }
+            if(m.replyTo){
+    const rb=document.createElement('div');rb.className='reply-block';
+    let rName = (m.replyTo.fromName||'').toUpperCase();
+    if(!rName){
+        if(m.replyTo.fromMe) rName = (currentUserData.DisplayName||'Я').toUpperCase();
+        else if(m.replyTo.fromUid) rName = (usersCache[m.replyTo.fromUid]?.DisplayName || chatTargetData.DisplayName || 'Player').toUpperCase();
+        else rName = (chatTargetData.DisplayName||'Player').toUpperCase();
+    }
+    rb.innerHTML=`<b>${escapeHtml(rName)}:</b> ${escapeHtml((m.replyTo.text||'').substring(0,50))}`;
+    rb.onclick = (e)=>{
+        e.stopPropagation();
+        scrollToMessage(m.replyTo.key);
+    };
+    div.appendChild(rb);
+}
         if(m.type==='photo'){const wrap2=document.createElement('div');wrap2.className='msg-photo-wrap';const img=document.createElement('img');img.className='msg-photo';img.src=m.url||'';img.loading='lazy';img.onclick=()=>viewPhoto(m.url||'');wrap2.appendChild(img);const dlBtn=document.createElement('button');dlBtn.className='msg-photo-dl';dlBtn.innerText='⬇';dlBtn.onclick=e=>{e.stopPropagation();downloadPhoto(m.url||'');};wrap2.appendChild(dlBtn);div.appendChild(wrap2);if(m.text){const s=document.createElement('div');s.style.marginTop='4px';s.innerHTML=linkify(m.text);div.appendChild(s);}}
         else if(m.type==='sticker'){const si=document.createElement('img');si.className='msg-sticker';si.src=m.sticker||'';si.loading='lazy';si.onerror=()=>si.style.display='none';div.appendChild(si);div.style.background='transparent';div.style.border='none';div.style.padding='0';}
         else if(m.type==='post'){const pc=buildInlinePostCard(m.postData||{},m.postId);div.appendChild(pc);div.style.padding='0';div.style.background='transparent';div.style.border='none';}
@@ -2077,13 +2084,26 @@ function checkEmptyChatGreeting(msgs){
     function copyMsg(){if(!activeMenuMsg)return;const t=activeMenuMsg.type==='voice'?'[Voice]':activeMenuMsg.type==='photo'?'[Photo]':(activeMenuMsg.text||'');if(navigator.clipboard)navigator.clipboard.writeText(t).catch(()=>{});closeMsgModal();}
     function replyToMsg(){if(!activeMenuMsg)return;triggerReply(activeMenuMsg);closeMsgModal();}
     function triggerReply(msg){
-        replyingTo={key:msg.key,fromMe:msg.from===currentUser.uid,text:msg.type==='photo'?'📷':msg.type==='voice'?'🎙':msg.type==='sticker'?'Стикер':(msg.text||'').substring(0,80)};
-        const name=msg.from===currentUser.uid?(currentUserData.DisplayName||'Я'):chatIsGroup?(usersCache[msg.from]?.DisplayName||'Player'):(chatTargetData.DisplayName||'Player');
-        document.getElementById('reply-ind-name').innerText=name.toUpperCase();
-        document.getElementById('reply-ind-text').innerText=replyingTo.text;
-        document.getElementById('reply-indicator').classList.remove('hidden');
-        document.getElementById('chat-input').focus();
-    }
+    const isOwn = msg.from===currentUser.uid;
+    let fromName = '';
+    if(isOwn) fromName = (currentUserData.DisplayName||'Я');
+    else if(chatIsGroup) fromName = (usersCache[msg.from]?.DisplayName || 'Player');
+    else fromName = (chatTargetData.DisplayName || 'Player');
+
+    replyingTo={
+        key:msg.key,
+        fromUid:msg.from,
+        fromMe:isOwn,
+        fromName: fromName,
+        text:msg.type==='photo'?'📷':msg.type==='voice'?'🎙':msg.type==='sticker'?'Стикер':(msg.text||'').substring(0,80)
+    };
+    const nameEl=document.getElementById('reply-ind-name');
+    const textEl=document.getElementById('reply-ind-text');
+    if(nameEl) nameEl.innerText = fromName.toUpperCase();
+    if(textEl) textEl.innerText = replyingTo.text;
+    document.getElementById('reply-indicator').classList.remove('hidden');
+    document.getElementById('chat-input').focus();
+}
     function cancelReply(){replyingTo=null;const ind=document.getElementById('reply-indicator');if(ind)ind.classList.add('hidden');}
     function startEdit(msg){editingMsgKey=msg.key;const inp=document.getElementById('chat-input');inp.value=msg.text||'';inp.focus();updateSendButton();document.getElementById('edit-preview').innerText=msg.text||'';document.getElementById('edit-indicator').classList.remove('hidden');}
     function cancelEdit(){editingMsgKey=null;const ind=document.getElementById('edit-indicator');if(ind)ind.classList.add('hidden');}
@@ -2754,23 +2774,41 @@ function checkEmptyChatGreeting(msgs){
         if(currentSection==='feed')loadFeed();
     }
     function loadUserPosts(uid, containerId){
-    const cont=document.getElementById(containerId); if(!cont) return;
-    cont.innerHTML='<div class="loader">'+L('load_err')+'</div>';
-    // используем orderByChild('time') для сортировки по времени
-    db.ref(`UserPosts/${uid}`).once('value').then(snap=>{
-        const postIds=[]; snap.forEach(s=>postIds.push(s.key));
-        if(!postIds.length){
+    const cont=document.getElementById(containerId); 
+    if(!cont) return;
+    cont.innerHTML='<div class="loader">...</div>';
+    
+    const finish = (postsArr)=>{
+        cont.innerHTML='';
+        if(!postsArr.length){
             cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${L('no_posts')}</div>`;
             return;
         }
-        cont.innerHTML='';
-        const promises=postIds.map(pid=>db.ref(`Posts/${pid}`).once('value'));
-        Promise.all(promises).then(snaps=>{
-            const posts=[]; snaps.forEach(snap=>{ if(snap.exists()){ posts.push({pid:snap.key,...snap.val()}); } });
-            posts.sort((a,b)=>(b.time||0)-(a.time||0));
-            posts.forEach((p,i)=>{ const card=buildPostCard(p.pid,p,i); cont.appendChild(card); });
+        postsArr.sort((a,b)=>(b.time||0)-(a.time||0));
+        postsArr.forEach((p,i)=>{ cont.appendChild(buildPostCard(p.pid,p,i)); });
+    };
+
+    // 1. пробуем по индексу, 2. фолбэк по всем постам по uid
+    db.ref(`UserPosts/${uid}`).once('value').then(snap=>{
+        if(snap.exists() && snap.numChildren()>0){
+            const ids=[]; snap.forEach(s=>ids.push(s.key));
+            Promise.all(ids.map(pid=>db.ref(`Posts/${pid}`).once('value'))).then(snaps=>{
+                const posts=[]; snaps.forEach(s=>{ if(s.exists()) posts.push({pid:s.key, ...s.val()}); });
+                if(posts.length>0) finish(posts);
+                else db.ref('Posts').orderByChild('uid').equalTo(uid).once('value').then(s2=>{
+                    const arr=[]; s2.forEach(s=>arr.push({pid:s.key, ...s.val()})); finish(arr);
+                });
+            });
+        } else {
+            db.ref('Posts').orderByChild('uid').equalTo(uid).once('value').then(snap2=>{
+                const arr=[]; snap2.forEach(s=>arr.push({pid:s.key, ...s.val()})); finish(arr);
+            });
+        }
+    }).catch(()=>{
+        db.ref('Posts').orderByChild('uid').equalTo(uid).once('value').then(snap2=>{
+            const arr=[]; snap2.forEach(s=>arr.push({pid:s.key, ...s.val()})); finish(arr);
         });
-    }).catch(err=>{ cont.innerHTML=`<div style="padding:20px;color:var(--danger);font-size:12px;">${escapeHtml(err.message)}</div>`; });
+    });
 }
     function buildPostCard(postId,data,idx=0){
         const card=document.createElement('div');card.className='post-card';card.style.animationDelay=`${idx*0.05}s`;
