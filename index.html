@@ -1260,44 +1260,47 @@
         handleUrlRoute();
         showSection('account');
         // --- Восстановление маршрута после редиректа с 404 ---
-const redirect = sessionStorage.getItem('redirectPath');
-if (redirect) {
-    sessionStorage.removeItem('redirectPath');
-    // удаляем ведущий слеш, если есть
-    const path = redirect;
-    // пробуем распарсить и перейти
-    let m = path.match(/^\/user\/([^/]+)/);
-    if (m) {
-        const uname = m[1].toLowerCase();
-        db.ref('Users').orderByChild('username').equalTo(uname).once('value').then(snap => {
-            if (snap.exists()) {
-                snap.forEach(s => viewProfile(s.key));
+        const redirect = sessionStorage.getItem('redirectPath');
+        if (redirect) {
+            sessionStorage.removeItem('redirectPath');
+            const path = redirect;
+            let m = path.match(/^\/user\/([^/]+)/);
+            if (m) {
+                const uname = m[1].toLowerCase();
+                db.ref('Users').orderByChild('username').equalTo(uname).once('value').then(snap => {
+                    if (snap.exists()) {
+                        snap.forEach(s => viewProfile(s.key));
+                    }
+                });
+                hideSplash(); // 👈 добавляем
+                return;
             }
-        });
-        return;
-    }
-    m = path.match(/^\/post\/([^/]+)/);
-    if (m) {
-        const postId = m[1];
-        db.ref(`Posts/${postId}`).once('value').then(snap => {
-            if (snap.exists()) openSinglePost(postId, snap.val());
-        });
-        return;
-    }
-    m = path.match(/^\/(group|channel)\/([^/]+)/);
-    if (m) {
-        const uname = m[2].toLowerCase();
-        db.ref('Chats').once('value').then(snap => {
-            snap.forEach(s => {
-                const info = s.val()?.info;
-                if (info && info.username === uname) {
-                    joinOrOpenGroup(s.key, { ...info, id: s.key });
-                }
-            });
-        });
-        return;
-    }
-}
+            m = path.match(/^\/post\/([^/]+)/);
+            if (m) {
+                const postId = m[1];
+                db.ref(`Posts/${postId}`).once('value').then(snap => {
+                    if (snap.exists()) openSinglePost(postId, snap.val());
+                });
+                hideSplash(); // 👈 добавляем
+                return;
+            }
+            m = path.match(/^\/(group|channel)\/([^/]+)/);
+            if (m) {
+                const uname = m[2].toLowerCase();
+                db.ref('Chats').once('value').then(snap => {
+                    snap.forEach(s => {
+                        const info = s.val()?.info;
+                        if (info && info.username === uname) {
+                            joinOrOpenGroup(s.key, { ...info, id: s.key });
+                        }
+                    });
+                });
+                hideSplash(); // 👈 добавляем
+                return;
+            }
+            // если ничего не подошло – скрываем сплеш и продолжаем
+            hideSplash();
+        }
     } else {
         clearInterval(window._verifyInterval);
         clearAllListeners();currentUser=null;currentUserData={};chatsCache={};notifCache=[];usersCache={};activeChatId=null;chatTargetUid=null;
