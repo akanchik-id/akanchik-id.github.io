@@ -2149,16 +2149,6 @@
     // сохраняем слушатели для очистки
     viewProfileListener = { uid, cb, pcb };
 }
-        db.ref('Users/'+uid).on('value',cb);
-        const pcb=snap=>{
-            const p=snap.val()||{};const el=document.getElementById('view-presence');if(!el)return;
-            const showOnline=usersCache[uid]?.privacy?.showOnline!==false;
-            if(p.state==='online' && showOnline){el.innerHTML=`<span class="online-dot"></span><span>${L('online')}</span>`;}
-            else{const ls=fmtLastSeen(p.lastSeen);el.innerText=(currentLang==='ru'?'Был(а) ':'Last seen ')+ls;}
-        };
-        db.ref(`Users/${uid}/Presence`).on('value',pcb);
-        viewProfileListener={uid,cb,pcb};
-    }
     function toggleFan(tid,isFan){
         const myUid=currentUser.uid;
         if(isFan){db.ref(`Users/${myUid}/Idols/${tid}`).remove();db.ref(`Users/${tid}/Fans/${myUid}`).remove();}
