@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>chats - Under</title>
+<title>activity - Under</title>
 <link rel="icon" href="/stickerss/logo.png">
 <style>
 
@@ -777,7 +777,7 @@ function showSection(id){
 document.addEventListener('DOMContentLoaded',()=>{
   const screenMap={'index.html':'account','profile.html':'account','feed.html':'feed','explore.html':'explore','chats.html':'chats','chat.html':'chats','settings.html':'cabinet','activity.html':'activity','auth.html':'auth'};
   const file = location.pathname.split('/').pop() || 'profile.html';
-  const scr = screenMap[file] || 'chats';
+  const scr = screenMap[file] || 'activity';
   setTimeout(()=>{
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     const t=document.getElementById('screen-'+scr);
