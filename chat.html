@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Under - Under</title>
+<title>Chat - Under</title>
 <link rel="icon" type="image/png" href="/stickerss/logo.png?v=9">
 <style>
 @font-face { font-family: 'ZeroCool'; src: url('/static.ttf?v=7'); }
@@ -353,18 +353,102 @@ function buildPostCardHTML(postId,data){
 }
 </script>
 </head>
-<body data-page="index">
+<body data-page="chat">
 <div id="splash"><img src="/logo.gif" class="splash-gif" alt=""><div style="margin-top:10px;font-size:12px;letter-spacing:3px;color:var(--accent)">UNDER</div></div>
 <div class="app-shell">
-<div class="app-scroll" style="display:flex;align-items:center;justify-content:center"><div class="empty-state">Загрузка...</div></div>
-<script>
-setTimeout(()=>{
-  if(firebase.auth().currentUser) location.href='feed.html'; else location.href='auth.html';
-},800);
-</script>
+
+<div class="app-header" style="gap:10px">
+  <button class="app-header-action" onclick="history.back()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <img id="chat-av" src="/avatar1.png" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--accent);object-fit:cover">
+  <div style="flex:1;min-width:0"><div id="chat-name" style="font-size:14px;font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">PLAYER</div><div id="chat-status" style="font-size:10px;color:var(--text3)"></div></div>
+  <button class="app-header-action" onclick="location.href='profile.html?uid='+chatTargetUid"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+</div>
+<div class="app-scroll" style="display:flex;flex-direction:column;padding-bottom:0">
+  <div id="chat-messages" style="flex:1"></div>
+  <div id="reply-bar" class="hidden" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg3);border-top:1px solid var(--border)"><div style="flex:1"><div style="font-size:9px;color:var(--blue);text-transform:uppercase">Ответ</div><div id="reply-preview" style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div></div><button onclick="cancelReply()" style="background:none;border:none;font-size:18px;color:var(--text3)">✕</button></div>
+  <div class="chat-input-bar">
+    <button class="chat-btn icon" onclick="document.getElementById('photo-input').click()"><svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+    <input id="chat-input" class="chat-inp" placeholder="Сообщение...">
+    <button id="btn-send" class="chat-btn send"><svg id="icon-mic" viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg><svg id="icon-send" class="hidden" viewBox="0 0 24 24" style="width:18px;height:18px;fill:#fff"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+  </div>
+  <input type="file" id="photo-input" accept="image/*" class="hidden">
+</div>
 </div>
 <div id="toast" class="toast"><img id="toast-av" class="toast-av" src="/avatar1.png"><div style="flex:1;min-width:0"><div id="toast-name" style="font-weight:700;font-size:12px;text-transform:uppercase">PLAYER</div><div id="toast-text" style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">msg</div></div></div>
 <div id="photo-viewer" class="overlay hidden" onclick="this.classList.add('hidden')"><img id="photo-viewer-img" src="" style="max-width:92vw;max-height:86vh;border-radius:14px"></div>
-<script></script>
+<script>
+let activeChatId=null, chatTargetUid=null, chatIsGroup=false, currentMsgs=[], replyTo=null;
+document.addEventListener('DOMContentLoaded',()=>{
+  initTheme();
+  const params=new URLSearchParams(location.search);
+  const uid=params.get('uid'); const gid=params.get('id');
+  setTimeout(()=>{
+    if(!auth.currentUser){ location.href='auth.html'; return; }
+    if(gid){ openGroupChat(gid); } else if(uid){ openDirectChat(uid); }
+  },700);
+
+  document.getElementById('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault(); send();}});
+  document.getElementById('chat-input').addEventListener('input',()=>{document.getElementById('icon-mic').classList.toggle('hidden', document.getElementById('chat-input').value.trim().length>0); document.getElementById('icon-send').classList.toggle('hidden', document.getElementById('chat-input').value.trim().length===0);});
+  document.getElementById('btn-send').onclick=send;
+});
+
+function openDirectChat(uid){
+ chatTargetUid=uid; activeChatId=makeChatId(currentUser.uid,uid); chatIsGroup=false;
+ db.ref('Users/'+uid).once('value').then(s=>{ const u=s.val()||{}; document.getElementById('chat-name').innerText=(u.DisplayName||'PLAYER').toUpperCase(); document.getElementById('chat-av').src='/avatar'+(u.Avatar||1)+'.png'; });
+ db.ref(`UserChats/${currentUser.uid}/${activeChatId}/unread`).set(0);
+ subscribeMessages();
+}
+function openGroupChat(gid){
+ activeChatId=gid; chatIsGroup=true;
+ db.ref('Chats/'+gid+'/info').once('value').then(s=>{ const info=s.val()||{}; document.getElementById('chat-name').innerText=(info.name||'GROUP').toUpperCase(); });
+ subscribeMessages();
+}
+
+function subscribeMessages(){
+ db.ref(`Chats/${activeChatId}/messages`).orderByChild('time').limitToLast(100).on('value',snap=>{
+   let arr=[]; snap.forEach(c=>arr.push({key:c.key,...c.val()}));
+   currentMsgs=arr; renderMessages(arr);
+   const cont=document.getElementById('chat-messages'); cont.scrollTop=cont.scrollHeight;
+ });
+}
+
+function renderMessages(arr){
+ const cont=document.getElementById('chat-messages'); cont.innerHTML='';
+ arr.forEach(m=>{
+   const isMine=m.from===currentUser.uid;
+   const row=document.createElement('div'); row.className='msg-row '+(isMine?'mine':'other');
+   const bubble=document.createElement('div'); bubble.className='msg '+(isMine?'mine':'other');
+   let inner='';
+   if(m.replyTo) inner+=`<div style="font-size:10px;opacity:.7;border-left:2px solid var(--accent);padding-left:6px;margin-bottom:4px">${escapeHtml(m.replyTo.text||'') }</div>`;
+   if(m.type==='photo' && m.url) inner+=`<img src="${m.url}" style="max-width:200px;border-radius:10px;display:block" onclick="viewPhoto('${m.url}')">`;
+   else if(m.type==='sticker' && m.sticker) inner+=`<img src="${m.sticker}" style="width:90px;height:90px">`;
+   else inner+=linkify(m.text||'');
+   inner+=`<div class="msg-meta">${fmtTime(m.time)}</div>`;
+   bubble.innerHTML=inner;
+   bubble.onclick=()=>{ replyTo=m; document.getElementById('reply-preview').innerText=(m.text||'').substring(0,40); document.getElementById('reply-bar').classList.remove('hidden'); };
+   row.appendChild(bubble); cont.appendChild(row);
+ });
+}
+
+function send(){
+ const inp=document.getElementById('chat-input'); const text=inp.value.trim(); if(!text||!activeChatId) return;
+ inp.value=''; document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden');
+ const key=db.ref(`Chats/${activeChatId}/messages`).push().key;
+ const msg={from:currentUser.uid,time:Date.now(),text,readBy:{[currentUser.uid]:true}};
+ if(replyTo){ msg.replyTo={key:replyTo.key,text:replyTo.text||'',from:replyTo.from}; replyTo=null; document.getElementById('reply-bar').classList.add('hidden'); }
+ const updates={};
+ updates[`Chats/${activeChatId}/messages/${key}`]=msg;
+ updates[`UserChats/${currentUser.uid}/${activeChatId}/lastTime`]=Date.now();
+ updates[`UserChats/${currentUser.uid}/${activeChatId}/lastText`]=text.substring(0,40);
+ if(!chatIsGroup && chatTargetUid){
+   updates[`UserChats/${chatTargetUid}/${activeChatId}/lastTime`]=Date.now();
+   updates[`UserChats/${chatTargetUid}/${activeChatId}/lastText`]=text.substring(0,40);
+   updates[`UserChats/${chatTargetUid}/${activeChatId}/with`]=currentUser.uid;
+   updates[`UserChats/${chatTargetUid}/${activeChatId}/unread`]= (chatsCache[activeChatId]?.unread||0)+1;
+ }
+ db.ref().update(updates);
+}
+function cancelReply(){ replyTo=null; document.getElementById('reply-bar').classList.add('hidden'); }
+</script>
 </body>
 </html>

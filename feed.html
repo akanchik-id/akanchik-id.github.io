@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Under - Under</title>
+<title>Feed - Under</title>
 <link rel="icon" type="image/png" href="/stickerss/logo.png?v=9">
 <style>
 @font-face { font-family: 'ZeroCool'; src: url('/static.ttf?v=7'); }
@@ -353,18 +353,40 @@ function buildPostCardHTML(postId,data){
 }
 </script>
 </head>
-<body data-page="index">
+<body data-page="feed">
 <div id="splash"><img src="/logo.gif" class="splash-gif" alt=""><div style="margin-top:10px;font-size:12px;letter-spacing:3px;color:var(--accent)">UNDER</div></div>
 <div class="app-shell">
-<div class="app-scroll" style="display:flex;align-items:center;justify-content:center"><div class="empty-state">Загрузка...</div></div>
-<script>
-setTimeout(()=>{
-  if(firebase.auth().currentUser) location.href='feed.html'; else location.href='auth.html';
-},800);
-</script>
+
+<div class="app-header"><div class="app-header-title">Лента</div><button class="app-header-action" onclick="location.reload()"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button></div>
+<div class="app-scroll">
+  <div class="feed-tabs"><button class="feed-tab active" id="ft-subs">Подписки</button><button class="feed-tab" id="ft-rec">Рекомендации</button></div>
+  <div id="feed-container"></div>
+</div>
+<div class="tab-bar" id="tab-bar"></div>
 </div>
 <div id="toast" class="toast"><img id="toast-av" class="toast-av" src="/avatar1.png"><div style="flex:1;min-width:0"><div id="toast-name" style="font-weight:700;font-size:12px;text-transform:uppercase">PLAYER</div><div id="toast-text" style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">msg</div></div></div>
 <div id="photo-viewer" class="overlay hidden" onclick="this.classList.add('hidden')"><img id="photo-viewer-img" src="" style="max-width:92vw;max-height:86vh;border-radius:14px"></div>
-<script></script>
+<script>
+let feedTab='subscriptions';
+function onUserDataSync(){ loadFeed(); }
+document.addEventListener('DOMContentLoaded',()=>{
+  initTheme(); renderTabBar('feed');
+  document.getElementById('ft-subs').onclick=()=>{feedTab='subscriptions'; document.querySelectorAll('.feed-tab').forEach(b=>b.classList.remove('active')); document.getElementById('ft-subs').classList.add('active'); loadFeed();};
+  document.getElementById('ft-rec').onclick=()=>{feedTab='recommendations'; document.querySelectorAll('.feed-tab').forEach(b=>b.classList.remove('active')); document.getElementById('ft-rec').classList.add('active'); loadFeed();};
+  setTimeout(()=>{ if(currentUser) loadFeed(); },800);
+});
+function loadFeed(){
+ const cont=document.getElementById('feed-container'); if(!cont) return;
+ cont.innerHTML='<div class="empty-state">Загрузка...</div>';
+ const idolIds=currentUserData.Idols?Object.keys(currentUserData.Idols):[];
+ db.ref('Posts').orderByChild('time').limitToLast(100).once('value').then(snap=>{
+   let posts=[]; snap.forEach(s=>{const p=s.val(); if(!p) return; if(feedTab==='subscriptions'){ if(idolIds.includes(p.uid)) posts.push({pid:s.key,...p}); } else { if(p.uid!==currentUser.uid && !idolIds.includes(p.uid)) posts.push({pid:s.key,...p}); } });
+   posts.sort((a,b)=>(b.time||0)-(a.time||0));
+   cont.innerHTML='';
+   if(!posts.length){ cont.innerHTML='<div class="empty-state">Лента пуста</div>'; return; }
+   posts.forEach(p=>{ const div=document.createElement('div'); div.innerHTML=buildPostCardHTML(p.pid,p); cont.appendChild(div.firstElementChild); });
+ });
+}
+</script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Under - Under</title>
+<title>Пост - Under</title>
 <link rel="icon" type="image/png" href="/stickerss/logo.png?v=9">
 <style>
 @font-face { font-family: 'ZeroCool'; src: url('/static.ttf?v=7'); }
@@ -353,18 +353,51 @@ function buildPostCardHTML(postId,data){
 }
 </script>
 </head>
-<body data-page="index">
+<body data-page="post">
 <div id="splash"><img src="/logo.gif" class="splash-gif" alt=""><div style="margin-top:10px;font-size:12px;letter-spacing:3px;color:var(--accent)">UNDER</div></div>
 <div class="app-shell">
-<div class="app-scroll" style="display:flex;align-items:center;justify-content:center"><div class="empty-state">Загрузка...</div></div>
-<script>
-setTimeout(()=>{
-  if(firebase.auth().currentUser) location.href='feed.html'; else location.href='auth.html';
-},800);
-</script>
+
+<div class="app-header"><button class="app-header-action" onclick="history.back()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="app-header-title">Пост</div><div style="width:32px"></div></div>
+<div class="app-scroll"><div id="post-box"></div><div id="comments-box" style="padding:0 12px"></div>
+<div style="padding:12px;display:flex;gap:8px"><input id="comment-inp" class="field" placeholder="Комментарий..." style="flex:1"><button class="btn btn-accent" style="width:80px" onclick="sendComment()">Отпр</button></div>
+</div>
 </div>
 <div id="toast" class="toast"><img id="toast-av" class="toast-av" src="/avatar1.png"><div style="flex:1;min-width:0"><div id="toast-name" style="font-weight:700;font-size:12px;text-transform:uppercase">PLAYER</div><div id="toast-text" style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">msg</div></div></div>
 <div id="photo-viewer" class="overlay hidden" onclick="this.classList.add('hidden')"><img id="photo-viewer-img" src="" style="max-width:92vw;max-height:86vh;border-radius:14px"></div>
-<script></script>
+<script>
+let postId=null;
+document.addEventListener('DOMContentLoaded',()=>{
+  initTheme();
+  postId=new URLSearchParams(location.search).get('id');
+  setTimeout(()=>{
+    db.ref('Posts/'+postId).once('value').then(s=>{
+      const p=s.val(); if(!p) return;
+      const box=document.getElementById('post-box');
+      // build card
+      const div=document.createElement('div');
+      div.innerHTML=`<div class="post-card"><div class="post-hd"><img src="/avatar${p.avatar||1}.png" class="post-hd-av"><div style="flex:1"><div class="post-hd-name">${escapeHtml((p.displayName||'').toUpperCase())}</div><div class="post-hd-time">${p.time?new Date(p.time).toLocaleDateString():''}</div></div></div>${p.photo?`<img src="${p.photo}" class="post-photo">`:''}${p.text?`<div class="post-caption">${linkify(p.text)}</div>`:''}</div>`;
+      box.appendChild(div.firstElementChild);
+      loadComments();
+    });
+  },600);
+});
+function loadComments(){
+  const cont=document.getElementById('comments-box'); cont.innerHTML='';
+  db.ref('Comments/'+postId).orderByChild('time').limitToLast(50).once('value').then(s=>{
+    s.forEach(c=>{
+      const v=c.val(); const row=document.createElement('div'); row.style.display='flex'; row.style.gap='8px'; row.style.padding='8px 0'; row.style.borderBottom='1px solid var(--border)';
+      row.innerHTML=`<img src="/avatar${v.avatar||1}.png" style="width:28px;height:28px;border-radius:50%"><div><div style="font-size:11px;font-weight:700">${escapeHtml((v.displayName||'').toUpperCase())}</div><div style="font-size:12px">${escapeHtml(v.text||'')}</div></div>`;
+      cont.appendChild(row);
+    });
+  });
+}
+function sendComment(){
+  const inp=document.getElementById('comment-inp'); const t=inp.value.trim(); if(!t) return; inp.value='';
+  const k=db.ref('Comments/'+postId).push().key;
+  db.ref('Comments/'+postId+'/'+k).set({uid:currentUser.uid,displayName:currentUserData.DisplayName||'PLAYER',avatar:currentUserData.Avatar||1,text:t,time:Date.now()});
+  db.ref('Posts/'+postId+'/commentCount').transaction(v=>(v||0)+1);
+  setTimeout(loadComments,400);
+}
+</script>
 </body>
 </html>

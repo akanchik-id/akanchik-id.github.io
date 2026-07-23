@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Under - Under</title>
+<title>Auth - Under</title>
 <link rel="icon" type="image/png" href="/stickerss/logo.png?v=9">
 <style>
 @font-face { font-family: 'ZeroCool'; src: url('/static.ttf?v=7'); }
@@ -353,18 +353,44 @@ function buildPostCardHTML(postId,data){
 }
 </script>
 </head>
-<body data-page="index">
+<body data-page="auth">
 <div id="splash"><img src="/logo.gif" class="splash-gif" alt=""><div style="margin-top:10px;font-size:12px;letter-spacing:3px;color:var(--accent)">UNDER</div></div>
 <div class="app-shell">
-<div class="app-scroll" style="display:flex;align-items:center;justify-content:center"><div class="empty-state">Загрузка...</div></div>
-<script>
-setTimeout(()=>{
-  if(firebase.auth().currentUser) location.href='feed.html'; else location.href='auth.html';
-},800);
-</script>
+
+<div class="app-scroll no-nav" style="padding:24px 20px">
+  <div style="text-align:center;margin:30px 0 24px">
+    <img src="/logo.gif" style="width:56px;height:56px;border-radius:50%;border:3px solid var(--accent)">
+    <div style="font-size:22px;font-weight:800;margin-top:10px">Under</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">войдите или создайте аккаунт</div>
+  </div>
+  <div class="card-padded">
+    <label class="field-label">Email</label><input id="user-email" class="field" placeholder="you@example.com" style="margin-bottom:12px">
+    <label class="field-label">Пароль</label><input id="user-pass" type="password" class="field" placeholder="••••••••" style="margin-bottom:14px">
+    <button class="btn btn-accent" id="btn-login" style="margin-bottom:8px">Войти</button>
+    <button class="btn btn-ghost" id="btn-reg">Создать аккаунт</button>
+  </div>
+</div>
 </div>
 <div id="toast" class="toast"><img id="toast-av" class="toast-av" src="/avatar1.png"><div style="flex:1;min-width:0"><div id="toast-name" style="font-weight:700;font-size:12px;text-transform:uppercase">PLAYER</div><div id="toast-text" style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">msg</div></div></div>
 <div id="photo-viewer" class="overlay hidden" onclick="this.classList.add('hidden')"><img id="photo-viewer-img" src="" style="max-width:92vw;max-height:86vh;border-radius:14px"></div>
-<script></script>
+<script>
+function onUserDataSync(){ location.href='feed.html'; }
+document.addEventListener('DOMContentLoaded',()=>{
+  initTheme();
+  document.getElementById('btn-login').onclick=()=>{
+    const e=document.getElementById('user-email').value, p=document.getElementById('user-pass').value;
+    auth.signInWithEmailAndPassword(e,p).catch(err=>alert(err.message));
+  };
+  document.getElementById('btn-reg').onclick=()=>{
+    const e=document.getElementById('user-email').value, p=document.getElementById('user-pass').value;
+    auth.createUserWithEmailAndPassword(e,p).then(res=>{
+      const nick=e.split('@')[0];
+      db.ref('Users/'+res.user.uid).set({DisplayName:nick,username:cleanUsername(nick),Avatar:1,Status:'NEW PLAYER',Coins:100});
+      res.user.sendEmailVerification();
+      alert('Аккаунт создан, подтвердите email');
+    }).catch(err=>alert(err.message));
+  };
+});
+</script>
 </body>
 </html>

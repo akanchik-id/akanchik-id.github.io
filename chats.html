@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Under - Under</title>
+<title>Chats - Under</title>
 <link rel="icon" type="image/png" href="/stickerss/logo.png?v=9">
 <style>
 @font-face { font-family: 'ZeroCool'; src: url('/static.ttf?v=7'); }
@@ -353,18 +353,37 @@ function buildPostCardHTML(postId,data){
 }
 </script>
 </head>
-<body data-page="index">
+<body data-page="chats">
 <div id="splash"><img src="/logo.gif" class="splash-gif" alt=""><div style="margin-top:10px;font-size:12px;letter-spacing:3px;color:var(--accent)">UNDER</div></div>
 <div class="app-shell">
-<div class="app-scroll" style="display:flex;align-items:center;justify-content:center"><div class="empty-state">Загрузка...</div></div>
-<script>
-setTimeout(()=>{
-  if(firebase.auth().currentUser) location.href='feed.html'; else location.href='auth.html';
-},800);
-</script>
+
+<div class="app-header"><div class="app-header-title">Сообщения</div><button class="app-header-action" onclick="location.href='explore.html'"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div>
+<div class="app-scroll"><div id="chats-list"><div class="empty-state">Загрузка...</div></div></div>
+<div class="tab-bar" id="tab-bar"></div>
 </div>
 <div id="toast" class="toast"><img id="toast-av" class="toast-av" src="/avatar1.png"><div style="flex:1;min-width:0"><div id="toast-name" style="font-weight:700;font-size:12px;text-transform:uppercase">PLAYER</div><div id="toast-text" style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">msg</div></div></div>
 <div id="photo-viewer" class="overlay hidden" onclick="this.classList.add('hidden')"><img id="photo-viewer-img" src="" style="max-width:92vw;max-height:86vh;border-radius:14px"></div>
-<script></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  initTheme(); renderTabBar('chats');
+  setTimeout(()=>{ if(currentUser) renderChats(); },800);
+  db.ref(`UserChats/${currentUser?.uid}`).on('value',()=>renderChats());
+});
+function renderChats(){
+ const cont=document.getElementById('chats-list'); if(!cont) return;
+ const items=Object.entries(chatsCache).map(([id,c])=>({id,...c})).sort((a,b)=>(b.lastTime||0)-(a.lastTime||0));
+ if(!items.length){ cont.innerHTML='<div class="empty-state">Чатов пока нет</div>'; return; }
+ cont.innerHTML='';
+ items.forEach(c=>{
+   const isGroup=c.type==='group'||c.type==='channel';
+   const row=document.createElement('div'); row.className='chat-row';
+   const name=c.name||'PLAYER'; const av=c.avatar||'/avatar1.png';
+   const unread=c.unread||0;
+   row.innerHTML=`<img src="${av}" class="chat-row-av"><div class="chat-row-info"><div class="chat-row-top"><div class="chat-row-name">${escapeHtml(name.toUpperCase())}</div><div class="chat-row-time">${c.lastTime?fmtTime(c.lastTime):''}</div></div><div style="display:flex;justify-content:space-between"><div class="chat-row-last">${escapeHtml((c.lastText||'').substring(0,40))}</div>${unread?`<span style="background:var(--danger);color:#fff;border-radius:10px;min-width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;padding:0 4px">${unread}</span>`:''}</div></div>`;
+   row.onclick=()=>{ if(isGroup) location.href='chat.html?id='+c.id; else location.href='chat.html?uid='+c.with; };
+   cont.appendChild(row);
+ });
+}
+</script>
 </body>
 </html>
