@@ -1980,26 +1980,40 @@ input::-webkit-credit-card-auto-fill-button {
         msgRef.on('value',msgCb);listeners.push({ref:msgRef,event:'value',cb:msgCb});
     }
     function _subscribeTyping(chatId,targetUid){
+    const showTypingBubble = (uid) => {
+        const cont = document.getElementById('chat-messages');
+        if(!cont) return;
+        let old = document.getElementById('typing-bubble-row');
+        if(old) old.remove();
+
+        const u = usersCache[uid] || chatTargetData || {};
+        const av = `/avatar${u.Avatar||1}.png`;
+
+        const row = document.createElement('div');
+        row.id = 'typing-bubble-row';
+        row.className = 'msg-row other';
+        row.innerHTML = `<img src="${av}" class="msg-av"><div class="msg other typing-msg"><div class="typing-dots-msg"><span></span><span></span></div></div>`;
+        cont.appendChild(row);
+        cont.scrollTop = cont.scrollHeight;
+    };
+    const hideTypingBubble = () => {
+        const old = document.getElementById('typing-bubble-row');
+        if(old) old.remove();
+    };
+
     if(chatIsGroup){
         const typRef=db.ref(`Typing/${chatId}`);
         const typCb=snap=>{
             if(activeChatId!=chatId) return;
-            const el=document.getElementById('chat-typing'); if(!el) return;
             const typers=snap.val();
-            if(!typers){ el.innerHTML=''; return; }
+            if(!typers){ hideTypingBubble(); return; }
             const now=Date.now();
-            const names=[];
+            let foundUid = null;
             Object.entries(typers).forEach(([uid,ts])=>{
-                if(uid!=currentUser.uid && ts && now-ts<5000){
-                    const u=usersCache[uid];
-                    names.push((u?.DisplayName||'Player'));
-                }
+                if(uid!=currentUser.uid && ts && now-ts<5000) foundUid = uid;
             });
-            if(names.length){
-                el.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-            } else {
-                el.innerHTML = '';
-            }
+            if(foundUid) showTypingBubble(foundUid);
+            else hideTypingBubble();
         };
         typRef.on('value',typCb); listeners.push({ref:typRef,event:'value',cb:typCb});
         return;
@@ -2009,12 +2023,8 @@ input::-webkit-credit-card-auto-fill-button {
     const typCb=snap=>{
         if(activeChatId!=chatId) return;
         const ts=snap.val();
-        const el=document.getElementById('chat-typing'); if(!el) return;
-        if(ts && Date.now()-ts<5000){
-            el.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-        } else {
-            el.innerHTML = '';
-        }
+        if(ts && Date.now()-ts<5000) showTypingBubble(targetUid);
+        else hideTypingBubble();
     };
     typRef.on('value',typCb); listeners.push({ref:typRef,event:'value',cb:typCb});
 }
@@ -2024,11 +2034,20 @@ input::-webkit-credit-card-auto-fill-button {
 
     // ═══ MESSAGES RENDER ═══
     function renderMessages(arr){
-        const cont=document.getElementById('chat-messages');const wasAtBottom=cont.scrollHeight-cont.scrollTop-cont.clientHeight<80;
-        cont.innerHTML='';
-        arr.forEach((m,i)=>{const row=buildMsgRow(m,arr,i);if(row)cont.appendChild(row);});
-        if(wasAtBottom||arr.length<=5)setTimeout(()=>cont.scrollTo({top:cont.scrollHeight,behavior:'smooth'}),30);
+    const cont=document.getElementById('chat-messages');
+    const wasAtBottom=cont.scrollHeight-cont.scrollTop-cont.clientHeight<80;
+    const typingEl = document.getElementById('typing-bubble-row'); // сохраняем пузырек
+    const wasTyping =!!typingEl;
+
+    cont.innerHTML='';
+    arr.forEach((m,i)=>{const row=buildMsgRow(m,arr,i);if(row)cont.appendChild(row);});
+
+    if(wasTyping){
+        cont.appendChild(typingEl);
     }
+
+    if(wasAtBottom||arr.length<=5)setTimeout(()=>cont.scrollTo({top:cont.scrollHeight,behavior:'smooth'}),30);
+}
     // вызывать после renderMessages или в конце _subscribeChatMessages
 function checkEmptyChatGreeting(msgs){
     const cont = document.getElementById('chat-messages');
