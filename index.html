@@ -52,13 +52,14 @@
   padding-bottom: max(4px, env(safe-area-inset-bottom));
   z-index: 100;
   will-change: transform;
-  position: relative;
 
-  /* ЭФФЕКТ СТЕКЛА ДЛЯ НАВИГАЦИИ */
-  /* Делаем переменную --nav-bg полупрозрачной на 75% */
+  /* 1. ФИКСИРУЕМ НАВИГАЦИЮ ПОВЕРХ ЧАТА */
+  position: fixed; /* или sticky, если родитель позволяет */
+  bottom: 0;
+  left: 0;
+
+  /* 2. ЭФФЕКТ СТЕКЛА ДЛЯ НАВИГАЦИИ */
   background: color-mix(in srgb, var(--nav-bg) 75%, transparent) !important;
-  
-  /* Размытие в 10px и насыщенность 180% */
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
 }
