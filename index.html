@@ -43,7 +43,25 @@
         @keyframes splashPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(243,156,18,.4)}50%{transform:scale(1.06);box-shadow:0 0 0 14px rgba(243,156,18,0)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         /* NAV */
-        .nav{flex-shrink:0;background:var(--nav-bg);display:flex;width:100%;border-top:1px solid var(--nav-border);padding:4px 0;padding-bottom:max(4px,env(safe-area-inset-bottom));z-index:100;will-change:transform;position:relative;}
+        .nav {
+  flex-shrink: 0;
+  display: flex;
+  width: 100%;
+  border-top: 1px solid var(--nav-border);
+  padding: 4px 0;
+  padding-bottom: max(4px, env(safe-area-inset-bottom));
+  z-index: 100;
+  will-change: transform;
+  position: relative;
+
+  /* ЭФФЕКТ СТЕКЛА ДЛЯ НАВИГАЦИИ */
+  /* Делаем переменную --nav-bg полупрозрачной на 75% */
+  background: color-mix(in srgb, var(--nav-bg) 75%, transparent) !important;
+  
+  /* Размытие в 10px и насыщенность 180% */
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
         .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 2px;cursor:pointer;position:relative;transition:opacity .15s;-webkit-tap-highlight-color:transparent;}
         .nav-item:active{opacity:.6;}
         .ni-icon{width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:transform .2s cubic-bezier(0.34,1.56,0.64,1);will-change:transform;position:relative;}
