@@ -625,10 +625,14 @@ input::-webkit-credit-card-auto-fill-button {
 }
 #btn-attach,
 #btn-sticker{
-  background: var(--bg3) !important;
+  background: colormix(in srgb, var(--bg3) 75%, transparent) !important;
+  backdrop-filter: blur(10px) saturate(160%)!important;
+  -webkit-backdrop-filter: blur(10px) saturate(160%)!important;
 }
 #btn-send{
-  background: var(--accent) !important;
+  background: colormix(in srgb, var(--accent) 75%, transparent) !important;
+  backdrop-filter: blur(10px) saturate(160%)!important;
+  -webkit-backdrop-filter: blur(10px) saturate(160%)!important;
 }
 
 /* чтобы сообщения не прятались под прозрачной панелью */
