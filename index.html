@@ -556,6 +556,84 @@ input::-webkit-credit-card-auto-fill-button {
         .reply-block:hover {
             background: rgba(243,156,18,0.2);
         }
+        /* УБИРАЕМ СТАРЫЙ БАР С ТОЧКАМИ */
+#chat-typing,.typing-row,.typing-dots {
+  display: none!important;
+}
+
+/* ПЕРЕПИСЫВАЕМ КОНТЕЙНЕР ЧАТА */
+#chat-messages{
+  padding: 10px 10px 110px 10px!important; /* 110px чтобы последние сообщения не прятались под блюром */
+  background: linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.1) 100%)!important;
+}
+[data-theme="dark"] #chat-messages {
+  background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%)!important;
+}
+
+/* ДЕЛАЕМ НИЖНЮЮ ПАНЕЛЬ СТЕКЛЯННОЙ С РАЗМЫТИЕМ */
+/* НИЖНЯЯ ПАНЕЛЬ ПОЛНОСТЬЮ ПРОЗРАЧНАЯ */
+.chat-input-area{
+  background: transparent !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  position: absolute !important;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.chat-input-row{
+  background: transparent !important;
+}
+
+.chat-indicator,
+.voice-bar,
+.typing-row,
+#chat-typing{
+  background: transparent !important;
+  border: none !important;
+}
+
+/* ОСТАВЛЯЕМ ФОН ТОЛЬКО У ПОЛЯ И КНОПОК */
+.chat-inp{
+  background: var(--bg3) !important;
+  border: 1.5px solid var(--border) !important;
+}
+#btn-attach,
+#btn-sticker{
+  background: var(--bg3) !important;
+}
+#btn-send{
+  background: var(--accent) !important;
+}
+
+/* чтобы сообщения не прятались под прозрачной панелью */
+#chat-messages{
+  padding-bottom: 110px !important;
+}
+
+/* НОВЫЕ ТОЧКИ КАК СООБЩЕНИЕ */
+.msg.typing-msg{
+  padding: 14px 16px!important;
+  min-width: 60px;
+}
+.typing-dots-msg{
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+.typing-dots-msg span{
+  width: 7px;
+  height: 7px;
+  background: var(--text3);
+  border-radius: 50%;
+  animation: dotBounce 1.2s ease-in-out infinite;
+}
+.typing-dots-msg span:nth-child(2){ animation-delay: 0.2s; }
+.typing-dots-msg span:nth-child(3){ animation-delay: 0.4s; }
     </style>
 </head>
 <body>
