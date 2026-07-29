@@ -510,12 +510,10 @@ input::-webkit-credit-card-auto-fill-button {
             .chat-row{max-width:460px;margin:0 auto;}
         }
         /* исправление для поля ввода и клавиатуры */
-        .chat-input-area {
-            position: sticky;
-            bottom: 0;
-            background: var(--bg2);
-            z-index: 10;
-        }
+        .chat-input-area{
+  background: transparent !important;
+  border-top: none !important;
+}
         .chat-fs {
             position: fixed;
             bottom: 0;
@@ -523,10 +521,10 @@ input::-webkit-credit-card-auto-fill-button {
             height: 100%;
         }
         input, textarea {
-            autocomplete: off;
-            autocorrect: off;
-            autocapitalize: off;
-            spellcheck: false;
+            autocomplete: on;
+            autocorrect: on;
+            autocapitalize: on;
+            spellcheck: true;
         }
         /* кнопка с цветом профиля */
         .btn-profile-color {
