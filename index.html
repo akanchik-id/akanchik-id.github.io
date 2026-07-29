@@ -18,7 +18,6 @@
             --card-shadow:0 2px 12px rgba(0,0,0,0.08);
             --loader-bg:#f0f0f2;--input-bg:#ffffff;--overlay:rgba(0,0,0,0.5);
             --radius:16px;--radius-sm:10px;--radius-lg:24px;
-            --profile-color:#f39c12; /* цвет профиля (контур аватарки и кнопки) */
         }
         [data-theme="dark"] {
             --bg:#0d0d0f;--bg2:#1c1c1e;--bg3:#2c2c2e;--bg4:#3a3a3c;
@@ -114,7 +113,7 @@ input::-webkit-credit-card-auto-fill-button {
 }
         /* PROFILE */
         .profile-top{background:var(--bg2);padding:20px 16px 16px;margin-bottom:2px;text-align:center;position:relative;}
-        .profile-av{width:88px;height:88px;border-radius:50%;border:3px solid var(--profile-color, var(--accent));object-fit:cover;margin:0 auto 10px;display:block;}
+        .profile-av{width:88px;height:88px;border-radius:50%;border:3px solid var(--accent);object-fit:cover;margin:0 auto 10px;display:block;}
         .profile-name{font-size:20px;color:var(--text);text-transform:uppercase;margin-bottom:2px;}
         .profile-username{font-size:11px;color:var(--text3);margin-bottom:6px;}
         .profile-status{font-size:12px;color:var(--text2);margin-bottom:12px;white-space:pre-wrap;}
@@ -135,7 +134,7 @@ input::-webkit-credit-card-auto-fill-button {
         .user-row:active{background:var(--bg3);}
         .user-row.rounded{border-radius:10px;margin-bottom:4px;}
         @keyframes itemSlide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
-        .urow-av{width:44px;height:44px;border-radius:50%;border:2px solid var(--profile-color, var(--accent));object-fit:cover;flex-shrink:0;}
+        .urow-av{width:44px;height:44px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;flex-shrink:0;}
         .urow-info{flex:1;min-width:0;}
         .urow-name{font-size:13px;color:var(--text);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .urow-sub{font-size:10px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -144,7 +143,7 @@ input::-webkit-credit-card-auto-fill-button {
         .chat-row{background:var(--bg2);display:flex;align-items:center;padding:10px 14px;gap:12px;cursor:pointer;transition:background .15s;animation:itemSlide .25s ease both;position:relative;}
         .chat-row:active{background:var(--bg3);}
         .chat-row-av-wrap{position:relative;flex-shrink:0;}
-        .chat-row-av{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid var(--profile-color, var(--accent));}
+        .chat-row-av{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);}
         .chat-row-online{position:absolute;bottom:2px;right:2px;width:12px;height:12px;background:var(--safe);border-radius:50%;border:2px solid var(--bg2);}
         .chat-type-badge{position:absolute;bottom:-1px;right:-1px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg2);}
         .chat-type-badge svg{width:10px;height:10px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
@@ -162,7 +161,7 @@ input::-webkit-credit-card-auto-fill-button {
         .chat-hd-back{background:none;border:none;color:var(--accent);font-size:15px;cursor:pointer;padding:4px 8px 4px 2px;display:flex;align-items:center;gap:2px;font-family:'ZeroCool',monospace;flex-shrink:0;}
         .chat-hd-back:active{opacity:.6;}
         .chat-hd-back svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
-        .chat-hd-av{width:36px;height:36px;border-radius:50%;border:2px solid var(--profile-color, var(--accent));object-fit:cover;cursor:pointer;flex-shrink:0;}
+        .chat-hd-av{width:36px;height:36px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;cursor:pointer;flex-shrink:0;}
         .chat-hd-meta{flex:1;min-width:0;cursor:pointer;}
         .chat-hd-name{font-size:14px;text-transform:uppercase;color:var(--nav-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .chat-hd-status{font-size:10px;color:var(--text3);min-height:13px;}
@@ -214,7 +213,7 @@ input::-webkit-credit-card-auto-fill-button {
         }
         .msg-row{display:flex;align-items:flex-end;gap:6px;padding:1px 0;}
         .msg-row.mine{flex-direction:row-reverse;}
-        .msg-av{width:26px;height:26px;border-radius:50%;border:2px solid var(--profile-color, var(--accent));object-fit:cover;flex-shrink:0;margin-bottom:2px;cursor:pointer;}
+        .msg-av{width:26px;height:26px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;flex-shrink:0;margin-bottom:2px;cursor:pointer;}
         .msg-row.mine .msg-av{display:none;}
         .msg-swipe{position:relative;display:inline-flex;max-width:calc(100% - 38px);touch-action:pan-y;will-change:transform;}
         .msg-row.mine .msg-swipe{margin-left:auto;}
@@ -303,8 +302,9 @@ input::-webkit-credit-card-auto-fill-button {
         .msg-post-info{padding:6px 8px;font-size:10px;color:var(--text2);}
         .msg-post-caption{font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         .typing-row{font-size:11px;color:var(--text3);padding:4px 12px;min-height:20px;flex-shrink:0;font-style:italic;}
-        .chat-indicator{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
-        .ci-bar{width:3px;height:32px;border-radius:2px;flex-shrink:0;}
+        .chat-indicator{display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg3);border-radius:12px 12px 0 0;margin:0 10px;border:1.5px solid var(--border);border-bottom:none;flex-shrink:0;animation:indicatorSlide .18s cubic-bezier(0.34,1.56,0.64,1);}
+        @keyframes indicatorSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .ci-bar{width:3px;height:24px;border-radius:2px;flex-shrink:0;}
         .ci-bar.edit{background:var(--accent);}
         .ci-bar.reply{background:var(--blue);}
         .ci-info{flex:1;min-width:0;}
@@ -314,19 +314,19 @@ input::-webkit-credit-card-auto-fill-button {
         .ci-text{font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
         .ci-close{background:none;border:none;cursor:pointer;padding:4px;color:var(--text3);}
         .ci-close svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
-        .voice-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);flex-shrink:0;border-top:1px solid var(--border);}
+        .voice-bar{display:flex;align-items:center;gap:10px;padding:5px 10px;background:var(--bg3);flex-shrink:0;border-radius:12px 12px 0 0;margin:0 10px;border:1.5px solid var(--border);border-bottom:none;animation:indicatorSlide .18s cubic-bezier(0.34,1.56,0.64,1);}
         .voice-dot{width:9px;height:9px;background:var(--danger);border-radius:50%;animation:vBlink .8s infinite;}
         @keyframes vBlink{0%,100%{opacity:1}50%{opacity:.2}}
         .voice-time{flex:1;font-size:12px;color:var(--text);}
         .voice-cancel{background:none;border:none;cursor:pointer;color:var(--danger);font-size:20px;line-height:1;}
         .voice-send{background:var(--accent);border:none;color:#fff;border-radius:10px;padding:7px 14px;cursor:pointer;font-family:'ZeroCool';font-size:12px;}
-        .chat-input-area{background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:max(8px,env(safe-area-inset-bottom));}
-        .chat-input-row{display:flex;gap:6px;padding:8px 10px;align-items:center;}
-        .chat-inp{flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:20px;font-family:'ZeroCool',monospace;background:var(--bg3);color:var(--text);font-size:13px;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+        .chat-input-area{background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:max(8px,env(safe-area-inset-bottom));width:100%;box-sizing:border-box;}
+        .chat-input-row{display:flex;gap:6px;padding:8px 10px;align-items:center;width:100%;box-sizing:border-box;min-width:0;}
+        .chat-inp{flex:1;min-width:0;padding:10px 12px;border:1.5px solid var(--border);border-radius:20px;font-family:'ZeroCool',monospace;background:var(--bg3);color:var(--text);font-size:13px;outline:none;transition:border-color .2s;-webkit-appearance:none;max-width:100%;}
         .chat-inp:focus{border-color:var(--accent);}
-        .chat-btn{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s;-webkit-appearance:none;}
+        .chat-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s;-webkit-appearance:none;}
         .chat-btn:active{transform:scale(.88);}
-        .chat-btn svg{width:20px;height:20px;}
+        .chat-btn svg{width:19px;height:19px;}
         #btn-attach{background:var(--bg3);color:var(--text2);}
         #btn-attach svg{stroke:var(--text2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
         #btn-sticker{background:var(--bg3);}
@@ -491,9 +491,7 @@ input::-webkit-credit-card-auto-fill-button {
         .feed-tabs{display:flex;gap:2px;margin:0 12px 10px;background:var(--bg3);border-radius:12px;padding:3px;}
         .feed-tab{flex:1;padding:8px;border:none;background:transparent;font-family:'ZeroCool';font-size:11px;color:var(--text3);border-radius:10px;cursor:pointer;transition:all .2s;}
         .feed-tab.active{background:var(--bg2);color:var(--text);box-shadow:var(--card-shadow);}
-        .profile-color-picker{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0;}
-        .profile-color-swatch{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .2s;}
-        .profile-color-swatch.active{border-color:var(--text);transform:scale(1.2);}
+        
         /* уведомление-тост */
         .toast-notification{
             position:fixed;
@@ -545,22 +543,8 @@ input::-webkit-credit-card-auto-fill-button {
             autocapitalize: on;
             spellcheck: true;
         }
-        /* кнопка с цветом профиля */
-        .btn-profile-color {
-            border-color: var(--profile-color, var(--accent)) !important;
-        }
-        .btn-profile-color-outline {
-            background: transparent;
-            border: 2px solid var(--profile-color, var(--accent));
-            color: var(--profile-color, var(--accent));
-        }
-        .btn-profile-color-outline:active {
-            background: var(--profile-color, var(--accent));
-            color: #fff;
-        }
-        .chat-hd-av, .profile-av, .urow-av, .chat-row-av, .msg-av, .post-hd-av {
-            border-color: var(--profile-color, var(--accent)) !important;
-        }
+        .scroll-bottom-btn{position:absolute;bottom:90px;right:16px;width:38px;height:38px;border-radius:50%;background:var(--bg2);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.12);z-index:20;animation:popIn .2s cubic-bezier(0.34,1.56,0.64,1);}
+        .scroll-bottom-badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:10px;min-width:16px;height:16px;line-height:16px;padding:0 4px;font-size:8px;text-align:center;border:2px solid var(--bg2);}
         /* закрепленное сообщение кликабельно */
         .pinned-bar {
             cursor: pointer;
@@ -580,70 +564,31 @@ input::-webkit-credit-card-auto-fill-button {
   display: none!important;
 }
 
-/* ПЕРЕПИСЫВАЕМ КОНТЕЙНЕР ЧАТА */
+/* КОНТЕЙНЕР ЧАТА */
 #chat-messages{
-  padding: 10px 10px 110px 10px!important; /* 110px чтобы последние сообщения не прятались под блюром */
-  background: linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.1) 100%)!important;
-}
-[data-theme="dark"] #chat-messages {
-  background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%)!important;
+  padding: 10px 10px 12px 10px!important;
+  background: var(--bg)!important;
+  justify-content: flex-end !important;
 }
 
-/* ДЕЛАЕМ НИЖНЮЮ ПАНЕЛЬ СТЕКЛЯННОЙ С РАЗМЫТИЕМ */
-/* НИЖНЯЯ ПАНЕЛЬ ПОЛНОСТЬЮ ПРОЗРАЧНАЯ */
+/* НИЖНЯЯ ПАНЕЛЬ */
 .chat-input-area{
-  background: transparent !important;
-  border-top: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  position: absolute !important;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
+  background: var(--bg2) !important;
+  border-top: 1px solid var(--border) !important;
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .chat-input-row{
   background: transparent !important;
 }
 
-.chat-indicator,
-.voice-bar,
-.typing-row,
-#chat-typing{
-  background: transparent !important;
-  border: none !important;
-}
-
-/* ОСТАВЛЯЕМ ФОН ТОЛЬКО У ПОЛЯ И КНОПОК */
-.chat-inp{
-  background: color-mix(in srgb, var(--bg3) 75%, transparent) !important;
-  border: 1.5px solid var(--border) !important;
-  backdrop-filter: blur(10px) saturate(160%)!important;
-  -webkit-backdrop-filter: blur(10px) saturate(160%)!important;
-}
-#btn-attach,
-#btn-sticker{
-  background: color-mix(in srgb, var(--bg3) 75%, transparent) !important;
-  backdrop-filter: blur(10px) saturate(160%)!important;
-  -webkit-backdrop-filter: blur(10px) saturate(160%)!important;
-}
-#btn-send{
-  background: color-mix(in srgb, var(--accent) 75%, transparent) !important;
-  backdrop-filter: blur(10px) saturate(160%)!important;
-  -webkit-backdrop-filter: blur(10px) saturate(160%)!important;
-}
-
-/* чтобы сообщения не прятались под прозрачной панелью */
-#chat-messages{
-  padding-bottom: 110px !important;
-}
-
-/* НОВЫЕ ТОЧКИ КАК СООБЩЕНИЕ */
+/* ТОЧКИ КАК СООБЩЕНИЕ */
 .msg.typing-msg{
-  padding: 14px 16px!important;
-  min-width: 60px;
+  padding: 12px 16px!important;
+  min-width: 56px;
+  background: var(--bg2) !important;
+  border: 1px solid var(--msg-other-border) !important;
 }
 .typing-dots-msg{
   display: inline-flex;
@@ -659,6 +604,83 @@ input::-webkit-credit-card-auto-fill-button {
 }
 .typing-dots-msg span:nth-child(2){ animation-delay: 0.2s; }
 .typing-dots-msg span:nth-child(3){ animation-delay: 0.4s; }
+
+/* MULTI-PHOTO CAROUSEL */
+.post-photos-carousel{
+  position:relative;
+  overflow:hidden;
+  width:100%;
+  background:var(--bg3);
+}
+.post-photos-track{
+  display:flex;
+  transition:transform .3s cubic-bezier(0.4,0,0.2,1);
+  will-change:transform;
+}
+.post-photo-slide{
+  flex-shrink:0;
+  width:100%;
+  position:relative;
+}
+.post-photo-slide img{
+  width:100%;
+  max-height:420px;
+  object-fit:cover;
+  display:block;
+  cursor:zoom-in;
+}
+.post-photos-dots{
+  display:flex;
+  justify-content:center;
+  gap:5px;
+  padding:6px 0 2px;
+}
+.post-photos-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--border2);transition:background .2s,transform .2s;
+}
+.post-photos-dot.active{background:var(--accent);transform:scale(1.3);}
+.post-photos-count{
+  position:absolute;bottom:8px;right:10px;background:rgba(0,0,0,0.55);color:#fff;border-radius:8px;padding:2px 8px;font-size:10px;pointer-events:none;
+}
+/* PHOTO THUMBS IN POST CREATE */
+.post-photo-thumbs{
+  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;
+}
+.post-photo-thumb{
+  position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;border:2px solid var(--border);cursor:pointer;flex-shrink:0;
+  animation:thumbIn .2s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes thumbIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+.post-photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.post-photo-thumb .thumb-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+.post-add-photo-btn{
+  width:72px;height:72px;border-radius:10px;border:2px dashed var(--border2);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;gap:4px;transition:border-color .2s;
+}
+.post-add-photo-btn:active{border-color:var(--accent);}
+.post-add-photo-btn svg{width:22px;height:22px;stroke:var(--text3);fill:none;stroke-width:1.8;}
+.post-add-photo-btn span{font-size:9px;color:var(--text3);}
+
+/* COMMENT LIKES + REPLIES */
+.comment-actions{display:flex;gap:10px;margin-top:5px;align-items:center;}
+.comment-action-btn{background:none;border:none;font-family:'ZeroCool';font-size:10px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:3px;padding:2px 4px;border-radius:6px;transition:all .15s;}
+.comment-action-btn:active{background:var(--bg3);}
+.comment-action-btn.liked{color:var(--danger);}
+.comment-action-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+.comment-replies{margin-top:8px;padding-left:14px;border-left:2px solid var(--border);}
+.comment-reply-indicator{
+  display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg3);border-radius:10px 10px 0 0;font-size:11px;color:var(--accent);margin:0 12px;
+  animation:indicatorSlide .15s ease;
+}
+.comment-reply-indicator button{background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;margin-left:auto;}
+
+/* MORE ANIMATIONS */
+@keyframes popIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.post-card{animation:slideUp .3s cubic-bezier(0.4,0,0.2,1) both;}
+.comment-row{animation:fadeSlideIn .2s ease both;}
+.notif-row{animation:fadeSlideIn .2s ease both;}
+.user-row{animation:itemSlide .2s ease both;}
     </style>
 </head>
 <body>
@@ -821,13 +843,7 @@ input::-webkit-credit-card-auto-fill-button {
                     <div style="font-size:10px;color:var(--text3);margin-top:4px;" data-lang="avatar_hint">Выберите аватар</div>
                 </div>
                 <div class="settings-section" id="account-fields"></div>
-                <!-- цвет профиля -->
-                <div style="padding:12px 16px;background:var(--bg2);border-radius:var(--radius);margin:0 12px 12px;">
-                    <div class="field-label" data-lang="profile_color_label">Цвет профиля (контур аватарки и кнопки)</div>
-                    <div class="profile-color-picker" id="profile-color-picker"></div>
-                    <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:6px;">Не выбирайте — будет использоваться основной цвет</div>
                 </div>
-            </div>
             <div id="s-appearance" class="settings-sub">
                 <div class="settings-sub-hd"><button class="settings-sub-hd-back" onclick="closeSettingsSection()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> <span data-lang="appearance_label">Оформление</span></button></div>
                 <div class="card-padded">
@@ -902,7 +918,7 @@ input::-webkit-credit-card-auto-fill-button {
                 </div>
             </div>
             <div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:8px;">
-                <button class="btn btn-accent btn-profile-color" id="view-action-btn" data-lang="fan_btn">Стать фанатом</button>
+                <button class="btn btn-accent" id="view-action-btn" data-lang="fan_btn">Стать фанатом</button>
                 <button class="btn btn-blue" id="view-msg-btn" data-lang="write_btn">Написать</button>
             </div>
             <div id="view-posts-list"></div>
@@ -1038,6 +1054,11 @@ input::-webkit-credit-card-auto-fill-button {
         <div style="flex:1;font-size:15px;font-weight:bold;" data-lang="comments_title">Комментарии</div>
     </div>
     <div id="comments-list" style="flex:1;overflow-y:auto;padding:12px;"></div>
+    <div id="comment-reply-indicator" class="comment-reply-indicator hidden">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+        <span id="comment-reply-name">Ответ</span>
+        <button onclick="cancelCommentReply()">✕</button>
+    </div>
     <div class="comment-input-row">
         <input type="text" id="comment-input" class="comment-inp" placeholder="Написать комментарий..." autocomplete="off" inputmode="text">
         <button class="comment-send-btn" onclick="sendComment()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
@@ -1052,19 +1073,14 @@ input::-webkit-credit-card-auto-fill-button {
         <button onclick="submitPost()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-family:'ZeroCool';font-size:12px;cursor:pointer;font-weight:bold;" data-lang="publish_btn">Опубликовать</button>
     </div>
     <div class="post-create-body">
-        <div class="post-img-wrap" id="post-img-wrap" onclick="triggerPostPhoto()">
-            <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--text3);fill:none;stroke-width:1.5;margin-bottom:8px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <div style="font-size:12px;color:var(--text3)" data-lang="add_photo_hint">Нажмите, чтобы добавить фото</div>
-        </div>
-        <div id="post-draw-toolbar" class="draw-bar hidden">
-            <button class="draw-bar-btn active" id="pdtool-none" onclick="setPostTool('none')" data-lang="none">Нет</button>
-            <button class="draw-bar-btn" id="pdtool-draw" onclick="setPostTool('draw')" data-lang="draw">Рисовать</button>
-            <input type="color" id="post-draw-color" value="#ff0000" style="width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:50%;">
-            <input type="range" id="post-draw-size" min="2" max="20" value="4" style="width:60px;">
-            <button class="draw-bar-btn" onclick="undoPostDraw()" style="flex:none;" data-lang="undo_btn">Отмена</button>
+        <div class="post-photo-thumbs" id="post-photo-thumbs">
+            <div class="post-add-photo-btn" onclick="triggerPostPhoto()" id="post-add-photo-btn">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Фото</span>
+            </div>
         </div>
         <textarea class="post-textarea" id="post-text-input" placeholder="Напишите что-нибудь... (необязательно)" rows="3"></textarea>
-        <input type="file" id="post-photo-input" accept="image/*" style="display:none">
+        <input type="file" id="post-photo-input" accept="image/*" multiple style="display:none">
     </div>
 </div>
 
@@ -1284,7 +1300,7 @@ input::-webkit-credit-card-auto-fill-button {
     const listeners=[];
     let editingFieldKey=null;
     let feedTab='subscriptions';
-    let profileColorPickerInitialized=false;
+    
     let toastTimeout=null;
 
     // ═══ THEME ═══
@@ -1399,7 +1415,7 @@ input::-webkit-credit-card-auto-fill-button {
         document.getElementById('user-date').innerText=new Date(user.metadata.creationTime).toLocaleDateString(currentLang=='ru'?'ru-RU':'en-US');
         if('Notification' in window && Notification.permission=='default') Notification.requestPermission();
         syncMyData();initCarousel();initStickerPanel();setupOnlineStatus();setupChatsListener();setupNotificationListener();loadPrivacySettings();
-        initAccountFields();initProfileColorPicker();
+        initAccountFields();
         handleUrlRoute();
         showSection('account');
         hideSplash(); // <-- ВАЖНО: для обычного входа
@@ -1471,53 +1487,8 @@ input::-webkit-credit-card-auto-fill-button {
             document.getElementById('s-val-name').innerText=(d.DisplayName||'').toUpperCase();
             if(!d.username||d.username===''){setTimeout(()=>document.getElementById('username-prompt-modal').classList.remove('hidden'),900);}
             updateAccountFields(d);
-            // Устанавливаем цвет профиля
-            if(d.profileColor){
-                document.documentElement.style.setProperty('--profile-color', d.profileColor);
-            } else {
-                document.documentElement.style.setProperty('--profile-color', 'var(--accent)');
-            }
             if(currentSection==='feed')loadFeed();
         });
-    }
-
-    // ═══ COLOR PROFILE PICKER ═══
-    function initProfileColorPicker(){
-        if(profileColorPickerInitialized) return;
-        profileColorPickerInitialized = true;
-        const colors = ['#f39c12','#e74c3c','#9b59b6','#34c759','#007aff','#e91e63','#00bcd4','#ff5722','#9e9e9e','#000000','#ffffff'];
-        const container = document.getElementById('profile-color-picker');
-        container.innerHTML = '';
-        // Добавляем "сбросить"
-        const resetBtn = document.createElement('button');
-        resetBtn.className = 'btn-sm btn-ghost';
-        resetBtn.innerText = '✕';
-        resetBtn.title = 'Сбросить цвет';
-        resetBtn.onclick = ()=>{
-            db.ref(`Users/${currentUser.uid}/profileColor`).remove();
-            document.documentElement.style.setProperty('--profile-color', 'var(--accent)');
-            document.querySelectorAll('.profile-color-swatch').forEach(s=>s.classList.remove('active'));
-        };
-        container.appendChild(resetBtn);
-
-        colors.forEach(c=>{
-            const sw = document.createElement('div');
-            sw.className = 'profile-color-swatch';
-            sw.style.background = c;
-            sw.style.borderColor = (c==='#ffffff' || c==='#000000') ? 'var(--border)' : 'transparent';
-            sw.onclick = ()=>{
-                db.ref(`Users/${currentUser.uid}/profileColor`).set(c);
-                document.documentElement.style.setProperty('--profile-color', c);
-                document.querySelectorAll('.profile-color-swatch').forEach(s=>s.classList.remove('active'));
-                sw.classList.add('active');
-            };
-            container.appendChild(sw);
-        });
-        if(currentUserData.profileColor){
-            document.querySelectorAll('.profile-color-swatch').forEach(s=>{
-                if(s.style.background === currentUserData.profileColor) s.classList.add('active');
-            });
-        }
     }
 
     // ═══ ACCOUNT SETTINGS ═══
@@ -1637,7 +1608,7 @@ input::-webkit-credit-card-auto-fill-button {
         document.getElementById('cabinet-main').style.display='none';
         document.querySelectorAll('.settings-sub').forEach(s=>s.classList.remove('active'));
         const sub=document.getElementById(id);if(sub)sub.classList.add('active');
-        if(id==='s-account'){initCarousel();initProfileColorPicker();}
+        if(id==='s-account'){initCarousel();}
     }
     function closeSettingsSection(){
         document.getElementById('cabinet-main').style.display='';
@@ -1992,7 +1963,7 @@ input::-webkit-credit-card-auto-fill-button {
         const row = document.createElement('div');
         row.id = 'typing-bubble-row';
         row.className = 'msg-row other';
-        row.innerHTML = `<img src="${av}" class="msg-av"><div class="msg other typing-msg"><div class="typing-dots-msg"><span></span><span></span></div></div>`;
+        row.innerHTML = `<div class="msg other typing-msg"><div class="typing-dots-msg"><span></span><span></span><span></span></div></div>`;
         cont.appendChild(row);
         cont.scrollTop = cont.scrollHeight;
     };
@@ -2060,16 +2031,16 @@ function checkEmptyChatGreeting(msgs){
     }
     // если уже есть приветствие – не дублируем
     if(cont.querySelector('.empty-greeting')) return;
-    
+
     const wrap = document.createElement('div');
     wrap.className = 'empty-greeting';
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;color:var(--text3);font-size:12px;text-align:center;';
-    
+
     const label = document.createElement('div');
     label.innerText = currentLang=='ru' ? 'Поприветствуйте собеседника стикером 👋' : 'Greet with a sticker 👋';
     label.style.marginBottom = '12px';
     wrap.appendChild(label);
-    
+
     // рандомный стикер (1-120)
     const rnd = Math.floor(Math.random() * 120) + 1;
     const img = document.createElement('img');
@@ -2352,29 +2323,46 @@ function checkEmptyChatGreeting(msgs){
 }
 
     // ═══ FEED ═══
+    let seenPostIds=new Set(JSON.parse(localStorage.getItem('under_seen_posts')||'[]'));
+    function markPostSeen(pid){if(!pid||seenPostIds.has(pid))return;seenPostIds.add(pid);try{localStorage.setItem('under_seen_posts',JSON.stringify([...seenPostIds].slice(-500)));}catch(e){}}
+    function shuffleArray(a){const arr=[...a];for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
     function setFeedTab(tab){feedTab=tab;document.querySelectorAll('.feed-tab').forEach(t=>t.classList.remove('active'));document.getElementById(`ft-${tab}`).classList.add('active');loadFeed();}
     function refreshFeed(){loadFeed();}
     function loadFeed(){
         const cont=document.getElementById('feed-container');if(!cont)return;
-        cont.innerHTML='<div class="loader">'+L('load_err')+'</div>';
+        cont.innerHTML='<div class="loader">...</div>';
         const idolIds=currentUserData.Idols?Object.keys(currentUserData.Idols):[];
         if(feedTab==='subscriptions'){
             if(!idolIds.length){cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${L('no_feed')}</div>`;return;}
-            db.ref('Posts').orderByChild('time').limitToLast(100).once('value').then(snap=>{
+            db.ref('Posts').orderByChild('time').limitToLast(200).once('value').then(snap=>{
                 const posts=[];snap.forEach(s=>{const p=s.val();if(p&&idolIds.includes(p.uid))posts.push({pid:s.key,...p});});
                 posts.sort((a,b)=>(b.time||0)-(a.time||0));
                 cont.innerHTML='';
                 if(!posts.length){cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${L('no_feed')}</div>`;return;}
-                posts.forEach((p,i)=>{const card=buildPostCard(p.pid,p,i);cont.appendChild(card);});
+                posts.forEach((p,i)=>{markPostSeen(p.pid);const card=buildPostCard(p.pid,p,i);cont.appendChild(card);});
             }).catch(err=>{cont.innerHTML=`<div style="padding:20px;color:var(--danger);font-size:12px;">${escapeHtml(err.message)}</div>`;});
         } else {
-            db.ref('Posts').orderByChild('time').limitToLast(100).once('value').then(snap=>{
-                const posts=[];snap.forEach(s=>{const p=s.val();if(p&&p.uid!==currentUser.uid&&!idolIds.includes(p.uid))posts.push({pid:s.key,...p});});
-                posts.sort((a,b)=>(b.time||0)-(a.time||0));
-                const recs=posts.slice(0,30);
+            db.ref('Posts').orderByChild('time').limitToLast(500).once('value').then(snap=>{
+                const allPosts=[];snap.forEach(s=>{const p=s.val();if(p&&p.uid!==currentUser?.uid)allPosts.push({pid:s.key,...p});});
+                // split into unseen and seen
+                const unseen=allPosts.filter(p=>!seenPostIds.has(p.pid));
+                const seen=allPosts.filter(p=>seenPostIds.has(p.pid));
+                // randomize both pools
+                const shuffledUnseen=shuffleArray(unseen);
+                const shuffledSeen=shuffleArray(seen);
+                // pick 20 unseen first; if not enough, fill with seen
+                let recs=shuffledUnseen.slice(0,20);
+                if(recs.length<20)recs=[...recs,...shuffledSeen.slice(0,20-recs.length)];
                 cont.innerHTML='';
                 if(!recs.length){cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${L('no_recommendations')}</div>`;return;}
-                recs.forEach((p,i)=>{const card=buildPostCard(p.pid,p,i);cont.appendChild(card);});
+                recs.forEach((p,i)=>{markPostSeen(p.pid);const card=buildPostCard(p.pid,p,i);card.style.animationDelay=`${i*0.06}s`;cont.appendChild(card);});
+                // Load more unseen posts on scroll
+                if(shuffledUnseen.length>20){
+                    let page=1;
+                    const loadMoreBtn=document.createElement('button');loadMoreBtn.className='btn btn-ghost';loadMoreBtn.style.cssText='margin:0 12px 16px;';loadMoreBtn.innerText=currentLang==='ru'?'Ещё':'More';
+                    loadMoreBtn.onclick=()=>{const batch=shuffledUnseen.slice(page*20,(page+1)*20);batch.forEach((p,i)=>{markPostSeen(p.pid);const card=buildPostCard(p.pid,p,i);card.style.animationDelay=`${i*0.06}s`;cont.insertBefore(card,loadMoreBtn);});page++;if(page*20>=shuffledUnseen.length)loadMoreBtn.remove();};
+                    cont.appendChild(loadMoreBtn);
+                }
             }).catch(err=>{cont.innerHTML=`<div style="padding:20px;color:var(--danger);font-size:12px;">${escapeHtml(err.message)}</div>`;});
         }
     }
@@ -2529,11 +2517,6 @@ function checkEmptyChatGreeting(msgs){
             currentViewedUid = uid;
             showSection('idols');
         };
-
-        const profileColor = u.profileColor || 'var(--accent)';
-        document.getElementById('view-avatar').style.borderColor = profileColor;
-        document.getElementById('view-action-btn').style.borderColor = profileColor;
-        document.getElementById('view-msg-btn').style.borderColor = profileColor;
 
         const isGroup = u.type === 'group' || u.type === 'channel';
         const btn = document.getElementById('view-action-btn');
@@ -2844,42 +2827,65 @@ function checkEmptyChatGreeting(msgs){
     function downloadPhoto(url){const a=document.createElement('a');a.href=url;a.download='photo.jpg';a.click();}
 
     // ═══ POSTS ═══
-    let postCanvas=null,postCtx=null,postTool='none',postDrawHistory=[];
-    function openPostCreate(){document.getElementById('post-create-panel').classList.add('open');postCanvas=null;const wrap=document.getElementById('post-img-wrap');wrap.innerHTML='<svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--text3);fill:none;stroke-width:1.5;margin-bottom:8px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><div style="font-size:12px;color:var(--text3)">'+L('add_photo_hint')+'</div>';wrap.onclick=triggerPostPhoto;wrap.classList.remove('has-img');document.getElementById('post-draw-toolbar').classList.add('hidden');document.getElementById('post-text-input').value='';}
-    function closePostCreate(){document.getElementById('post-create-panel').classList.remove('open');}
-    function triggerPostPhoto(){document.getElementById('post-photo-input').click();}
+    let postPhotos=[]; // array of dataURLs
+    function openPostCreate(){
+        document.getElementById('post-create-panel').classList.add('open');
+        postPhotos=[];renderPostThumbs();
+        document.getElementById('post-text-input').value='';
+    }
+    function closePostCreate(){document.getElementById('post-create-panel').classList.remove('open');postPhotos=[];}
+    function triggerPostPhoto(){
+        if(postPhotos.length>=10){showToast(currentLang==='ru'?'Максимум 10 фото':'Max 10 photos');return;}
+        document.getElementById('post-photo-input').click();
+    }
+    function renderPostThumbs(){
+        const thumbs=document.getElementById('post-photo-thumbs');
+        thumbs.innerHTML='';
+        postPhotos.forEach((dataUrl,i)=>{
+            const wrap=document.createElement('div');wrap.className='post-photo-thumb';
+            wrap.innerHTML=`<img src="${dataUrl}"><button class="thumb-del" onclick="removePostPhoto(${i})">✕</button>`;
+            thumbs.appendChild(wrap);
+        });
+        if(postPhotos.length<10){
+            const addBtn=document.createElement('div');addBtn.className='post-add-photo-btn';addBtn.id='post-add-photo-btn';addBtn.onclick=triggerPostPhoto;
+            addBtn.innerHTML=`<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>${currentLang==='ru'?'Фото':'Photo'}</span>`;
+            thumbs.appendChild(addBtn);
+        }
+    }
+    function removePostPhoto(i){postPhotos.splice(i,1);renderPostThumbs();}
     document.getElementById('post-photo-input').addEventListener('change',async e=>{
-        const file=e.target.files[0];e.target.value='';if(!file||!file.type.startsWith('image/'))return;
-        const img=new Image();const url=URL.createObjectURL(file);await new Promise(res=>{img.onload=res;img.src=url;});
-        const wrap=document.getElementById('post-img-wrap');wrap.innerHTML='';wrap.classList.add('has-img');wrap.onclick=null;
-        postCanvas=document.createElement('canvas');postCtx=postCanvas.getContext('2d');
-        const maxW=Math.min(window.innerWidth-48,580);const scale=Math.min(1,maxW/img.width);
-        postCanvas.width=Math.round(img.width*scale);postCanvas.height=Math.round(img.height*scale);
-        postCtx.drawImage(img,0,0,postCanvas.width,postCanvas.height);
-        URL.revokeObjectURL(url);wrap.appendChild(postCanvas);postDrawHistory=[postCanvas.toDataURL()];
-        document.getElementById('post-draw-toolbar').classList.remove('hidden');setPostTool('none');
-        _setupDrawCanvas(postCanvas,postCtx,()=>postDrawHistory,()=>postTool,()=>document.getElementById('post-draw-color').value,()=>parseInt(document.getElementById('post-draw-size').value));
+        const files=[...e.target.files];e.target.value='';
+        for(const file of files){
+            if(!file.type.startsWith('image/'))continue;
+            if(postPhotos.length>=10)break;
+            const url=URL.createObjectURL(file);
+            const img=new Image();await new Promise(res=>{img.onload=res;img.src=url;});
+            const maxDim=900;let w=img.width,h=img.height;
+            if(w>maxDim||h>maxDim){const s=Math.min(maxDim/w,maxDim/h);w=Math.round(w*s);h=Math.round(h*s);}
+            const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+            postPhotos.push(c.toDataURL('image/jpeg',0.7));URL.revokeObjectURL(url);
+        }
+        renderPostThumbs();
     });
-    function setPostTool(tool){postTool=tool;['none','draw'].forEach(t=>document.getElementById(`pdtool-${t}`)?.classList.toggle('active',t===tool));if(postCanvas)postCanvas.style.cursor=tool==='draw'?'crosshair':'default';}
-    function undoPostDraw(){if(postDrawHistory.length<=1)return;postDrawHistory.pop();const prev=new Image();prev.onload=()=>{postCtx.clearRect(0,0,postCanvas.width,postCanvas.height);postCtx.drawImage(prev,0,0);};prev.src=postDrawHistory[postDrawHistory.length-1];}
     async function submitPost(){
-        if(!currentUser)return;if(!postCanvas){alert('Добавьте фото');return;}
+        if(!currentUser)return;
         const text=document.getElementById('post-text-input').value.trim();
-        const maxDim=800;let w=postCanvas.width,h=postCanvas.height;if(w>maxDim||h>maxDim){const s=Math.min(maxDim/w,maxDim/h);w=Math.round(w*s);h=Math.round(h*s);}
-        const comp=document.createElement('canvas');comp.width=w;comp.height=h;comp.getContext('2d').drawImage(postCanvas,0,0,w,h);
-        const dataUrl=comp.toDataURL('image/jpeg',0.65);
+        if(!postPhotos.length&&!text){showToast(currentLang==='ru'?'Добавьте фото или текст':'Add photo or text');return;}
         const postId=db.ref('Posts').push().key;
-        const postData={uid:currentUser.uid,displayName:currentUserData.DisplayName||'PLAYER',avatar:currentUserData.Avatar||1,photo:dataUrl,text:text||'',time:Date.now(),likes:{},commentCount:0};
+        const postData={uid:currentUser.uid,displayName:currentUserData.DisplayName||'PLAYER',avatar:currentUserData.Avatar||1,text:text||'',time:Date.now(),likes:{},commentCount:0};
+        if(postPhotos.length===1)postData.photo=postPhotos[0];
+        else if(postPhotos.length>1)postData.photos=postPhotos;
         await db.ref(`Posts/${postId}`).set(postData);
         await db.ref(`UserPosts/${currentUser.uid}/${postId}`).set(true);
         closePostCreate();loadUserPosts(currentUser.uid,'my-posts-list');
         if(currentSection==='feed')loadFeed();
+        showToast(currentLang==='ru'?'Пост опубликован!':'Post published!');
     }
     function loadUserPosts(uid, containerId){
     const cont=document.getElementById(containerId); 
     if(!cont || !uid) return;
     cont.innerHTML='<div class="loader">Загрузка...</div>';
-    
+
     const render = (arr)=>{
         if(!arr || !arr.length){
             cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${L('no_posts')}</div>`;
@@ -2908,12 +2914,30 @@ function checkEmptyChatGreeting(msgs){
         cont.innerHTML=`<div style="padding:20px;color:var(--danger);font-size:12px;">${escapeHtml(err.message)}</div>`;
     });
 }
+    function buildPostCarousel(photos,postId){
+        if(!photos||!photos.length)return'';
+        if(photos.length===1)return`<img src="${escapeHtml(photos[0])}" class="post-photo" loading="lazy" onclick="viewPhoto('${escapeHtml(photos[0])}')">`;
+        const id='car'+postId.replace(/[^a-z0-9]/gi,'');
+        const slides=photos.map((p,i)=>`<div class="post-photo-slide"><img src="${escapeHtml(p)}" loading="lazy" onclick="viewPhoto('${escapeHtml(p)}')"></div>`).join('');
+        const dots=photos.map((_,i)=>`<div class="post-photos-dot${i===0?' active':''}" id="${id}dot${i}"></div>`).join('');
+        setTimeout(()=>{
+            const track=document.getElementById(`${id}trk`);const cont=document.getElementById(`${id}cnt`);if(!track||!cont)return;
+            let cur=0,sx=0,dx=0,drag=false;
+            const go=i=>{cur=Math.max(0,Math.min(photos.length-1,i));track.style.transform=`translateX(${-cur*100}%)`;cont.querySelectorAll('.post-photos-dot').forEach((d,j)=>d.classList.toggle('active',j===cur));document.getElementById(`${id}cnt`).querySelector('.post-photos-count').textContent=`${cur+1}/${photos.length}`;};
+            track.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;dx=0;drag=true;},{passive:true});
+            track.addEventListener('touchmove',e=>{if(!drag)return;dx=e.touches[0].clientX-sx;},{passive:true});
+            track.addEventListener('touchend',()=>{if(Math.abs(dx)>40)go(dx<0?cur+1:cur-1);drag=false;});
+        },0);
+        return`<div class="post-photos-carousel" id="${id}cnt"><div class="post-photos-track" id="${id}trk">${slides}</div><div class="post-photos-dots">${dots}</div><div class="post-photos-count">1/${photos.length}</div></div>`;
+    }
     function buildPostCard(postId,data,idx=0){
         const card=document.createElement('div');card.className='post-card';card.style.animationDelay=`${idx*0.05}s`;
         const isOwn=currentUser&&data.uid===currentUser.uid;
         const isLiked=currentUser&&data.likes&&data.likes[currentUser.uid];
         const likeCount=data.likes?Object.keys(data.likes).length:0;
         const commentCount=data.commentCount||0;
+        // build photos block: prefer data.photos array, else fall back to data.photo
+        const allPhotos=data.photos?data.photos:(data.photo?[data.photo]:[]);
         card.innerHTML=`
     <div class="post-hd">
       <img src="/avatar${data.avatar||1}.png" class="post-hd-av" onerror="this.src='/avatar1.png'" onclick="viewProfile('${escapeHtml(data.uid||'')}')">
@@ -2923,7 +2947,7 @@ function checkEmptyChatGreeting(msgs){
       </div>
       <button class="post-more-btn" onclick="event.stopPropagation();openPostOptions('${escapeHtml(postId)}','${escapeHtml(data.uid||'')}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
     </div>
-    ${data.photo?`<img src="${escapeHtml(data.photo)}" class="post-photo" loading="lazy" onclick="viewPhoto('${escapeHtml(data.photo)}')">`:''}
+    ${buildPostCarousel(allPhotos,postId)}
     ${data.text?`<div class="post-caption">${linkify(data.text)}</div>`:''}
     <div class="post-actions">
       <button class="post-action ${isLiked?'liked':''}" onclick="toggleLike('${escapeHtml(postId)}','${escapeHtml(data.uid||'')}',this)">
@@ -3008,9 +3032,110 @@ function checkEmptyChatGreeting(msgs){
     }
 
     // ═══ COMMENTS ═══
-    function openComments(postId){activeCommentsPostId=postId;document.getElementById('comments-panel').classList.add('open');const list=document.getElementById('comments-list');list.innerHTML='<div class="loader">...</div>';db.ref(`Comments/${postId}`).orderByChild('time').limitToLast(100).once('value').then(snap=>{list.innerHTML='';snap.forEach(s=>{const c=s.val();if(!c)return;const row=document.createElement('div');row.className='comment-row';row.innerHTML=`<img src="/avatar${c.avatar||1}.png" class="comment-av"><div class="comment-bubble"><div class="comment-name">${escapeHtml((c.displayName||'PLAYER').toUpperCase())}</div><div class="comment-text">${escapeHtml(c.text||'')}</div></div>`;list.appendChild(row);});if(!snap.exists())list.innerHTML=`<div class="empty-state">${L('no_comments')??'Нет комментариев'}</div>`;});}
-    function closeComments(){document.getElementById('comments-panel').classList.remove('open');activeCommentsPostId=null;}
-    function sendComment(){const inp=document.getElementById('comment-input');const text=inp.value.trim();if(!text||!activeCommentsPostId||!currentUser)return;inp.value='';const cKey=db.ref(`Comments/${activeCommentsPostId}`).push().key;db.ref(`Comments/${activeCommentsPostId}/${cKey}`).set({uid:currentUser.uid,displayName:currentUserData.DisplayName||'PLAYER',avatar:currentUserData.Avatar||1,text,time:Date.now()}).then(()=>{db.ref(`Posts/${activeCommentsPostId}/commentCount`).transaction(v=>(v||0)+1);openComments(activeCommentsPostId);});}
+    let commentReplyTo=null; // {cid, displayName}
+    function openComments(postId){
+        activeCommentsPostId=postId;commentReplyTo=null;
+        document.getElementById('comments-panel').classList.add('open');
+        document.getElementById('comment-reply-indicator').classList.add('hidden');
+        _loadComments(postId);
+    }
+    function _loadComments(postId){
+        const list=document.getElementById('comments-list');list.innerHTML='<div class="loader">...</div>';
+        db.ref(`Comments/${postId}`).orderByChild('time').limitToLast(200).once('value').then(snap=>{
+            list.innerHTML='';
+            if(!snap.exists()){list.innerHTML=`<div class="empty-state">${L('no_comments')||'Нет комментариев'}</div>`;return;}
+            const allComments={};snap.forEach(s=>{if(s.val())allComments[s.key]=s.val();});
+            // separate top-level and replies
+            const topLevel=Object.entries(allComments).filter(([,c])=>!c.parentId);
+            const replies=Object.entries(allComments).filter(([,c])=>c.parentId);
+            const replyMap={};replies.forEach(([k,c])=>{if(!replyMap[c.parentId])replyMap[c.parentId]=[];replyMap[c.parentId].push([k,c]);});
+            topLevel.sort((a,b)=>(a[1].time||0)-(b[1].time||0));
+            topLevel.forEach(([cid,c],ci)=>{
+                const row=_buildCommentRow(cid,c,false,ci);
+                list.appendChild(row);
+                // render replies
+                if(replyMap[cid]){
+                    replyMap[cid].sort((a,b)=>(a[1].time||0)-(b[1].time||0));
+                    const replyWrap=document.createElement('div');replyWrap.className='comment-replies';
+                    replyMap[cid].forEach(([rid,r],ri)=>replyWrap.appendChild(_buildCommentRow(rid,r,true,ri)));
+                    row.appendChild(replyWrap);
+                }
+            });
+        });
+    }
+    function _buildCommentRow(cid,c,isReply=false,idx=0){
+        const isOwn=currentUser&&c.uid===currentUser.uid;
+        const isLiked=currentUser&&c.likes&&c.likes[currentUser.uid];
+        const likeCount=c.likes?Object.keys(c.likes).length:0;
+        const row=document.createElement('div');row.className='comment-row';row.style.animationDelay=`${idx*0.04}s`;
+        row.innerHTML=`
+            <img src="/avatar${c.avatar||1}.png" class="comment-av" onclick="viewProfile('${escapeHtml(c.uid||'')}')">
+            <div style="flex:1;min-width:0;">
+                <div class="comment-bubble">
+                    <div class="comment-name">${escapeHtml((c.displayName||'PLAYER').toUpperCase())}</div>
+                    <div class="comment-text">${escapeHtml(c.text||'')}</div>
+                </div>
+                <div class="comment-actions">
+                    <button class="comment-action-btn ${isLiked?'liked':''}" onclick="toggleCommentLike('${escapeHtml(activeCommentsPostId)}','${escapeHtml(cid)}',this)">
+                        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"${isLiked?' fill="var(--danger)" stroke="var(--danger)"':''}/></svg>
+                        <span>${likeCount||''}</span>
+                    </button>
+                    <button class="comment-action-btn" onclick="startCommentReply('${escapeHtml(cid)}','${escapeHtml(c.displayName||'PLAYER')}')">
+                        <svg viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+                        ${currentLang==='ru'?'Ответить':'Reply'}
+                    </button>
+                </div>
+            </div>`;
+        return row;
+    }
+    function toggleCommentLike(postId,cid,btn){
+        if(!currentUser)return;
+        const ref=db.ref(`Comments/${postId}/${cid}/likes/${currentUser.uid}`);
+        ref.once('value').then(snap=>{
+            if(snap.exists()){
+                ref.remove();btn.classList.remove('liked');
+                const n=Math.max(0,(parseInt(btn.querySelector('span').innerText||'0')-1));
+                btn.querySelector('span').innerText=n||'';
+                btn.querySelector('path').removeAttribute('fill');btn.querySelector('path').removeAttribute('stroke');
+            } else {
+                ref.set(true);btn.classList.add('liked');
+                const n=(parseInt(btn.querySelector('span').innerText||'0')+1);
+                btn.querySelector('span').innerText=n||'';
+                btn.querySelector('path').setAttribute('fill','var(--danger)');btn.querySelector('path').setAttribute('stroke','var(--danger)');
+            }
+        });
+    }
+    function startCommentReply(cid,displayName){
+        commentReplyTo={cid,displayName};
+        const ind=document.getElementById('comment-reply-indicator');
+        document.getElementById('comment-reply-name').textContent=`→ ${displayName.toUpperCase()}`;
+        ind.classList.remove('hidden');
+        document.getElementById('comment-input').focus();
+    }
+    function cancelCommentReply(){commentReplyTo=null;document.getElementById('comment-reply-indicator').classList.add('hidden');}
+    function closeComments(){document.getElementById('comments-panel').classList.remove('open');activeCommentsPostId=null;commentReplyTo=null;}
+    function sendComment(){
+        const inp=document.getElementById('comment-input');const text=inp.value.trim();
+        if(!text||!activeCommentsPostId||!currentUser)return;
+        inp.value='';
+        const cData={uid:currentUser.uid,displayName:currentUserData.DisplayName||'PLAYER',avatar:currentUserData.Avatar||1,text,time:Date.now()};
+        if(commentReplyTo)cData.parentId=commentReplyTo.cid;
+        cancelCommentReply();
+        const cKey=db.ref(`Comments/${activeCommentsPostId}`).push().key;
+        db.ref(`Comments/${activeCommentsPostId}/${cKey}`).set(cData).then(()=>{
+            db.ref(`Posts/${activeCommentsPostId}/commentCount`).transaction(v=>(v||0)+1);
+            _loadComments(activeCommentsPostId);
+            // notify post author
+            db.ref(`Posts/${activeCommentsPostId}/uid`).once('value').then(s=>{
+                const authorUid=s.val();
+                if(authorUid&&authorUid!==currentUser.uid){
+                    const nk=db.ref(`Notifications/${authorUid}`).push().key;
+                    db.ref(`Notifications/${authorUid}/${nk}`).set({type:'comment',from:currentUser.uid,fromName:currentUserData.DisplayName||'PLAYER',fromAvatar:currentUserData.Avatar||1,postId:activeCommentsPostId,time:Date.now(),read:false});
+                    showBrowserNotif(currentUserData.DisplayName||'PLAYER',text);
+                }
+            });
+        });
+    }
 
     // ═══ SHARE POST ═══
     function openSharePost(postId,authorId){
