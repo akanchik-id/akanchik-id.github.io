@@ -1190,6 +1190,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 <script>
     // ═══ FIREBASE ═══
     firebase.initializeApp({apiKey:"AIzaSyDUsThsXcfoKojRE3mj6_DYRG5ifSVZhCg",authDomain:"akanchik-id.firebaseapp.com",databaseURL:"https://akanchik-id-default-rtdb.europe-west1.firebasedatabase.app",projectId:"akanchik-id",storageBucket:"akanchik-id.firebasestorage.app",messagingSenderId:"1096469011879",appId:"1:1096469011879:web:2badb039e6d0d31cb02a82"});
@@ -1329,7 +1330,7 @@
         document.getElementById('user-uid').innerText=user.uid;
         document.getElementById('user-date').innerText=new Date(user.metadata.creationTime).toLocaleDateString(currentLang=='ru'?'ru-RU':'en-US');
         if('Notification' in window && Notification.permission=='default') Notification.requestPermission();
-        syncMyData();initCarousel();initStickerPanel();setupOnlineStatus();setupChatsListener();setupNotificationListener();loadPrivacySettings();
+        syncMyData();initFCM();initCarousel();initStickerPanel();setupOnlineStatus();setupChatsListener();setupNotificationListener();loadPrivacySettings();
         initAccountFields();
         handleUrlRoute();
         showSection('account');
@@ -1601,7 +1602,37 @@
     }
 
     // ═══ NOTIFICATIONS ═══
-    function enableNotifications(){if(!('Notification' in window)){alert('Not supported');return;}Notification.requestPermission().then(p=>{if(p==='granted'){try{new Notification('Under',{body:currentLang==='ru'?'Уведомления включены ✓':'Notifications enabled ✓'});}catch(e){}alert(currentLang==='ru'?'Уведомления включены!':'Notifications enabled!');}else alert(currentLang==='ru'?'Разрешение не выдано.':'Permission denied.');});}
+    let fcmToken = null;
+async function initFCM(){
+  try{
+    if(!('Notification' in window)) return;
+    if(Notification.permission !== 'granted') return;
+    const messaging = firebase.messaging();
+    // ВСТАВЬ СВОЙ VAPID КЛЮЧ СЮДА
+    const VAPID_KEY = 'ТВОЙ_VAPID_КЛЮЧ_ИЗ_FIREBASE';
+    const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+    if(token){
+      fcmToken = token;
+      await db.ref(`Users/${currentUser.uid}/fcmTokens/${token.replace(/\//g,'_')}`).set(true);
+      console.log('FCM token saved');
+    }
+    messaging.onMessage(payload => {
+      const title = payload.notification?.title || 'Under';
+      const body = payload.notification?.body || '';
+      showBrowserNotif(title, body, '/logo.gif');
+      showToast(payload.data?.fromName || title, body, `/avatar${payload.data?.fromAvatar||1}.png`);
+    });
+  }catch(e){ console.log('FCM error', e); }
+}
+
+async function enableNotifications(){
+  if(!('Notification' in window)){ alert('Not supported'); return; }
+  const p = await Notification.requestPermission();
+  if(p !== 'granted'){ alert('Разрешение не выдано'); return; }
+  try{ new Notification('Under',{body: 'Уведомления включены ✓', icon: '/logo.gif'}); }catch(e){}
+  await initFCM();
+  alert('Уведомления включены!');
+}
     function showBrowserNotif(title,body,icon){if(!('Notification' in window)||Notification.permission!=='granted')return;try{const n=new Notification(title,{body,icon:icon||'/logo.gif'});n.onclick=()=>{window.focus();n.close();};setTimeout(()=>{try{n.close();}catch(e){}},5000);}catch(e){}}
     function setupNotificationListener(){
     trackRef(db.ref(`Notifications/${currentUser.uid}`),'value',snap=>{
