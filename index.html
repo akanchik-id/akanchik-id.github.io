@@ -498,6 +498,17 @@
         .comment-row{animation:fadeSlideIn .2s ease both;}
         .notif-row{animation:fadeSlideIn .2s ease both;}
         .user-row{animation:itemSlide .2s ease both;}
+        .chat-input-shell{
+  flex:1; display:flex; flex-direction:column;
+  background: var(--card, #222); border:1px solid var(--border);
+  border-radius:22px; overflow:hidden; min-width:0;
+}
+.chat-input-shell:focus-within{border-color:var(--accent)}
+.chat-inp{background:transparent!important; border:none!important; outline:none!important}
+.chat-indicator{display:flex; gap:10px; align-items:center; padding:8px 12px; background:rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.08)}
+.voice-bar{display:flex; gap:10px; align-items:center; padding:10px 14px}
+.hidden{display:none!important}
+.chat-input-shell.is-recording .chat-inp, .chat-input-shell.is-recording .chat-indicator{display:none}
 </style>
 </head>
 <body>
