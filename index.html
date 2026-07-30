@@ -581,6 +581,48 @@
   -webkit-backdrop-filter: none !important;
   border: none !important;
 }
+        /* === WALLPAPER CHATROOM === */
+#chat-messages{
+  position: relative !important;
+  isolation: isolate;
+  background: var(--bg) !important; /* подложка под обоями */
+  overflow: clip;
+  perspective: 1200px;
+}
+
+.chat-wallpaper{
+  position: absolute;
+  inset: -12%; /* делаем больше экрана чтобы было куда двигаться */
+  z-index: 0;
+  pointer-events: none;
+  background-image: url('wallpaper.png');
+  background-size: cover; /* УВЕЛИЧИВАЕТСЯ ПОД ЭКРАН, А НЕ РАСТЯГИВАЕТСЯ */
+  background-position: center center;
+  background-repeat: no-repeat;
+  will-change: transform;
+  /* чуть-чуть 3D */
+  transform: translate3d(0, 0, -80px) scale(1.15);
+  transform-style: preserve-3d;
+  opacity: 0.24;
+  filter: saturate(1.1) contrast(1.05);
+  transition: filter .35s ease, opacity .35s ease;
+}
+
+/* чтобы сообщения были над обоями */
+#chat-messages > *:not(.chat-wallpaper){
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme="dark"] .chat-wallpaper{
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.1);
+  opacity: 0.16;
+}
+
+/* чтобы сам контейнер чата тоже не перекрывал */
+#screen-chat-room{
+  perspective: 1200px;
+}
     </style>
 </head>
 <body>
@@ -903,7 +945,9 @@
         <span class="pinned-text" id="pin-text-preview"></span>
         <button class="pinned-close" onclick="event.stopPropagation();unpinMessage()">✕</button>
     </div>
-    <div id="chat-messages"></div>
+    <div id="chat-messages">
+        <div id="chat-wallpaper" class="chat-wallpaper"></div>
+    </div>
     <button id="scroll-bottom-btn" class="scroll-bottom-btn hidden" onclick="scrollChatToBottom()"><svg viewBox="0 0 24 24" style="stroke:var(--text);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><polyline points="6 9 12 15 18 9"/></svg><span id="scroll-bottom-badge" class="scroll-bottom-badge hidden">0</span></button>
     <div class="typing-row" id="chat-typing"></div>
     <div class="chat-input-area">
@@ -3190,6 +3234,38 @@ function checkEmptyChatGreeting(msgs){
         db.ref().update(updates).then(()=>playSound('send')).catch(err=>alert(L('send_err')+err.message));
         document.getElementById('chat-input').focus();
     }
+    // === ПАРАЛЛАКС ОБОЕВ 3D ===
+(function(){
+  const box = document.getElementById('chat-messages');
+  const wp = document.getElementById('chat-wallpaper');
+  if(!box || !wp) return;
+
+  let ticking = false;
+  let currentY = 0;
+
+  // движение при скролле - всего 6% от скролла
+  box.addEventListener('scroll', () => {
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const targetY = box.scrollTop * 0.07; // ЧУТЬ-ЧУТЬ ДВИГАЕТСЯ
+      // плавность
+      currentY += (targetY - currentY) * 0.12;
+      wp.style.transform = `translate3d(0px, ${-currentY}px, -80px) scale(1.15)`;
+      ticking = false;
+    });
+  }, {passive:true});
+
+  // легкий 3D при движении мыши / наклоне телефона
+  window.addEventListener('mousemove', (e) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 16; // макс 8px в стороны
+    const y = (e.clientY / window.innerHeight - 0.5) * 16;
+    wp.style.setProperty('--mx', x+'px');
+    wp.style.setProperty('--my', y+'px');
+    // комбинируем с текущим параллаксом
+    wp.style.transform = `translate3d(${x}px, ${-currentY + y}px, -80px) scale(1.15) rotateX(${y*-0.02}deg) rotateY(${x*0.02}deg)`;
+  }, {passive:true});
+})();
 
     // ═══ GROUP SETTINGS SEARCH ═══
     document.getElementById('gs-admin-search').addEventListener('input',e=>{
