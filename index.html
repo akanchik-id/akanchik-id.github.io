@@ -466,12 +466,12 @@
         .typing-dots-msg span:nth-child(2){ animation-delay: 0.2s; }
         .typing-dots-msg span:nth-child(3){ animation-delay: 0.4s; }
         @keyframes dotBounce{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-6px);opacity:1}}
-        .post-photos-carousel{position:relative;overflow:hidden;width:100%;background:var(--bg3);touch-action:pan-y;}
-.post-photos-track{display:flex;transition:transform .32s cubic-bezier(0.4,0,0.2,1);will-change:transform;width:100%;}
-.post-photo-slide{flex:0 0 100%;width:100%;position:relative;user-select:none;}
-.post-photo-slide img{width:100%;max-height:420px;object-fit:cover;display:block;cursor:zoom-in;pointer-events:none;}
+        .post-photos-carousel{position:relative;overflow:hidden;width:100%;background:var(--bg3);touch-action:pan-y;user-select:none;}
+.post-photos-track{display:flex;will-change:transform;transition:transform.32s cubic-bezier(0.4,0,0.2,1);}
+.post-photo-slide{flex:0 0 100%;width:100%;position:relative;}
+.post-photo-slide img{width:100%;max-height:420px;object-fit:cover;display:block;cursor:zoom-in;-webkit-user-drag:none;}
 .post-photos-dots{display:flex;justify-content:center;gap:5px;padding:6px 0 2px;}
-.post-photos-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);transition:background .2s,transform .2s;cursor:pointer;}
+.post-photos-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);transition:background.2s,transform.2s;cursor:pointer;}
 .post-photos-dot.active{background:var(--accent);transform:scale(1.3);}
 .post-photos-count{position:absolute;bottom:8px;right:10px;background:rgba(0,0,0,0.55);color:#fff;border-radius:8px;padding:2px 8px;font-size:10px;pointer-events:none;z-index:2;}
         .post-photo-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
@@ -2774,7 +2774,7 @@ function checkEmptyChatGreeting(msgs){
 
         const go=(n, animate=true)=>{
             cur=Math.max(0,Math.min(photos.length-1,n));
-            track.style.transition = animate ? 'transform .32s cubic-bezier(0.4,0,0.2,1)' : 'none';
+            track.style.transition = animate? 'transform.32s cubic-bezier(0.4,0,0.2,1)' : 'none';
             track.style.transform=`translate3d(${-cur*cont.clientWidth}px,0,0)`;
             dotsEls.forEach((d,j)=>d.classList.toggle('active',j===cur));
             if(countEl) countEl.textContent=`${cur+1}/${photos.length}`;
@@ -2789,20 +2789,20 @@ function checkEmptyChatGreeting(msgs){
             else go(cur);
         };
 
-        // touch
-        track.addEventListener('touchstart',e=>onStart(e.touches[0].clientX),{passive:true});
-        track.addEventListener('touchmove',e=>onMove(e.touches[0].clientX),{passive:true});
-        track.addEventListener('touchend',onEnd);
-        // mouse (для десктопа)
-        track.addEventListener('mousedown',e=>{ e.preventDefault(); onStart(e.clientX); });
+        // ВАЖНО: слушаем контейнер, а не трек
+        cont.addEventListener('touchstart',e=>onStart(e.touches[0].clientX),{passive:true});
+        cont.addEventListener('touchmove',e=>onMove(e.touches[0].clientX),{passive:true});
+        cont.addEventListener('touchend',onEnd);
+        cont.addEventListener('mousedown',e=>{ e.preventDefault(); onStart(e.clientX); });
+
         window.addEventListener('mousemove',e=>{ if(dragging) onMove(e.clientX); });
         window.addEventListener('mouseup',onEnd);
+        window.addEventListener('resize',()=>go(cur,false));
 
         dotsEls.forEach(d=>{
             d.addEventListener('click',()=>go(parseInt(d.dataset.i)));
         });
 
-        window.addEventListener('resize',()=>go(cur,false));
         go(0,false);
     },30);
 
