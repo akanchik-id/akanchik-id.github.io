@@ -581,39 +581,45 @@
   -webkit-backdrop-filter: none !important;
   border: none !important;
 }
-        /* === WALLPAPER CHATROOM === */
-/* === WALLPAPER FIX === */
-#chat-messages{
-  position: relative !important;
-  isolation: isolate;
+/* === WALLPAPER FINAL === */
+#screen-chat-room{
+  position:relative;
   background: var(--bg) !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
+}
+#chat-wallpaper-wrap{
+  position:absolute;
+  left:0; right:0;
+  top: 54px; /* под шапкой */
+  bottom: 68px; /* над полем ввода */
+  overflow:hidden;
+  z-index:0;
+  pointer-events:none;
+  background: var(--bg);
 }
 .chat-wallpaper{
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  background-image: url('./wallpaper.png');
-  background-size: cover; /* увеличивается под экран, а не растягивается */
+  position:absolute;
+  top:-10%; left:-10%;
+  width:120%;
+  height:120%;
+  background-image: url('wallpaper.png'); /* проверь что файл лежит рядом с index.html */
+  background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
+  transform: translate3d(0,0,0) scale(1);
   will-change: transform;
-  transform: translate3d(0,0,0) scale(1.18);
-  opacity: 0.32;
-  filter: saturate(1.1) contrast(1.05);
-  transition: filter .3s ease;
-}
-#chat-messages > *:not(.chat-wallpaper){
-  position: relative;
-  z-index: 1;
+  opacity: 0.35; /* поставь 1 для теста */
 }
 [data-theme="dark"] .chat-wallpaper{
-  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.1);
-  opacity: 0.22;
+  opacity: 0.28;
+  filter: brightness(0.9);
+}
+#chat-messages{
+  background: transparent !important;
+  position:relative !important;
+  z-index:1 !important;
+  isolation:auto !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
 }
     </style>
 </head>
@@ -937,9 +943,10 @@
         <span class="pinned-text" id="pin-text-preview"></span>
         <button class="pinned-close" onclick="event.stopPropagation();unpinMessage()">✕</button>
     </div>
-    <div id="chat-messages">
+    <div id="chat-wallpaper-wrap">
         <div id="chat-wallpaper" class="chat-wallpaper"></div>
     </div>
+    <div id="chat-messages"></div>
     <button id="scroll-bottom-btn" class="scroll-bottom-btn hidden" onclick="scrollChatToBottom()"><svg viewBox="0 0 24 24" style="stroke:var(--text);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><polyline points="6 9 12 15 18 9"/></svg><span id="scroll-bottom-badge" class="scroll-bottom-badge hidden">0</span></button>
     <div class="typing-row" id="chat-typing"></div>
     <div class="chat-input-area">
@@ -3238,43 +3245,29 @@ function checkEmptyChatGreeting(msgs){
     applyLang(currentLang);
     document.addEventListener('contextmenu',e=>{if(!e.target.matches('input,textarea,canvas'))e.preventDefault();});
 </script>
-    <script>
+<script>
+// параллакс + тест загрузки
 (function(){
   const box = document.getElementById('chat-messages');
-  if(!box) return;
-  let wp = document.getElementById('chat-wallpaper');
-  if(!wp){
-    wp = document.createElement('div');
-    wp.id='chat-wallpaper'; wp.className='chat-wallpaper';
-    box.prepend(wp);
-  }
+  const wp = document.getElementById('chat-wallpaper');
+  if(!box || !wp) return;
 
-  // фиксим renderMessages чтобы он не удалял обои
-  const oldRender = window.renderMessages;
-  window.renderMessages = function(arr){
-    const cont = document.getElementById('chat-messages');
-    const wasAtBottom = cont.scrollHeight - cont.scrollTop - cont.clientHeight < 80;
-    const typingEl = document.getElementById('typing-bubble-row');
-    const hadTyping = !!typingEl;
-    const wallpaper = document.getElementById('chat-wallpaper');
-    
-    cont.innerHTML = '';
-    if(wallpaper) cont.appendChild(wallpaper);
-    
-    arr.forEach((m,i)=>{ const row=buildMsgRow(m,arr,i); if(row) cont.appendChild(row); });
-    if(hadTyping && typingEl) cont.appendChild(typingEl);
-    if(wasAtBottom||arr.length<=5) setTimeout(()=>cont.scrollTo({top:cont.scrollHeight,behavior:'smooth'}),30);
-    if(typeof checkEmptyChatGreeting === 'function') checkEmptyChatGreeting(arr);
+  // проверка что картинка существует
+  const testImg = new Image();
+  testImg.onload = () => console.log('wallpaper.png OK');
+  testImg.onerror = () => {
+    console.error('wallpaper.png НЕ НАЙДЕН! Положи файл рядом с index.html');
+    wp.style.background = 'red'; // увидишь красный фон = путь неправильный
   };
+  testImg.src = 'wallpaper.png';
 
-  // чуть-чуть 3D + движение при скролле
-  let ticking=false, curY=0;
+  let ticking=false, cur=0;
   box.addEventListener('scroll', ()=>{
     if(ticking) return; ticking=true;
     requestAnimationFrame(()=>{
-      const target = box.scrollTop * 0.06; // 6% движения
-      curY += (target - curY) * 0.15;
-      wp.style.transform = `translate3d(0px, ${-curY}px, 0) scale(1.18)`;
+      const target = box.scrollTop * 0.15;
+      cur += (target - cur) * 0.1;
+      wp.style.transform = `translate3d(0, ${-cur}px, 0) scale(1)`;
       ticking=false;
     });
   }, {passive:true});
