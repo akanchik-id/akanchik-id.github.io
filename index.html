@@ -2758,21 +2758,56 @@ function checkEmptyChatGreeting(msgs){
     });
 }
     function buildPostCarousel(photos,postId){
-        if(!photos||!photos.length)return'';
-        if(photos.length===1)return`<img src="${escapeHtml(photos[0])}" class="post-photo" loading="lazy" onclick="viewPhoto('${escapeHtml(photos[0])}')">`;
-        const id='car'+postId.replace(/[^a-z0-9]/gi,'');
-        const slides=photos.map((p,i)=>`<div class="post-photo-slide"><img src="${escapeHtml(p)}" loading="lazy" onclick="viewPhoto('${escapeHtml(p)}')"></div>`).join('');
-        const dots=photos.map((_,i)=>`<div class="post-photos-dot${i===0?' active':''}" id="${id}dot${i}"></div>`).join('');
-        setTimeout(()=>{
-            const track=document.getElementById(`${id}trk`);const cont=document.getElementById(`${id}cnt`);if(!track||!cont)return;
-            let cur=0,sx=0,dx=0,drag=false;
-            const go=i=>{cur=Math.max(0,Math.min(photos.length-1,i));track.style.transform=`translateX(${-cur*100}%)`;cont.querySelectorAll('.post-photos-dot').forEach((d,j)=>d.classList.toggle('active',j===cur));document.getElementById(`${id}cnt`).querySelector('.post-photos-count').textContent=`${cur+1}/${photos.length}`;};
-            track.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;dx=0;drag=true;},{passive:true});
-            track.addEventListener('touchmove',e=>{if(!drag)return;dx=e.touches[0].clientX-sx;},{passive:true});
-            track.addEventListener('touchend',()=>{if(Math.abs(dx)>40)go(dx<0?cur+1:cur-1);drag=false;});
-        },0);
-        return`<div class="post-photos-carousel" id="${id}cnt"><div class="post-photos-track" id="${id}trk">${slides}</div><div class="post-photos-dots">${dots}</div><div class="post-photos-count">1/${photos.length}</div></div>`;
-    }
+    if(!photos||!photos.length) return '';
+    if(photos.length===1) return `<img src="${escapeHtml(photos[0])}" class="post-photo" loading="lazy" onclick="viewPhoto('${escapeHtml(photos[0])}')">`;
+    const safeId='car'+postId.replace(/[^a-zA-Z0-9]/g,'');
+    const slides=photos.map(p=>`<div class="post-photo-slide"><img src="${escapeHtml(p)}" loading="lazy" onclick="viewPhoto('${escapeHtml(p)}')"></div>`).join('');
+    const dots=photos.map((_,i)=>`<div class="post-photos-dot${i===0?' active':''}" data-i="${i}"></div>`).join('');
+
+    setTimeout(()=>{
+        const track=document.getElementById(`${safeId}trk`);
+        const cont=document.getElementById(`${safeId}cnt`);
+        if(!track||!cont) return;
+        let cur=0, startX=0, dx=0, dragging=false;
+        const dotsEls=cont.querySelectorAll('.post-photos-dot');
+        const countEl=cont.querySelector('.post-photos-count');
+
+        const go=(n, animate=true)=>{
+            cur=Math.max(0,Math.min(photos.length-1,n));
+            track.style.transition = animate ? 'transform .32s cubic-bezier(0.4,0,0.2,1)' : 'none';
+            track.style.transform=`translate3d(${-cur*cont.clientWidth}px,0,0)`;
+            dotsEls.forEach((d,j)=>d.classList.toggle('active',j===cur));
+            if(countEl) countEl.textContent=`${cur+1}/${photos.length}`;
+        };
+
+        const onStart=x=>{ dragging=true; startX=x; dx=0; track.style.transition='none'; };
+        const onMove=x=>{ if(!dragging) return; dx=x-startX; track.style.transform=`translate3d(${ -cur*cont.clientWidth + dx }px,0,0)`; };
+        const onEnd=()=>{
+            if(!dragging) return;
+            dragging=false;
+            if(Math.abs(dx)>40) go(dx<0?cur+1:cur-1);
+            else go(cur);
+        };
+
+        // touch
+        track.addEventListener('touchstart',e=>onStart(e.touches[0].clientX),{passive:true});
+        track.addEventListener('touchmove',e=>onMove(e.touches[0].clientX),{passive:true});
+        track.addEventListener('touchend',onEnd);
+        // mouse (для десктопа)
+        track.addEventListener('mousedown',e=>{ e.preventDefault(); onStart(e.clientX); });
+        window.addEventListener('mousemove',e=>{ if(dragging) onMove(e.clientX); });
+        window.addEventListener('mouseup',onEnd);
+
+        dotsEls.forEach(d=>{
+            d.addEventListener('click',()=>go(parseInt(d.dataset.i)));
+        });
+
+        window.addEventListener('resize',()=>go(cur,false));
+        go(0,false);
+    },30);
+
+    return `<div class="post-photos-carousel" id="${safeId}cnt"><div class="post-photos-track" id="${safeId}trk">${slides}</div><div class="post-photos-dots">${dots}</div><div class="post-photos-count">1/${photos.length}</div></div>`;
+}
     function buildPostCard(postId,data,idx=0){
         const card=document.createElement('div');card.className='post-card';card.style.animationDelay=`${idx*0.05}s`;
         const isOwn=currentUser&&data.uid===currentUser.uid;
