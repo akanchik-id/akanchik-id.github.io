@@ -939,9 +939,6 @@
         <span class="pinned-text" id="pin-text-preview"></span>
         <button class="pinned-close" onclick="event.stopPropagation();unpinMessage()">✕</button>
     </div>
-    <div id="chat-wallpaper-wrap">
-        <div id="chat-wallpaper" class="chat-wallpaper"></div>
-    </div>
     <div id="chat-messages"></div>
     <button id="scroll-bottom-btn" class="scroll-bottom-btn hidden" onclick="scrollChatToBottom()"><svg viewBox="0 0 24 24" style="stroke:var(--text);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><polyline points="6 9 12 15 18 9"/></svg><span id="scroll-bottom-badge" class="scroll-bottom-badge hidden">0</span></button>
     <div class="typing-row" id="chat-typing"></div>
@@ -3240,54 +3237,6 @@ function checkEmptyChatGreeting(msgs){
     initTheme();
     applyLang(currentLang);
     document.addEventListener('contextmenu',e=>{if(!e.target.matches('input,textarea,canvas'))e.preventDefault();});
-</script>
-<script>
-(function(){
-  const box = document.getElementById('chat-messages');
-  const wall = document.getElementById('chat-wallpaper');
-  const wrap = document.getElementById('chat-wallpaper-wrap');
-  if(!box || !wall || !wrap) return;
-
-  const TILE_H = 520; // высота одной плитки, должна совпадать с CSS
-  const PATTERN_H = TILE_H * 2; // паттерн из 2 плиток (норм + зеркало)
-
-  function buildTiles(){
-    const need = Math.ceil((box.scrollHeight + wrap.clientHeight + 2000) / TILE_H) + 10;
-    const count = Math.max(need, 30); // минимум 30 для бесконечности
-    wall.innerHTML = '';
-    wall.style.height = (count * TILE_H) + 'px';
-    for(let i=0;i<count;i++){
-      const d = document.createElement('div');
-      d.className = 'wallpaper-tile' + (i % 2 ? ' mirror' : '');
-      d.style.height = TILE_H + 'px';
-      wall.appendChild(d);
-    }
-  }
-
-  buildTiles();
-
-  // пересобираем когда приходят новые сообщения
-  const origRender = window.renderMessages;
-  if(origRender){
-    window.renderMessages = function(arr){
-      origRender(arr);
-      // если чат вырос - добавляем плитки
-      if(wall.children.length * TILE_H < box.scrollHeight + 2000) buildTiles();
-    }
-  }
-
-  let ticking = false;
-  box.addEventListener('scroll', ()=>{
-    if(ticking) return; ticking = true;
-    requestAnimationFrame(()=>{
-      // offset с модулем - вот тут и происходит бесконечность
-      // из-за зеркала каждые 2 плитки шов совпадает сам с собой
-      const offset = (box.scrollTop * 0.18) % PATTERN_H;
-      wall.style.transform = `translate3d(0, ${-offset}px, 0)`;
-      ticking = false;
-    });
-  }, {passive:true});
-})();
 </script>
 </body>
 </html>
