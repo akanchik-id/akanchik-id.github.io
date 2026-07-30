@@ -1609,7 +1609,7 @@ async function initFCM(){
     if(Notification.permission !== 'granted') return;
     const messaging = firebase.messaging();
     // ВСТАВЬ СВОЙ VAPID КЛЮЧ СЮДА
-    const VAPID_KEY = 'ТВОЙ_VAPID_КЛЮЧ_ИЗ_FIREBASE';
+    const VAPID_KEY = 'BH5D5XHH335e9Yd6oUvEed260j5hwe4f78Q5COmCkT02GIcP8gPbUjq1-3T8aNO9E6Nf_yPKNPOBP38v58L5iK0';
     const token = await messaging.getToken({ vapidKey: VAPID_KEY });
     if(token){
       fcmToken = token;
