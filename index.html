@@ -581,45 +581,41 @@
   -webkit-backdrop-filter: none !important;
   border: none !important;
 }
-/* === WALLPAPER FINAL === */
-#screen-chat-room{
-  position:relative;
-  background: var(--bg) !important;
-}
+/* === INFINITE MIRRORED WALLPAPER === */
 #chat-wallpaper-wrap{
   position:absolute;
   left:0; right:0;
-  top: 54px; /* под шапкой */
-  bottom: 68px; /* над полем ввода */
+  top:54px;
+  bottom:68px;
   overflow:hidden;
   z-index:0;
   pointer-events:none;
   background: var(--bg);
 }
-.chat-wallpaper{
+#chat-wallpaper{
   position:absolute;
-  top:-10%; left:-10%;
+  top:0; left:-10%;
   width:120%;
-  height:120%;
-  background-image: url('wallpaper.png'); /* проверь что файл лежит рядом с index.html */
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  transform: translate3d(0,0,0) scale(1);
   will-change: transform;
-  opacity: 0.35; /* поставь 1 для теста */
+  display:flex;
+  flex-direction:column;
 }
-[data-theme="dark"] .chat-wallpaper{
-  opacity: 0.28;
-  filter: brightness(0.9);
+.wallpaper-tile{
+  width:100%;
+  height:520px; /* высоту подбери под свою картинку */
+  flex-shrink:0;
+  background-image: url('wallpaper.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.wallpaper-tile.mirror{
+  transform: scaleY(-1); /* зеркалим по вертикали */
 }
 #chat-messages{
   background: transparent !important;
   position:relative !important;
   z-index:1 !important;
-  isolation:auto !important;
-  overflow-y:auto !important;
-  overflow-x:hidden !important;
 }
     </style>
 </head>
@@ -3246,29 +3242,49 @@ function checkEmptyChatGreeting(msgs){
     document.addEventListener('contextmenu',e=>{if(!e.target.matches('input,textarea,canvas'))e.preventDefault();});
 </script>
 <script>
-// параллакс + тест загрузки
 (function(){
   const box = document.getElementById('chat-messages');
-  const wp = document.getElementById('chat-wallpaper');
-  if(!box || !wp) return;
+  const wall = document.getElementById('chat-wallpaper');
+  const wrap = document.getElementById('chat-wallpaper-wrap');
+  if(!box || !wall || !wrap) return;
 
-  // проверка что картинка существует
-  const testImg = new Image();
-  testImg.onload = () => console.log('wallpaper.png OK');
-  testImg.onerror = () => {
-    console.error('wallpaper.png НЕ НАЙДЕН! Положи файл рядом с index.html');
-    wp.style.background = 'red'; // увидишь красный фон = путь неправильный
-  };
-  testImg.src = 'wallpaper.png';
+  const TILE_H = 520; // высота одной плитки, должна совпадать с CSS
+  const PATTERN_H = TILE_H * 2; // паттерн из 2 плиток (норм + зеркало)
 
-  let ticking=false, cur=0;
+  function buildTiles(){
+    const need = Math.ceil((box.scrollHeight + wrap.clientHeight + 2000) / TILE_H) + 10;
+    const count = Math.max(need, 30); // минимум 30 для бесконечности
+    wall.innerHTML = '';
+    wall.style.height = (count * TILE_H) + 'px';
+    for(let i=0;i<count;i++){
+      const d = document.createElement('div');
+      d.className = 'wallpaper-tile' + (i % 2 ? ' mirror' : '');
+      d.style.height = TILE_H + 'px';
+      wall.appendChild(d);
+    }
+  }
+
+  buildTiles();
+
+  // пересобираем когда приходят новые сообщения
+  const origRender = window.renderMessages;
+  if(origRender){
+    window.renderMessages = function(arr){
+      origRender(arr);
+      // если чат вырос - добавляем плитки
+      if(wall.children.length * TILE_H < box.scrollHeight + 2000) buildTiles();
+    }
+  }
+
+  let ticking = false;
   box.addEventListener('scroll', ()=>{
-    if(ticking) return; ticking=true;
+    if(ticking) return; ticking = true;
     requestAnimationFrame(()=>{
-      const target = box.scrollTop * 0.15;
-      cur += (target - cur) * 0.1;
-      wp.style.transform = `translate3d(0, ${-cur}px, 0) scale(1)`;
-      ticking=false;
+      // offset с модулем - вот тут и происходит бесконечность
+      // из-за зеркала каждые 2 плитки шов совпадает сам с собой
+      const offset = (box.scrollTop * 0.18) % PATTERN_H;
+      wall.style.transform = `translate3d(0, ${-offset}px, 0)`;
+      ticking = false;
     });
   }, {passive:true});
 })();
