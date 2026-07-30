@@ -267,8 +267,8 @@
         .chat-btn svg{width:19px;height:19px;}
         #btn-attach{
             background: color-mix(in srgb, var(--bg3) 72%, transparent) !important;
-            backdrop-filter: blur(18px) saturate(180%) !important;
-            -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+            backdrop-filter: blur(10px) saturate(170%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
             border:1px solid var(--border) !important;
             color:var(--text2);
         }
@@ -509,6 +509,39 @@
 .voice-bar{display:flex; gap:10px; align-items:center; padding:10px 14px}
 .hidden{display:none!important}
 .chat-input-shell.is-recording .chat-inp, .chat-input-shell.is-recording .chat-indicator{display:none}
+        /* САМ ИНПУТ - фон только у него */
+.chat-input-shell{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  background: color-mix(in stgb, var(--card, #222) 72%, transparent) !important;
+  border:1px solid var(--border);
+  border-radius:22px;
+  backdrop-filter: blur(10px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
+  overflow:hidden;
+  min-width:0;
+}
+
+/* УБИРАЕМ ФОН У ИНДИКАТОРОВ - теперь они прозрачные внутри инпута */
+.chat-input-shell .chat-indicator,
+.chat-input-shell .voice-bar{
+  background: transparent !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  padding: 7px 12px 4px 12px;
+}
+
+.chat-input-shell .chat-indicator + .chat-inp{
+  padding-top: 2px !important;
+}
+
+.ci-bar{width:3px; align-self:stretch; border-radius:10px; background:var(--accent)}
+.ci-bar.edit{background:#ff7675}
+.ci-bar.reply{background:#00cec9}
+.ci-info{background:transparent}
+.ci-text{opacity:.7}
     </style>
 </head>
 <body>
