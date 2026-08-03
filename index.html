@@ -1280,6 +1280,16 @@
     <button class="btn btn-accent" onclick="saveOnboarding()">Начать</button>
   </div>
 </div>
+    <div id="chat-actions-modal" class="overlay hidden" onclick="if(event.target===this) this.classList.add('hidden')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="chat-actions-title">Чат</div>
+    <button class="btn btn-ghost" id="ca-pin" style="margin-bottom:6px;" onclick="pinChatAction()">📌 Закрепить</button>
+    <button class="btn btn-ghost" id="ca-mute" style="margin-bottom:6px;" onclick="muteChatAction()">🔕 Замутить</button>
+    <button class="btn btn-danger" id="ca-delete" style="margin-bottom:6px;" onclick="deleteChatAction()">🗑 Удалить чат</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('chat-actions-modal').classList.add('hidden')">Отмена</button>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -1908,6 +1918,7 @@ async function enableNotifications(){
       </div>`;
             row.onclick=()=>{isGroup?openGroupChat(c.id,c):openChat(c.with,u);};
             cont.appendChild(row);
+            attachChatLongPress(row,c);
             if(i<items.length-1){const sep=document.createElement('div');sep.className='section-divider';sep.style.marginLeft='76px';cont.appendChild(sep);}
         });
     }
@@ -3418,6 +3429,41 @@ function checkOnboardingNeeded(d){
   if(!d.username || d.Status==='NEW PLAYER' ||!d.DisplayName || localStorage.getItem('under_onboard_done')!=='1'){
     if(!d.username) openOnboarding();
   }
+}
+    let actionChatId=null, actionChatData=null;
+function openChatActions(chatId, chatData){
+  actionChatId=chatId; actionChatData=chatData;
+  document.getElementById('chat-actions-title').innerText = (chatData.name || chatData.DisplayName || 'Чат').toUpperCase();
+  document.getElementById('chat-actions-modal').classList.remove('hidden');
+  if(navigator.vibrate) navigator.vibrate(20);
+}
+function deleteChatAction(){
+  if(!actionChatId ||!confirm('Удалить чат из списка?')) return;
+  db.ref(`UserChats/${currentUser.uid}/${actionChatId}`).remove().then(()=>{
+    document.getElementById('chat-actions-modal').classList.add('hidden');
+  });
+}
+function pinChatAction(){
+  // простой пин через localStorage
+  let pinned = JSON.parse(localStorage.getItem('pinned_chats')||'[]');
+  if(!pinned.includes(actionChatId)) pinned.unshift(actionChatId); else pinned = pinned.filter(id=>id!==actionChatId);
+  localStorage.setItem('pinned_chats', JSON.stringify(pinned));
+  document.getElementById('chat-actions-modal').classList.add('hidden');
+  renderChatsList();
+}
+function muteChatAction(){
+  db.ref(`UserChats/${currentUser.uid}/${actionChatId}/muted`).transaction(v=>!v).then(()=>{
+    document.getElementById('chat-actions-modal').classList.add('hidden');
+  });
+}
+
+// обнови renderChatsList — внутри цикла после row.innerHTML добавь:
+function attachChatLongPress(row, c){
+  let timer=null;
+  row.addEventListener('touchstart', ()=>{ timer=setTimeout(()=>openChatActions(c.id,c), 600); }, {passive:true});
+  row.addEventListener('touchend', ()=>clearTimeout(timer));
+  row.addEventListener('touchmove', ()=>clearTimeout(timer));
+  row.addEventListener('contextmenu', (e)=>{ e.preventDefault(); openChatActions(c.id,c); });
 }
 
     // ═══ GROUP SETTINGS SEARCH ═══
