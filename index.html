@@ -617,6 +617,26 @@
   position:relative !important;
   z-index:1 !important;
 }
+        /* === NEW PROFILE === */
+.profile-top-new{background:var(--bg2);padding:14px 14px 12px;border-radius:0 0 var(--radius-lg) var(--radius-lg);margin-bottom:8px;}
+.profile-top-row{display:flex;gap:14px;align-items:center;}
+.profile-av-new{width:72px;height:72px;border-radius:50%;border:2.5px solid var(--accent);object-fit:cover;flex-shrink:0;}
+.profile-stats-new{display:flex;flex:1;justify-content:space-around;}
+.stat{text-align:center;cursor:pointer;flex:1;padding:4px;border-radius:10px;transition:background.15s;}
+.stat:active{background:var(--bg3);}
+.stat-val{font-size:17px;font-weight:bold;color:var(--text);}
+.stat-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;margin-top:2px;}
+.profile-info-new{margin-top:12px;}
+.profile-name-new{font-size:18px;font-weight:bold;text-transform:uppercase;line-height:1.2;}
+.profile-username-new{font-size:11px;color:var(--text3);margin-top:2px;}
+.profile-status-new{font-size:12px;color:var(--text2);margin-top:6px;white-space:pre-wrap;line-height:1.4;}
+.profile-actions-new{display:flex;gap:8px;margin-top:14px;}
+.profile-actions-new.btn{flex:1;padding:10px;font-size:11px;}
+
+/* === REQUESTS === */
+#requests-badge{position:static!important;margin-left:6px;min-width:18px;height:18px;line-height:18px;font-size:9px;}
+.req-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border-radius:14px;margin-bottom:8px;}
+.req-actions{display:flex;gap:6px;margin-left:auto;}
     </style>
 </head>
 <body>
