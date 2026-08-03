@@ -1299,6 +1299,93 @@
     const listeners=[];
     let editingFieldKey=null;
     let feedTab='subscriptions';
+    let requestsCache = {};
+function isMutual(targetUid){
+    if(!targetUid ||!currentUserData) return false;
+    const idols = currentUserData.Idols || {};
+    const fans = currentUserData.Fans || {};
+    return!!(idols[targetUid] && fans[targetUid]);
+}
+function setupRequestsListener(){
+    trackRef(db.ref(`MessageRequests/${currentUser.uid}`),'value',snap=>{
+        requestsCache = snap.val() || {};
+        const count = Object.keys(requestsCache).length;
+        const badge = document.getElementById('requests-badge');
+        if(badge){
+            if(count>0){ badge.classList.remove('hidden'); badge.innerText = count>99?'99+':count; }
+            else badge.classList.add('hidden');
+        }
+        if(document.getElementById('requests-panel')?.classList.contains('open')){
+            renderRequestsList();
+        }
+    });
+}
+function openRequestsPanel(){
+    document.getElementById('requests-panel').classList.add('open');
+    renderRequestsList();
+}
+function closeRequestsPanel(){ document.getElementById('requests-panel').classList.remove('open'); }
+function renderRequestsList(){
+    const cont = document.getElementById('requests-list');
+    const keys = Object.keys(requestsCache);
+    if(!keys.length){ cont.innerHTML = `<div class="empty-state">${L('empty_users')}</div>`; return; }
+    cont.innerHTML = '';
+    keys.forEach(uid=>{
+        const r = requestsCache[uid];
+        const row = document.createElement('div');
+        row.className = 'req-row';
+        row.innerHTML = `
+            <img src="/avatar${r.fromAvatar||1}.png" class="urow-av" style="width:44px;height:44px">
+            <div class="urow-info">
+                <div class="urow-name">${escapeHtml((r.fromName||'PLAYER').toUpperCase())}</div>
+                <div class="urow-sub">@${escapeHtml(r.username||'')} · ${escapeHtml((r.text||'').substring(0,40))}</div>
+            </div>
+            <div class="req-actions">
+                <button class="btn-sm" style="background:var(--safe);color:#fff" onclick="acceptRequest('${uid}')">${L('request_accept')}</button>
+                <button class="btn-sm btn-ghost" onclick="declineRequest('${uid}')">${L('request_decline')}</button>
+            </div>`;
+        row.onclick = (e)=>{ if(e.target.tagName!=='BUTTON') viewProfile(uid); };
+        cont.appendChild(row);
+    });
+}
+function sendMessageRequest(toUid, text=''){
+    if(!toUid || toUid===currentUser.uid) return;
+    const ref = db.ref(`MessageRequests/${toUid}/${currentUser.uid}`);
+    ref.once('value').then(snap=>{
+        if(snap.exists()){ showToast(L('request_already')); return; }
+        ref.set({
+            from: currentUser.uid,
+            fromName: currentUserData.DisplayName||'PLAYER',
+            fromAvatar: currentUserData.Avatar||1,
+            username: currentUserData.username||'',
+            time: Date.now(),
+            text: text || (currentLang==='ru'?'Хочет начать переписку':'Wants to message you')
+        }).then(()=>{
+            showToast(L('request_sent'));
+            const nk = db.ref(`Notifications/${toUid}`).push().key;
+            db.ref(`Notifications/${toUid}/${nk}`).set({type:'message',from:currentUser.uid,fromName:currentUserData.DisplayName,fromAvatar:currentUserData.Avatar||1,text:'Отправил запрос на сообщения',time:Date.now(),read:false});
+        });
+    });
+}
+function acceptRequest(fromUid){
+    const toUid = currentUser.uid;
+    const updates = {};
+    updates[`Users/${toUid}/Idols/${fromUid}`]=true;
+    updates[`Users/${toUid}/Fans/${fromUid}`]=true;
+    updates[`Users/${fromUid}/Idols/${toUid}`]=true;
+    updates[`Users/${fromUid}/Fans/${toUid}`]=true;
+    updates[`MessageRequests/${toUid}/${fromUid}`]=null;
+    db.ref().update(updates).then(()=>{
+        const chatId = makeChatId(toUid, fromUid);
+        db.ref(`UserChats/${toUid}/${chatId}`).set({with:fromUid,lastTime:Date.now(),lastText:'Запрос принят',unread:0});
+        db.ref(`UserChats/${fromUid}/${chatId}`).set({with:toUid,lastTime:Date.now(),lastText:'Запрос принят',unread:0});
+        closeRequestsPanel();
+        db.ref(`Users/${fromUid}`).once('value').then(s=>openChat(fromUid, s.val()||{}));
+    });
+}
+function declineRequest(fromUid){
+    db.ref(`MessageRequests/${currentUser.uid}/${fromUid}`).remove();
+}
     
     let toastTimeout=null;
 
@@ -1314,8 +1401,8 @@
     // ═══ LANG ═══
     let currentLang=localStorage.getItem('akanchik_lang')||'ru';
     const T={
-        ru:{fan_btn:'Стать фанатом',unfan_btn:'Отписаться',online:'Онлайн',offline:'Не в сети',typing:'печатает…',edited_tag:'(изм.)',send_err:'Ошибка: ',load_err:'Ошибка: ',empty_chats:'Чатов пока нет',empty_notifs:'Событий пока нет',empty_users:'Пусто',empty_fans:'Фанатов пока нет',empty_idols:'Кумиров пока нет',notif_new_fan:'стал твоим фанатом',notif_new_msg:'написал тебе:',voice_too_short:'Слишком короткое',img_only:'Только изображения!',report_sent:'Жалоба отправлена. Спасибо!',report_select:'Выберите причину',report_post_title:'Жалоба на пост',pin_bar:'Закреплено:',reply_to:'Ответ:',notif_new_like:'лайкнул ваш пост',notif_new_comment:'прокомментировал ваш пост',no_posts:'Постов пока нет',no_comments:'Нет комментариев',just_now:'только что',seen:'Просмотрено',messages:'Сообщения',events:'События',explore:'Поиск',feed:'Лента',subscriptions:'Подписки',recommendations:'Рекомендации',refresh:'Обновить',no_feed:'Постов в ленте пока нет',no_recommendations:'Рекомендаций пока нет',verify_title:'Подтвердите email',verify_desc:'Проверьте почту и подтвердите аккаунт',verify_resend:'Отправить повторно',verify_confirm:'Я подтвердил',signout:'Выйти',auth_sub:'Войдите или создайте аккаунт',email_label:'Email',pass_label:'Пароль',forgot_pass:'Забыли пароль?',login_btn:'Войти',register_btn:'Создать аккаунт',terms:'Регистрируясь, вы принимаете условия использования',fans_label:'Фанаты',coins_label:'Монеты',idols_label:'Кумиры',new_post_btn:'Новый пост',feed_title:'Лента',subs_tab:'Подписки',rec_tab:'Рекомендации',explore_title:'Поиск',search_users:'Люди',search_groups:'Группы',search_channels:'Каналы',search_posts:'Посты',chats_title:'Сообщения',settings_title:'Настройки',account_label:'Аккаунт',appearance_label:'Оформление',privacy_label:'Приватность',notifs_label:'Уведомления',lang_label:'Язык',info_label:'Информация',delete_account:'Удалить аккаунт',avatar_hint:'Выберите аватар',theme_label:'Тема',light_theme:'Светлая',dark_theme:'Тёмная',accent_label:'Цвет акцента',who_can_msg:'Кто может писать',everyone:'Все',only_fans:'Только фанаты',nobody:'Никто',show_online:'Показывать онлайн',show_fans:'Показывать фанатов',show_idols:'Показывать кумиров',searchable:'Найти в поиске',read_receipts:'Уведомления о прочтении',allow_reactions:'Разрешить реакции',save_btn:'Сохранить',enable_notifs:'Включить уведомления',created_at:'Аккаунт создан:',version:'Версия:',back_btn:'Назад',write_btn:'Написать',report_btn:'Пожаловаться',nav_profile:'Профиль',nav_feed:'Лента',nav_explore:'Поиск',nav_chats:'Чаты',nav_settings:'Настройки',editing_label:'Редактирование',replying_label:'Ответ',send_voice:'Отправить',chat_info_title:'Информация',comments_title:'Комментарии',new_post_title:'Новый пост',publish_btn:'Опубликовать',add_photo_hint:'Нажмите, чтобы добавить фото',none:'Нет',draw:'Рисовать',undo_btn:'Отмена',save_photo:'⬇ Сохранить',preview_title:'Предпросмотр',crop:'Обрезать',cancel_btn:'Отмена',send_btn:'Отправить',reply_btn:'Ответить',copy_btn:'Копировать',edit_btn:'Изменить',pin_btn:'Закрепить',delete_btn:'Удалить',report_title:'Жалоба',report_send_btn:'Отправить жалобу',pin_title:'Закрепить сообщение',create_group_title:'Создать группу',basic_info:'Основное',public_label:'Публичный (виден в поиске)',add_members:'Добавить участников',create_btn:'Создать',group_settings_title:'Настройки группы',edit_info:'Изменить',who_can_write:'Кто может писать',all_members:'Все участники',only_admins:'Только админы',admins_label:'Администраторы',username_prompt_title:'Выберите @username',username_prompt_desc:'Уникальный username для поиска',later_btn:'Позже',share_title:'Поделиться постом',post_actions_title:'Действия с постом',edit_caption:'Изменить подпись',delete_post:'Удалить пост',edit_caption_label:'Изменить подпись',stickers_title:'Стикеры',recent_stickers:'Недавние',all_stickers:'Все стикеры',profile_color_label:'Цвет профиля',subscribe_btn:'Подписаться',unsubscribe_btn:'Отписаться',join_btn:'Присоединиться',leave_btn:'Покинуть'},
-        en:{fan_btn:'Become Fan',unfan_btn:'Unfollow',online:'Online',offline:'Offline',typing:'typing…',edited_tag:'(edited)',send_err:'Error: ',load_err:'Error: ',empty_chats:'No chats yet',empty_notifs:'No events yet',empty_users:'Empty',empty_fans:'No fans yet',empty_idols:'No idols yet',notif_new_fan:'became your fan',notif_new_msg:'wrote you:',voice_too_short:'Too short',img_only:'Images only!',report_sent:'Report sent. Thank you!',report_select:'Select a reason',report_post_title:'Report post',pin_bar:'Pinned:',reply_to:'Reply:',notif_new_like:'liked your post',notif_new_comment:'commented on your post',no_posts:'No posts yet',no_comments:'No comments yet',just_now:'just now',seen:'Seen',messages:'Messages',events:'Events',explore:'Explore',feed:'Feed',subscriptions:'Subscriptions',recommendations:'Recommendations',refresh:'Refresh',no_feed:'No posts in feed yet',no_recommendations:'No recommendations yet',verify_title:'Verify email',verify_desc:'Check your email and verify your account',verify_resend:'Resend',verify_confirm:'I confirmed',signout:'Sign out',auth_sub:'Sign in or create an account',email_label:'Email',pass_label:'Password',forgot_pass:'Forgot password?',login_btn:'Sign in',register_btn:'Create account',terms:'By registering you agree to the terms',fans_label:'Fans',coins_label:'Coins',idols_label:'Idols',new_post_btn:'New post',feed_title:'Feed',subs_tab:'Subscriptions',rec_tab:'Recommendations',explore_title:'Explore',search_users:'People',search_groups:'Groups',search_channels:'Channels',search_posts:'Posts',chats_title:'Messages',settings_title:'Settings',account_label:'Account',appearance_label:'Appearance',privacy_label:'Privacy',notifs_label:'Notifications',lang_label:'Language',info_label:'Info',delete_account:'Delete account',avatar_hint:'Choose avatar',theme_label:'Theme',light_theme:'Light',dark_theme:'Dark',accent_label:'Accent color',who_can_msg:'Who can write',everyone:'Everyone',only_fans:'Only fans',nobody:'Nobody',show_online:'Show online',show_fans:'Show fans',show_idols:'Show idols',searchable:'Searchable',read_receipts:'Read receipts',allow_reactions:'Allow reactions',save_btn:'Save',enable_notifs:'Enable notifications',created_at:'Account created:',version:'Version:',back_btn:'Back',write_btn:'Write',report_btn:'Report',nav_profile:'Profile',nav_feed:'Feed',nav_explore:'Explore',nav_chats:'Chats',nav_settings:'Settings',editing_label:'Editing',replying_label:'Replying',send_voice:'Send',chat_info_title:'Info',comments_title:'Comments',new_post_title:'New post',publish_btn:'Publish',add_photo_hint:'Tap to add photo',none:'None',draw:'Draw',undo_btn:'Undo',save_photo:'⬇ Save',preview_title:'Preview',crop:'Crop',cancel_btn:'Cancel',send_btn:'Send',reply_btn:'Reply',copy_btn:'Copy',edit_btn:'Edit',pin_btn:'Pin',delete_btn:'Delete',report_title:'Report',report_send_btn:'Send report',pin_title:'Pin message',create_group_title:'Create group',basic_info:'Basic',public_label:'Public (visible in search)',add_members:'Add members',create_btn:'Create',group_settings_title:'Group settings',edit_info:'Edit',who_can_write:'Who can write',all_members:'All members',only_admins:'Only admins',admins_label:'Admins',username_prompt_title:'Choose @username',username_prompt_desc:'Unique username for search',later_btn:'Later',share_title:'Share post',post_actions_title:'Post actions',edit_caption:'Edit caption',delete_post:'Delete post',edit_caption_label:'Edit caption',stickers_title:'Stickers',recent_stickers:'Recent',all_stickers:'All stickers',profile_color_label:'Profile color',subscribe_btn:'Subscribe',unsubscribe_btn:'Unsubscribe',join_btn:'Join',leave_btn:'Leave'}
+        ru:{fan_btn:'Стать фанатом',unfan_btn:'Отписаться',online:'Онлайн',offline:'Не в сети',typing:'печатает…',edited_tag:'(изм.)',send_err:'Ошибка: ',load_err:'Ошибка: ',empty_chats:'Чатов пока нет',empty_notifs:'Событий пока нет',empty_users:'Пусто',empty_fans:'Фанатов пока нет',empty_idols:'Кумиров пока нет',notif_new_fan:'стал твоим фанатом',notif_new_msg:'написал тебе:',voice_too_short:'Слишком короткое',img_only:'Только изображения!',report_sent:'Жалоба отправлена. Спасибо!',report_select:'Выберите причину',report_post_title:'Жалоба на пост',pin_bar:'Закреплено:',reply_to:'Ответ:',notif_new_like:'лайкнул ваш пост',notif_new_comment:'прокомментировал ваш пост',no_posts:'Постов пока нет',no_comments:'Нет комментариев',just_now:'только что',seen:'Просмотрено',messages:'Сообщения',events:'События',explore:'Поиск',feed:'Лента',subscriptions:'Подписки',recommendations:'Рекомендации',refresh:'Обновить',no_feed:'Постов в ленте пока нет',no_recommendations:'Рекомендаций пока нет',verify_title:'Подтвердите email',verify_desc:'Проверьте почту и подтвердите аккаунт',verify_resend:'Отправить повторно',verify_confirm:'Я подтвердил',signout:'Выйти',auth_sub:'Войдите или создайте аккаунт',email_label:'Email',pass_label:'Пароль',forgot_pass:'Забыли пароль?',login_btn:'Войти',register_btn:'Создать аккаунт',terms:'Регистрируясь, вы принимаете условия использования',fans_label:'Фанаты',coins_label:'Монеты',idols_label:'Кумиры',new_post_btn:'Новый пост',feed_title:'Лента',subs_tab:'Подписки',rec_tab:'Рекомендации',explore_title:'Поиск',search_users:'Люди',search_groups:'Группы',search_channels:'Каналы',search_posts:'Посты',chats_title:'Сообщения',settings_title:'Настройки',account_label:'Аккаунт',appearance_label:'Оформление',privacy_label:'Приватность',notifs_label:'Уведомления',lang_label:'Язык',info_label:'Информация',delete_account:'Удалить аккаунт',avatar_hint:'Выберите аватар',theme_label:'Тема',light_theme:'Светлая',dark_theme:'Тёмная',accent_label:'Цвет акцента',who_can_msg:'Кто может писать',everyone:'Все',only_fans:'Только фанаты',nobody:'Никто',show_online:'Показывать онлайн',show_fans:'Показывать фанатов',show_idols:'Показывать кумиров',searchable:'Найти в поиске',read_receipts:'Уведомления о прочтении',allow_reactions:'Разрешить реакции',save_btn:'Сохранить',enable_notifs:'Включить уведомления',created_at:'Аккаунт создан:',version:'Версия:',back_btn:'Назад',write_btn:'Написать',report_btn:'Пожаловаться',nav_profile:'Профиль',nav_feed:'Лента',nav_explore:'Поиск',nav_chats:'Чаты',nav_settings:'Настройки',editing_label:'Редактирование',replying_label:'Ответ',send_voice:'Отправить',chat_info_title:'Информация',comments_title:'Комментарии',new_post_title:'Новый пост',publish_btn:'Опубликовать',add_photo_hint:'Нажмите, чтобы добавить фото',none:'Нет',draw:'Рисовать',undo_btn:'Отмена',save_photo:'⬇ Сохранить',preview_title:'Предпросмотр',crop:'Обрезать',cancel_btn:'Отмена',send_btn:'Отправить',reply_btn:'Ответить',copy_btn:'Копировать',edit_btn:'Изменить',pin_btn:'Закрепить',delete_btn:'Удалить',report_title:'Жалоба',report_send_btn:'Отправить жалобу',pin_title:'Закрепить сообщение',create_group_title:'Создать группу',basic_info:'Основное',public_label:'Публичный (виден в поиске)',add_members:'Добавить участников',create_btn:'Создать',group_settings_title:'Настройки группы',edit_info:'Изменить',who_can_write:'Кто может писать',all_members:'Все участники',only_admins:'Только админы',admins_label:'Администраторы',username_prompt_title:'Выберите @username',username_prompt_desc:'Уникальный username для поиска',later_btn:'Позже',share_title:'Поделиться постом',post_actions_title:'Действия с постом',edit_caption:'Изменить подпись',delete_post:'Удалить пост',edit_caption_label:'Изменить подпись',stickers_title:'Стикеры',recent_stickers:'Недавние',all_stickers:'Все стикеры',profile_color_label:'Цвет профиля',subscribe_btn:'Подписаться',unsubscribe_btn:'Отписаться',join_btn:'Присоединиться',leave_btn:'Покинуть',requests_label:'Запросы', request_accept:'Принять', request_decline:'Отклонить', request_sent:'Запрос отправлен', request_already:'Запрос уже отправлен', mutual_only:'Вы не подписаны друг на друга', edit_profile:'Редактировать', my_profile:'Мой профиль'},
+        en:{fan_btn:'Become Fan',unfan_btn:'Unfollow',online:'Online',offline:'Offline',typing:'typing…',edited_tag:'(edited)',send_err:'Error: ',load_err:'Error: ',empty_chats:'No chats yet',empty_notifs:'No events yet',empty_users:'Empty',empty_fans:'No fans yet',empty_idols:'No idols yet',notif_new_fan:'became your fan',notif_new_msg:'wrote you:',voice_too_short:'Too short',img_only:'Images only!',report_sent:'Report sent. Thank you!',report_select:'Select a reason',report_post_title:'Report post',pin_bar:'Pinned:',reply_to:'Reply:',notif_new_like:'liked your post',notif_new_comment:'commented on your post',no_posts:'No posts yet',no_comments:'No comments yet',just_now:'just now',seen:'Seen',messages:'Messages',events:'Events',explore:'Explore',feed:'Feed',subscriptions:'Subscriptions',recommendations:'Recommendations',refresh:'Refresh',no_feed:'No posts in feed yet',no_recommendations:'No recommendations yet',verify_title:'Verify email',verify_desc:'Check your email and verify your account',verify_resend:'Resend',verify_confirm:'I confirmed',signout:'Sign out',auth_sub:'Sign in or create an account',email_label:'Email',pass_label:'Password',forgot_pass:'Forgot password?',login_btn:'Sign in',register_btn:'Create account',terms:'By registering you agree to the terms',fans_label:'Fans',coins_label:'Coins',idols_label:'Idols',new_post_btn:'New post',feed_title:'Feed',subs_tab:'Subscriptions',rec_tab:'Recommendations',explore_title:'Explore',search_users:'People',search_groups:'Groups',search_channels:'Channels',search_posts:'Posts',chats_title:'Messages',settings_title:'Settings',account_label:'Account',appearance_label:'Appearance',privacy_label:'Privacy',notifs_label:'Notifications',lang_label:'Language',info_label:'Info',delete_account:'Delete account',avatar_hint:'Choose avatar',theme_label:'Theme',light_theme:'Light',dark_theme:'Dark',accent_label:'Accent color',who_can_msg:'Who can write',everyone:'Everyone',only_fans:'Only fans',nobody:'Nobody',show_online:'Show online',show_fans:'Show fans',show_idols:'Show idols',searchable:'Searchable',read_receipts:'Read receipts',allow_reactions:'Allow reactions',save_btn:'Save',enable_notifs:'Enable notifications',created_at:'Account created:',version:'Version:',back_btn:'Back',write_btn:'Write',report_btn:'Report',nav_profile:'Profile',nav_feed:'Feed',nav_explore:'Explore',nav_chats:'Chats',nav_settings:'Settings',editing_label:'Editing',replying_label:'Replying',send_voice:'Send',chat_info_title:'Info',comments_title:'Comments',new_post_title:'New post',publish_btn:'Publish',add_photo_hint:'Tap to add photo',none:'None',draw:'Draw',undo_btn:'Undo',save_photo:'⬇ Save',preview_title:'Preview',crop:'Crop',cancel_btn:'Cancel',send_btn:'Send',reply_btn:'Reply',copy_btn:'Copy',edit_btn:'Edit',pin_btn:'Pin',delete_btn:'Delete',report_title:'Report',report_send_btn:'Send report',pin_title:'Pin message',create_group_title:'Create group',basic_info:'Basic',public_label:'Public (visible in search)',add_members:'Add members',create_btn:'Create',group_settings_title:'Group settings',edit_info:'Edit',who_can_write:'Who can write',all_members:'All members',only_admins:'Only admins',admins_label:'Admins',username_prompt_title:'Choose @username',username_prompt_desc:'Unique username for search',later_btn:'Later',share_title:'Share post',post_actions_title:'Post actions',edit_caption:'Edit caption',delete_post:'Delete post',edit_caption_label:'Edit caption',stickers_title:'Stickers',recent_stickers:'Recent',all_stickers:'All stickers',profile_color_label:'Profile color',subscribe_btn:'Subscribe',unsubscribe_btn:'Unsubscribe',join_btn:'Join',leave_btn:'Leave',requests_label:'Requests', request_accept:'Accept', request_decline:'Decline', request_sent:'Request sent', request_already:'Request already sent', mutual_only:'Not mutual following', edit_profile:'Edit', my_profile:'My profile'}
     };
     function L(k){return(T[currentLang]||T.ru)[k]||k;}
     const REPORT_REASONS={ru:['Спам','Оскорбления','Мошенничество','Угрозы','Неприемлемый контент','Другое'],en:['Spam','Harassment','Scam','Threats','Inappropriate content','Other']};
@@ -1413,7 +1500,7 @@
         document.getElementById('user-uid').innerText=user.uid;
         document.getElementById('user-date').innerText=new Date(user.metadata.creationTime).toLocaleDateString(currentLang=='ru'?'ru-RU':'en-US');
         if('Notification' in window && Notification.permission=='default') Notification.requestPermission();
-        syncMyData();initFCM();initCarousel();initStickerPanel();setupOnlineStatus();setupChatsListener();setupNotificationListener();loadPrivacySettings();
+        syncMyData();initFCM();initCarousel();initStickerPanel();setupOnlineStatus();setupChatsListener();setupRequestsListener();setupNotificationListener();loadPrivacySettings();
         initAccountFields();
         handleUrlRoute();
         showSection('account');
@@ -1833,27 +1920,36 @@ async function enableNotifications(){
     }
 
     function openChat(uid,userData){
-        if(!uid||uid===currentUser.uid)return;
-        if(!canUserWriteTo(uid)){
-            alert(currentLang==='ru'?'Пользователь запретил отправку сообщений':'User has disabled messaging');
+    if(!uid||uid===currentUser.uid)return;
+    const chatId = makeChatId(currentUser.uid,uid);
+    const hasChat =!!chatsCache[chatId];
+    const mutual = isMutual(uid);
+    if(!hasChat &&!mutual){
+        const priv = (userData&&userData.privacy) || (usersCache[uid]&&usersCache[uid].privacy) || {};
+        if(priv.whoCanMsg==='none'){
+            alert(currentLang==='ru'?'Пользователь запретил сообщения':'User disabled messages');
             return;
         }
-        if(activeChatId)clearChatListeners();
-        chatTargetUid=uid;chatTargetData=userData||{};activeChatId=makeChatId(currentUser.uid,uid);chatIsGroup=false;
-        pinnedMsgKey=null;replyingTo=null;editingMsgKey=null;currentMsgsArr=[];
-        _openChatRoom(`/avatar${chatTargetData.Avatar||1}.png`,(chatTargetData.DisplayName||'PLAYER').toUpperCase(),chatTargetData.Verify===1);
-        db.ref(`UserChats/${currentUser.uid}/${activeChatId}/unread`).set(0);
-        db.ref(`UserChats/${currentUser.uid}/${activeChatId}/with`).set(uid);
-        const upd={};notifCache.forEach(n=>{if(n.type==='message'&&n.from===uid&&!n.read)upd[`${n.key}/read`]=true;});
-        if(Object.keys(upd).length)db.ref(`Notifications/${currentUser.uid}`).update(upd);
-        db.ref(`Chats/${activeChatId}/pinned`).once('value').then(snap=>{const p=snap.val();if(p?.key){pinnedMsgKey=p.key;showPinnedBar(p.text||'');}else{pinnedMsgKey=null;document.getElementById('pinned-bar').classList.add('hidden');}});
-        _subscribeChatMessages(activeChatId);
-        const chatId=activeChatId;
-        const presRef=db.ref(`Users/${uid}/Presence`);
-        const presCb=snap=>{if(activeChatId!==chatId)return;const p=snap.val()||{};const el=document.getElementById('chat-target-status');if(!el)return;if(p.state==='online' && (usersCache[uid]?.privacy?.showOnline!==false)){el.innerHTML='<span class="online-dot" style="animation:none;"></span>'+(currentLang==='ru'?'онлайн':'online');}else if(p.lastSeen){el.innerText=(currentLang==='ru'?'был(а) ':'last seen ')+fmtLastSeen(p.lastSeen);}else el.innerText=L('offline');};
-        presRef.on('value',presCb);listeners.push({ref:presRef,event:'value',cb:presCb});
-        _subscribeTyping(chatId,uid);
+        if(confirm(currentLang==='ru'?'Вы не подписаны друг на друга. Отправить запрос на сообщения?':'Not mutual. Send request?')){
+            sendMessageRequest(uid,'');
+        }
+        return;
     }
+    if(activeChatId)clearChatListeners();
+    chatTargetUid=uid;chatTargetData=userData||{};activeChatId=chatId;chatIsGroup=false;
+    pinnedMsgKey=null;replyingTo=null;editingMsgKey=null;currentMsgsArr=[];
+    _openChatRoom(`/avatar${chatTargetData.Avatar||1}.png`,(chatTargetData.DisplayName||'PLAYER').toUpperCase(),chatTargetData.Verify===1);
+    db.ref(`UserChats/${currentUser.uid}/${activeChatId}/unread`).set(0);
+    db.ref(`UserChats/${currentUser.uid}/${activeChatId}/with`).set(uid);
+    const upd={};notifCache.forEach(n=>{if(n.type==='message'&&n.from===uid&&!n.read)upd[`${n.key}/read`]=true;});
+    if(Object.keys(upd).length)db.ref(`Notifications/${currentUser.uid}`).update(upd);
+    db.ref(`Chats/${activeChatId}/pinned`).once('value').then(snap=>{const p=snap.val();if(p?.key){pinnedMsgKey=p.key;showPinnedBar(p.text||'');}else{pinnedMsgKey=null;document.getElementById('pinned-bar').classList.add('hidden');}});
+    _subscribeChatMessages(activeChatId);
+    const presRef=db.ref(`Users/${uid}/Presence`);
+    const presCb=snap=>{if(activeChatId!==chatId)return;const p=snap.val()||{};const el=document.getElementById('chat-target-status');if(!el)return;if(p.state==='online' && (usersCache[uid]?.privacy?.showOnline!==false)){el.innerHTML='<span class="online-dot" style="animation:none;"></span>'+(currentLang==='ru'?'онлайн':'online');}else if(p.lastSeen){el.innerText=(currentLang==='ru'?'был(а) ':'last seen ')+fmtLastSeen(p.lastSeen);}else el.innerText=L('offline');};
+    presRef.on('value',presCb);listeners.push({ref:presRef,event:'value',cb:presCb});
+    _subscribeTyping(chatId,uid);
+}
     function openGroupChat(chatId,chatData){
         if(activeChatId)clearChatListeners();
         chatTargetUid=chatId;chatTargetData=chatData||{};activeChatId=chatId;chatIsGroup=true;chatGroupData=chatData||{};
@@ -2547,32 +2643,38 @@ function checkEmptyChatGreeting(msgs){
             showSection('idols');
         };
 
-        const isGroup = u.type === 'group' || u.type === 'channel';
-        const btn = document.getElementById('view-action-btn');
+        const isGroup = u.type==='group'||u.type==='channel';
+const btn = document.getElementById('view-action-btn');
+const msgBtn = document.getElementById('view-msg-btn');
+const mutual = isMutual(uid);
+const hasChat =!!chatsCache[makeChatId(currentUser.uid, uid)];
 
-        if (isGroup) {
-            const isSubscribed = (u.subscribers && u.subscribers[currentUser.uid]) || (u.members && u.members[currentUser.uid]);
-            if (u.type === 'channel') {
-                btn.innerText = isSubscribed ? L('unsubscribe_btn') : L('subscribe_btn');
-            } else {
-                btn.innerText = isSubscribed ? L('leave_btn') : L('join_btn');
-            }
-            btn.onclick = () => {
-                if (isSubscribed) {
-                    const upd = {};
-                    if (u.type === 'channel') upd[`Chats/${uid}/info/subscribers/${currentUser.uid}`] = null;
-                    else upd[`Chats/${uid}/info/members/${currentUser.uid}`] = null;
-                    upd[`UserChats/${currentUser.uid}/${uid}`] = null;
-                    db.ref().update(upd).then(() => { viewProfile(uid); }).catch(err => alert(err.message));
-                } else {
-                    joinOrOpenGroup(uid, u);
-                }
-            };
-        } else {
-            const isFan = !!(currentUserData.Idols && currentUserData.Idols[uid]);
-            btn.innerText = isFan ? L('unfan_btn') : L('fan_btn');
-            btn.onclick = () => toggleFan(uid, isFan);
-        }
+if(isGroup){
+    const isSubscribed = (u.subscribers&&u.subscribers[currentUser.uid])||(u.members&&u.members[currentUser.uid]);
+    btn.innerText = isSubscribed? (u.type==='channel'?L('unsubscribe_btn'):L('leave_btn')) : (u.type==='channel'?L('subscribe_btn'):L('join_btn'));
+    btn.onclick = ()=>{
+        if(isSubscribed){
+            const upd={}; if(u.type==='channel') upd[`Chats/${uid}/info/subscribers/${currentUser.uid}`]=null; else upd[`Chats/${uid}/info/members/${currentUser.uid}`]=null;
+            upd[`UserChats/${currentUser.uid}/${uid}`]=null;
+            db.ref().update(upd).then(()=>viewProfile(uid));
+        } else joinOrOpenGroup(uid,u);
+    };
+    msgBtn.classList.add('hidden');
+} else {
+    const isFan =!!(currentUserData.Idols && currentUserData.Idols[uid]);
+    btn.innerText = isFan? L('unfan_btn') : L('fan_btn');
+    btn.onclick = ()=>toggleFan(uid,isFan);
+    msgBtn.classList.remove('hidden');
+    if(hasChat || mutual){
+        msgBtn.innerText = L('write_btn');
+        msgBtn.onclick = ()=>openChat(uid,u);
+        msgBtn.className = 'btn btn-blue';
+    } else {
+        msgBtn.innerText = L('requests_label');
+        msgBtn.onclick = ()=>sendMessageRequest(uid);
+        msgBtn.className = 'btn btn-ghost';
+    }
+}
 
         document.getElementById('view-msg-btn').onclick = () => openChat(uid, u);
         document.getElementById('view-report-btn').onclick = () => openReportModal(uid);
@@ -2611,30 +2713,30 @@ function checkEmptyChatGreeting(msgs){
 
     // ═══ SUB LISTS ═══
     function loadSubList(type,cid,targetUid){
-        const cont=document.getElementById(cid);if(!cont)return;cont.innerHTML='<div class="loader">...</div>';if(!targetUid)targetUid=currentUser?.uid;
-        db.ref(`Users/${targetUid}`).once('value').then(snap=>{
-            const u=snap.val()||{};
-            const privacy=u.privacy||{};
-            if((type==='Fans' && privacy.showFans===false) || (type==='Idols' && privacy.showIdols===false)){
-                cont.innerHTML=`<div class="empty-state">${L('empty_users')}</div>`;
-                return;
-            }
-            db.ref(`Users/${targetUid}/${type}`).once('value').then(snap2=>{
-                const keys=[];snap2.forEach(c=>keys.push(c.key));
-                if(!keys.length){cont.innerHTML=`<div class="empty-state">${L(type==='Fans'?'empty_fans':'empty_idols')}</div>`;return;}
-                const promises=keys.map(uid=>db.ref(`Users/${uid}`).once('value'));
-                Promise.all(promises).then(results=>{
-                    cont.innerHTML='';
-                    results.forEach((s,i)=>{
-                        if(!s.exists())return;
-                        const row=buildUserRow(s.key,s.val());
-                        row.style.animationDelay=`${i*0.03}s`;
-                        cont.appendChild(row);
-                    });
+    const cont=document.getElementById(cid);if(!cont)return;cont.innerHTML='<div class="loader">...</div>';if(!targetUid)targetUid=currentUser?.uid;
+    const isOwnView = targetUid===currentUser?.uid;
+    db.ref(`Users/${targetUid}`).once('value').then(snap=>{
+        const u=snap.val()||{};
+        const privacy=u.privacy||{};
+        if(!isOwnView && ((type==='Fans' && privacy.showFans===false) || (type==='Idols' && privacy.showIdols===false))){
+            cont.innerHTML=`<div class="empty-state">${L('empty_users')} - ${currentLang==='ru'?'скрыто':'hidden'}</div>`;
+            return;
+        }
+        db.ref(`Users/${targetUid}/${type}`).once('value').then(snap2=>{
+            const keys=[];snap2.forEach(c=>keys.push(c.key));
+            if(!keys.length){cont.innerHTML=`<div class="empty-state">${L(type==='Fans'?'empty_fans':'empty_idols')}</div>`;return;}
+            Promise.all(keys.map(uid=>db.ref(`Users/${uid}`).once('value'))).then(results=>{
+                cont.innerHTML='';
+                results.forEach((s,i)=>{
+                    if(!s.exists())return;
+                    const row=buildUserRow(s.key,s.val());
+                    row.style.animationDelay=`${i*0.03}s`;
+                    cont.appendChild(row);
                 });
             });
         });
-    }
+    });
+}
 
     // ═══ REPORT ═══
     let reportTargetUid=null,selectedReportReason=null,reportTargetPostId=null;
