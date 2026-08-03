@@ -2713,29 +2713,25 @@ if(isGroup){
 
     // ═══ SUB LISTS ═══
     function loadSubList(type,cid,targetUid){
-    const cont=document.getElementById(cid);if(!cont)return;cont.innerHTML='<div class="loader">...</div>';if(!targetUid)targetUid=currentUser?.uid;
-    const isOwnView = targetUid===currentUser?.uid;
-    db.ref(`Users/${targetUid}`).once('value').then(snap=>{
-        const u=snap.val()||{};
-        const privacy=u.privacy||{};
-        if(!isOwnView && ((type==='Fans' && privacy.showFans===false) || (type==='Idols' && privacy.showIdols===false))){
-            cont.innerHTML=`<div class="empty-state">${L('empty_users')} - ${currentLang==='ru'?'скрыто':'hidden'}</div>`;
-            return;
-        }
-        db.ref(`Users/${targetUid}/${type}`).once('value').then(snap2=>{
-            const keys=[];snap2.forEach(c=>keys.push(c.key));
-            if(!keys.length){cont.innerHTML=`<div class="empty-state">${L(type==='Fans'?'empty_fans':'empty_idols')}</div>`;return;}
-            Promise.all(keys.map(uid=>db.ref(`Users/${uid}`).once('value'))).then(results=>{
-                cont.innerHTML='';
-                results.forEach((s,i)=>{
-                    if(!s.exists())return;
-                    const row=buildUserRow(s.key,s.val());
-                    row.style.animationDelay=`${i*0.03}s`;
-                    cont.appendChild(row);
-                });
-            });
-        });
+  const cont=document.getElementById(cid); if(!cont) return;
+  cont.innerHTML='<div class="loader">...</div>';
+  if(!targetUid) targetUid = currentViewedUid || currentUser?.uid;
+  const isOwn = targetUid === currentUser?.uid;
+  db.ref(`Users/${targetUid}`).once('value').then(snap=>{
+    const u=snap.val()||{};
+    const priv=u.privacy||{};
+    if(!isOwn && ((type==='Fans' && priv.showFans===false) || (type==='Idols' && priv.showIdols===false))){
+      cont.innerHTML=`<div class="empty-state">Скрыто пользователем</div>`; return;
+    }
+    db.ref(`Users/${targetUid}/${type}`).once('value').then(s2=>{
+      const ids=[]; s2.forEach(c=>ids.push(c.key));
+      if(!ids.length){cont.innerHTML=`<div class="empty-state">${L(type==='Fans'?'empty_fans':'empty_idols')}</div>`; return;}
+      Promise.all(ids.map(id=>db.ref(`Users/${id}`).once('value'))).then(res=>{
+        cont.innerHTML='';
+        res.forEach((s,i)=>{ if(!s.exists()) return; const row=buildUserRow(s.key, s.val()); row.style.animationDelay=`${i*0.04}s`; cont.appendChild(row); });
+      });
     });
+  });
 }
 
     // ═══ REPORT ═══
