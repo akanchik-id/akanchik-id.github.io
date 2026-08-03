@@ -1270,6 +1270,16 @@
     <div class="sticker-section-label" data-lang="all_stickers">Все стикеры</div>
     <div id="sticker-all-grid" class="sticker-grid"></div>
 </div>
+    <div id="onboarding-modal" class="overlay hidden center" style="z-index:5000;">
+  <div class="sheet" style="border-radius:24px;max-width:380px;width:92%;">
+    <div class="sheet-title">Добро пожаловать в Under</div>
+    <div style="text-align:center;padding:8px 0;"><div class="carousel" id="onboard-carousel"></div><div style="font-size:10px;color:var(--text3);">Выбери аватар</div></div>
+    <div class="field-wrap"><label class="field-label">Имя</label><input id="ob-name" class="field" placeholder="Твое имя"></div>
+    <div class="field-wrap"><label class="field-label">@username</label><input id="ob-username" class="field" placeholder="username"></div>
+    <div class="field-wrap"><label class="field-label">Статус</label><input id="ob-status" class="field" placeholder="NO STATUS"></div>
+    <button class="btn btn-accent" onclick="saveOnboarding()">Начать</button>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -1575,6 +1585,7 @@ function declineRequest(fromUid){
             if(!d.username||d.username===''){setTimeout(()=>document.getElementById('username-prompt-modal').classList.remove('hidden'),900);}
             updateAccountFields(d);
             if(currentSection==='feed')loadFeed();
+            checkOnboardingNeeded(d);
         });
     }
 
@@ -3368,6 +3379,46 @@ function initPostCarouselNative(safeId, count){
         db.ref().update(updates).then(()=>playSound('send')).catch(err=>alert(L('send_err')+err.message));
         document.getElementById('chat-input').focus();
     }
+    let onboardAvatar = 1;
+function openOnboarding(){
+  const modal=document.getElementById('onboarding-modal');
+  document.getElementById('ob-name').value = currentUserData.DisplayName||'';
+  document.getElementById('ob-username').value = currentUserData.username||'';
+  document.getElementById('ob-status').value = currentUserData.Status||'';
+  // карусель для онбординга
+  const sa=document.getElementById('onboard-carousel'); sa.innerHTML='';
+  for(let r=0;r<3;r++) for(let a=1;a<=7;a++){
+    const img=document.createElement('img'); img.src=`/avatar${a}.png`; img.className='carousel-item'; img.dataset.avId=a;
+    img.onclick=()=>{sa.querySelectorAll('.carousel-item').forEach(x=>x.classList.remove('active')); img.classList.add('active'); onboardAvatar=a;};
+    sa.appendChild(img);
+  }
+  setTimeout(()=>{ const mid=sa.querySelectorAll('.carousel-item')[10]; if(mid){mid.classList.add('active'); sa.scrollLeft=mid.offsetLeft - sa.clientWidth/2; onboardAvatar=parseInt(mid.dataset.avId);}},100);
+  modal.classList.remove('hidden');
+}
+function saveOnboarding(){
+  let name=document.getElementById('ob-name').value.trim() || 'PLAYER';
+  let uname=cleanUsername(document.getElementById('ob-username').value.trim());
+  let status=document.getElementById('ob-status').value.trim() || 'NEW PLAYER';
+  if(!uname){alert('Придумай username'); return;}
+  checkUsernameUnique(uname, currentUser.uid, null, ok=>{
+    if(!ok){alert('Username занят'); return;}
+    const upd={};
+    if(currentUserData.username) upd[`Usernames/${currentUserData.username}`]=null;
+    upd[`Usernames/${uname}`]={uid:currentUser.uid, type:'user'};
+    upd[`Users/${currentUser.uid}/DisplayName`]=name;
+    upd[`Users/${currentUser.uid}/username`]=uname;
+    upd[`Users/${currentUser.uid}/Status`]=status;
+    upd[`Users/${currentUser.uid}/Avatar`]=onboardAvatar;
+    db.ref().update(upd).then(()=>{document.getElementById('onboarding-modal').classList.add('hidden');});
+  });
+}
+
+// вызови в syncMyData после получения данных:
+function checkOnboardingNeeded(d){
+  if(!d.username || d.Status==='NEW PLAYER' ||!d.DisplayName || localStorage.getItem('under_onboard_done')!=='1'){
+    if(!d.username) openOnboarding();
+  }
+}
 
     // ═══ GROUP SETTINGS SEARCH ═══
     document.getElementById('gs-admin-search').addEventListener('input',e=>{
