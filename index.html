@@ -1688,7 +1688,14 @@ function declineRequest(fromUid){
         if(section==='activity')renderNotifs();
         if(section==='cabinet'){document.getElementById('s-val-lang').innerText=currentLang==='ru'?'Русский':'English';}
     }
-    function showListScreen(type){currentViewedUid=currentUser?.uid;showSection(type);}
+    function showListScreen(type){
+  if(!currentUser) return;
+  // если мы НЕ в чужом профиле, то показываем своих
+  if(currentSection !== 'view'){
+    currentViewedUid = currentUser.uid;
+  }
+  showSection(type);
+}
     function goBackFromView(){history.replaceState(null,'','/');showSection('explore');}
     function goBackFromList(){showSection(previousSection||'account');}
     function openSettingsSection(id){
