@@ -714,7 +714,7 @@
                     <div class="profile-status-new" id="my-status">NO STATUS</div>
                 </div>
                 <div class="profile-actions-new">
-                    <button class="btn btn-ghost" onclick="openSettingsSection('s-account')" style="flex:1" data-lang="edit_profile">Редактировать</button>
+                    <button class="btn btn-ghost" onclick="showSection('cabinet'); setTimeout(()=>openSettingsSection('s-account'),80)"
                     <button class="btn btn-accent" onclick="openPostCreate()" style="flex:1" data-lang="new_post_btn">+ Пост</button>
                 </div>
             </div> <!-- конец profile-top-new -->
@@ -1345,6 +1345,7 @@ function openRequestsPanel(){
     document.getElementById('requests-panel').classList.add('open');
     renderRequestsList();
 }
+    function openEditProfile(){ showSection('cabinet'); setTimeout(()=>openSettingsSection('s-account'),80); }
 function closeRequestsPanel(){ document.getElementById('requests-panel').classList.remove('open'); }
 function renderRequestsList(){
     const cont = document.getElementById('requests-list');
