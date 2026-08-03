@@ -3045,56 +3045,31 @@ if(isGroup){
         cont.innerHTML=`<div style="padding:20px;color:var(--danger);font-size:12px;">${escapeHtml(err.message)}</div>`;
     });
 }
-    function buildPostCarousel(photos,postId){
-    if(!photos||!photos.length) return '';
-    if(photos.length===1) return `<img src="${escapeHtml(photos[0])}" class="post-photo" loading="lazy" onclick="viewPhoto('${escapeHtml(photos[0])}')">`;
-    const safeId='car'+postId.replace(/[^a-zA-Z0-9]/g,'');
-    const slides=photos.map(p=>`<div class="post-photo-slide"><img src="${escapeHtml(p)}" loading="lazy" onclick="viewPhoto('${escapeHtml(p)}')"></div>`).join('');
-    const dots=photos.map((_,i)=>`<div class="post-photos-dot${i===0?' active':''}" data-i="${i}"></div>`).join('');
+    function buildPostCarousel(photos, postId){
+  if(!photos||!photos.length) return '';
+  if(photos.length===1) return `<img src="${escapeHtml(photos[0])}" class="post-photo" loading="lazy" onclick="viewPhoto('${escapeHtml(photos[0])}')">`;
+  const safeId = 'car_'+postId.replace(/[^a-zA-Z0-9]/g,'')+'_'+Math.random().toString(36).slice(2,5);
+  const slides = photos.map(p=>`<div class="post-photo-slide"><img src="${escapeHtml(p)}" loading="lazy" onclick="if(!this.dataset.moved) viewPhoto('${escapeHtml(p)}')"></div>`).join('');
+  const dots = photos.map((_,i)=>`<div class="post-photos-dot ${i===0?'active':''}" data-i="${i}" onclick="document.getElementById('${safeId}_track').scrollTo({left:${i}*document.getElementById('${safeId}_track').clientWidth, behavior:'smooth'})"></div>`).join('');
+  setTimeout(()=> initPostCarouselNative(safeId, photos.length), 60);
+  return `<div class="post-photos-carousel" id="${safeId}"><div class="post-photos-track" id="${safeId}_track">${slides}</div><div class="post-photos-dots" id="${safeId}_dots">${dots}</div><div class="post-photos-count" id="${safeId}_count">1/${photos.length}</div></div>`;
+}
 
-    setTimeout(()=>{
-        const track=document.getElementById(`${safeId}trk`);
-        const cont=document.getElementById(`${safeId}cnt`);
-        if(!track||!cont) return;
-        let cur=0, startX=0, dx=0, dragging=false;
-        const dotsEls=cont.querySelectorAll('.post-photos-dot');
-        const countEl=cont.querySelector('.post-photos-count');
-
-        const go=(n, animate=true)=>{
-            cur=Math.max(0,Math.min(photos.length-1,n));
-            track.style.transition = animate? 'transform.32s cubic-bezier(0.4,0,0.2,1)' : 'none';
-            track.style.transform=`translate3d(${-cur*cont.clientWidth}px,0,0)`;
-            dotsEls.forEach((d,j)=>d.classList.toggle('active',j===cur));
-            if(countEl) countEl.textContent=`${cur+1}/${photos.length}`;
-        };
-
-        const onStart=x=>{ dragging=true; startX=x; dx=0; track.style.transition='none'; };
-        const onMove=x=>{ if(!dragging) return; dx=x-startX; track.style.transform=`translate3d(${ -cur*cont.clientWidth + dx }px,0,0)`; };
-        const onEnd=()=>{
-            if(!dragging) return;
-            dragging=false;
-            if(Math.abs(dx)>40) go(dx<0?cur+1:cur-1);
-            else go(cur);
-        };
-
-        // ВАЖНО: слушаем контейнер, а не трек
-        cont.addEventListener('touchstart',e=>onStart(e.touches[0].clientX),{passive:true});
-        cont.addEventListener('touchmove',e=>onMove(e.touches[0].clientX),{passive:true});
-        cont.addEventListener('touchend',onEnd);
-        cont.addEventListener('mousedown',e=>{ e.preventDefault(); onStart(e.clientX); });
-
-        window.addEventListener('mousemove',e=>{ if(dragging) onMove(e.clientX); });
-        window.addEventListener('mouseup',onEnd);
-        window.addEventListener('resize',()=>go(cur,false));
-
-        dotsEls.forEach(d=>{
-            d.addEventListener('click',()=>go(parseInt(d.dataset.i)));
-        });
-
-        go(0,false);
-    },30);
-
-    return `<div class="post-photos-carousel" id="${safeId}cnt"><div class="post-photos-track" id="${safeId}trk">${slides}</div><div class="post-photos-dots">${dots}</div><div class="post-photos-count">1/${photos.length}</div></div>`;
+function initPostCarouselNative(safeId, count){
+  const track = document.getElementById(safeId+'_track');
+  const dotsWrap = document.getElementById(safeId+'_dots');
+  const countEl = document.getElementById(safeId+'_count');
+  if(!track) return;
+  let isDragging=false, startX=0;
+  track.addEventListener('scroll', ()=>{
+    const idx = Math.round(track.scrollLeft / track.clientWidth);
+    if(dotsWrap) [...dotsWrap.children].forEach((d,i)=>d.classList.toggle('active', i===idx));
+    if(countEl) countEl.textContent = `${idx+1}/${count}`;
+  }, {passive:true});
+  // чтобы клик не открывал фото после свайпа
+  track.addEventListener('pointerdown', e=>{isDragging=false; startX=e.clientX; track.querySelectorAll('img').forEach(img=>img.dataset.moved='');});
+  track.addEventListener('pointermove', e=>{ if(Math.abs(e.clientX-startX)>10) isDragging=true; });
+  track.addEventListener('pointerup', e=>{ if(isDragging) track.querySelectorAll('img').forEach(img=>img.dataset.moved='1'); setTimeout(()=>track.querySelectorAll('img').forEach(img=>img.dataset.moved=''), 200); });
 }
     function buildPostCard(postId,data,idx=0){
         const card=document.createElement('div');card.className='post-card';card.style.animationDelay=`${idx*0.05}s`;
