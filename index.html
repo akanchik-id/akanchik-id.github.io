@@ -2457,48 +2457,63 @@ function checkEmptyChatGreeting(msgs){
 
     // ═══ FEED ═══
     let seenPostIds=new Set(JSON.parse(localStorage.getItem('under_seen_posts')||'[]'));
+    let recState = { all:[], shown:0, batch:10, observer:null };
     function markPostSeen(pid){if(!pid||seenPostIds.has(pid))return;seenPostIds.add(pid);try{localStorage.setItem('under_seen_posts',JSON.stringify([...seenPostIds].slice(-500)));}catch(e){}}
     function shuffleArray(a){const arr=[...a];for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
-    function setFeedTab(tab){feedTab=tab;document.querySelectorAll('.feed-tab').forEach(t=>t.classList.remove('active'));document.getElementById(`ft-${tab}`).classList.add('active');loadFeed();}
+    function setFeedTab(tab){
+  feedTab=tab;
+  document.querySelectorAll('.feed-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(`ft-${tab}`)?.classList.add('active');
+  if(recState.observer){ recState.observer.disconnect(); recState.observer=null; }
+  loadFeed();
+}
     function refreshFeed(){loadFeed();}
     function loadFeed(){
-        const cont=document.getElementById('feed-container');if(!cont)return;
-        cont.innerHTML='<div class="loader">...</div>';
-        const idolIds=currentUserData.Idols?Object.keys(currentUserData.Idols):[];
-        if(feedTab==='subscriptions'){
-            if(!idolIds.length){cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${L('no_feed')}</div>`;return;}
-            db.ref('Posts').orderByChild('time').limitToLast(200).once('value').then(snap=>{
-                const posts=[];snap.forEach(s=>{const p=s.val();if(p&&idolIds.includes(p.uid))posts.push({pid:s.key,...p});});
-                posts.sort((a,b)=>(b.time||0)-(a.time||0));
-                cont.innerHTML='';
-                if(!posts.length){cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${L('no_feed')}</div>`;return;}
-                posts.forEach((p,i)=>{markPostSeen(p.pid);const card=buildPostCard(p.pid,p,i);cont.appendChild(card);});
-            }).catch(err=>{cont.innerHTML=`<div style="padding:20px;color:var(--danger);font-size:12px;">${escapeHtml(err.message)}</div>`;});
-        } else {
-            db.ref('Posts').orderByChild('time').limitToLast(500).once('value').then(snap=>{
-                const allPosts=[];snap.forEach(s=>{const p=s.val();if(p&&p.uid!==currentUser?.uid)allPosts.push({pid:s.key,...p});});
-                // split into unseen and seen
-                const unseen=allPosts.filter(p=>!seenPostIds.has(p.pid));
-                const seen=allPosts.filter(p=>seenPostIds.has(p.pid));
-                // randomize both pools
-                const shuffledUnseen=shuffleArray(unseen);
-                const shuffledSeen=shuffleArray(seen);
-                // pick 20 unseen first; if not enough, fill with seen
-                let recs=shuffledUnseen.slice(0,20);
-                if(recs.length<20)recs=[...recs,...shuffledSeen.slice(0,20-recs.length)];
-                cont.innerHTML='';
-                if(!recs.length){cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${L('no_recommendations')}</div>`;return;}
-                recs.forEach((p,i)=>{markPostSeen(p.pid);const card=buildPostCard(p.pid,p,i);card.style.animationDelay=`${i*0.06}s`;cont.appendChild(card);});
-                // Load more unseen posts on scroll
-                if(shuffledUnseen.length>20){
-                    let page=1;
-                    const loadMoreBtn=document.createElement('button');loadMoreBtn.className='btn btn-ghost';loadMoreBtn.style.cssText='margin:0 12px 16px;';loadMoreBtn.innerText=currentLang==='ru'?'Ещё':'More';
-                    loadMoreBtn.onclick=()=>{const batch=shuffledUnseen.slice(page*20,(page+1)*20);batch.forEach((p,i)=>{markPostSeen(p.pid);const card=buildPostCard(p.pid,p,i);card.style.animationDelay=`${i*0.06}s`;cont.insertBefore(card,loadMoreBtn);});page++;if(page*20>=shuffledUnseen.length)loadMoreBtn.remove();};
-                    cont.appendChild(loadMoreBtn);
-                }
-            }).catch(err=>{cont.innerHTML=`<div style="padding:20px;color:var(--danger);font-size:12px;">${escapeHtml(err.message)}</div>`;});
-        }
-    }
+  const cont=document.getElementById('feed-container'); if(!cont) return;
+  cont.innerHTML='<div class="loader">...</div>';
+  const idolIds=currentUserData.Idols?Object.keys(currentUserData.Idols):[];
+
+  if(feedTab==='subscriptions'){
+    if(!idolIds.length){cont.innerHTML=`<div class="empty-state">${L('no_feed')}</div>`; return;}
+    db.ref('Posts').orderByChild('time').limitToLast(300).once('value').then(snap=>{
+      const posts=[]; snap.forEach(s=>{const p=s.val(); if(p&&idolIds.includes(p.uid)) posts.push({pid:s.key,...p});});
+      posts.sort((a,b)=>(b.time||0)-(a.time||0));
+      cont.innerHTML=''; if(!posts.length){cont.innerHTML=`<div class="empty-state">${L('no_feed')}</div>`; return;}
+      posts.forEach((p,i)=>{markPostSeen(p.pid); cont.appendChild(buildPostCard(p.pid,p,i));});
+    });
+  } else {
+    db.ref('Posts').orderByChild('time').limitToLast(600).once('value').then(snap=>{
+      const all=[]; snap.forEach(s=>{const p=s.val(); if(p&&p.uid!==currentUser?.uid) all.push({pid:s.key,...p});});
+      const unseen = all.filter(p=>!seenPostIds.has(p.pid));
+      const seen = all.filter(p=>seenPostIds.has(p.pid));
+      recState.all = [...shuffleArray(unseen),...shuffleArray(seen)];
+      recState.shown = 0;
+      cont.innerHTML='';
+      if(!recState.all.length){cont.innerHTML=`<div class="empty-state">${L('no_recommendations')}</div>`; return;}
+      // первая порция
+      loadMoreRecs();
+      // наблюдатель для бесконечности
+      const sentinel = document.createElement('div'); sentinel.id='rec-sentinel'; sentinel.style.height='40px'; cont.appendChild(sentinel);
+      recState.observer = new IntersectionObserver((entries)=>{
+        if(entries[0].isIntersecting) loadMoreRecs();
+      }, {root: document.getElementById('main-scroll'), rootMargin:'400px'});
+      recState.observer.observe(sentinel);
+    });
+  }
+}
+
+function loadMoreRecs(){
+  const cont=document.getElementById('feed-container');
+  const sentinel=document.getElementById('rec-sentinel');
+  if(!cont || recState.shown >= recState.all.length) return;
+  const batch = recState.all.slice(recState.shown, recState.shown+recState.batch);
+  batch.forEach((p,i)=>{
+    markPostSeen(p.pid);
+    const card=buildPostCard(p.pid,p, recState.shown+i);
+    if(sentinel) cont.insertBefore(card, sentinel); else cont.appendChild(card);
+  });
+  recState.shown += batch.length;
+}
 
     // ═══ EXPLORE / SEARCH ═══
     let searchDebounce=null;
