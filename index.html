@@ -690,24 +690,35 @@
 
         <!-- ACCOUNT -->
         <div id="screen-account" class="screen">
-            <div class="profile-top" id="profile-top-my" style="background:var(--bg2);">
-                <img src="/avatar1.png" id="my-avatar" class="profile-av" onclick="openSettingsSection('s-account')">
-                <div class="profile-name" id="my-name">PLAYER</div>
-                <div class="profile-username" id="my-username">@username</div>
-                <div class="profile-status" id="my-status">NO STATUS</div>
-                <div class="profile-stats">
-                    <div class="stat-box" onclick="showListScreen('fans')"><div class="stat-val" id="count-fans">0</div><div class="stat-lbl" data-lang="fans_label">Фанаты</div></div>
-                    <div class="stat-box"><div class="stat-val" id="my-coins">0</div><div class="stat-lbl" data-lang="coins_label">Монеты</div></div>
-                    <div class="stat-box" onclick="showListScreen('idols')"><div class="stat-val" id="count-idols">0</div><div class="stat-lbl" data-lang="idols_label">Кумиры</div></div>
-                </div>
+    <div class="screen-hd" style="padding-top:max(14px, env(safe-area-inset-top));">
+        <div class="screen-hd-title" data-lang="my_profile">Мой профиль</div>
+        <button class="screen-hd-btn" onclick="openPostCreate()" title="Новый пост">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="screen-hd-btn" onclick="openSettingsSection('s-account')" title="Редактировать">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+    </div>
+    <div class="profile-top-new" id="profile-top-my">
+        <div class="profile-top-row">
+            <img src="/avatar1.png" id="my-avatar" class="profile-av-new" onclick="openSettingsSection('s-account')">
+            <div class="profile-stats-new">
+                <div class="stat" onclick="showListScreen('fans')"><div class="stat-val" id="count-fans">0</div><div class="stat-lbl" data-lang="fans_label">Фанаты</div></div>
+                <div class="stat"><div class="stat-val" id="my-coins">0</div><div class="stat-lbl" data-lang="coins_label">Монеты</div></div>
+                <div class="stat" onclick="showListScreen('idols')"><div class="stat-val" id="count-idols">0</div><div class="stat-lbl" data-lang="idols_label">Кумиры</div></div>
             </div>
-            <div style="padding:0 12px 8px;">
-                <button class="btn btn-accent" onclick="openPostCreate()" style="display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span data-lang="new_post_btn">Новый пост</span>
-                </button>
-            </div>
-            <div id="my-posts-list"></div>
         </div>
+        <div class="profile-info-new">
+            <div class="profile-name-new" id="my-name">USER</div>
+            <div class="profile-username-new" id="my-username">@username</div>
+            <div class="profile-status-new" id="my-status">NO STATUS</div>
+        </div>
+        <div class="profile-actions-new">
+            <button class="btn btn-ghost" onclick="openSettingsSection('s-account')" style="flex:1" data-lang="edit_profile">Редактировать</button>
+            <button class="btn btn-accent" onclick="openPostCreate()" style="flex:1" data-lang="new_post_btn">+ Пост</button>
+        </div>
+    <div id="my-posts-list"></div>
+</div>
 
         <!-- FEED -->
         <div id="screen-feed" class="screen">
@@ -749,11 +760,16 @@
 
         <!-- CHATS -->
         <div id="screen-chats" class="screen">
-            <div class="screen-hd" style="padding-top:max(14px, env(safe-area-inset-top));">
-                <div class="screen-hd-title" data-lang="chats_title">Сообщения</div>
-            </div>
-            <div id="chats-list"></div>
-        </div>
+    <div class="screen-hd" style="padding-top:max(14px, env(safe-area-inset-top));">
+        <div class="screen-hd-title" data-lang="chats_title">Сообщения</div>
+        <button class="screen-hd-btn" onclick="openRequestsPanel()" style="display:flex;align-items:center;gap:4px;position:relative;">
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><circle cx="9" cy="9" r="1"/><circle cx="13" cy="9" r="1"/><circle cx="17" cy="9" r="1"/></svg>
+            <span data-lang="requests_label">Запросы</span>
+            <span id="requests-badge" class="nav-badge hidden">0</span>
+        </button>
+    </div>
+    <div id="chats-list"></div>
+</div>
 
         <!-- CABINET -->
         <div id="screen-cabinet" class="screen">
@@ -860,23 +876,27 @@
                 <button class="btn btn-ghost" onclick="goBackFromView()" style="margin:10px 12px 0;display:flex;align-items:center;gap:6px;width:auto;padding:8px 12px;font-size:11px;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--text);fill:none;stroke-width:2.5;stroke-linecap:round;"><polyline points="15 18 9 12 15 6"/></svg> <span data-lang="back_btn">Назад</span></button>
                 <button id="view-report-btn" title="Пожаловаться" style="margin:10px 12px 0;width:34px;height:34px;border-radius:50%;border:none;background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--danger);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></button>
             </div>
-            <div class="profile-top" id="profile-top-view" style="background:var(--bg2);">
-                <img src="/avatar1.png" id="view-avatar" class="profile-av">
-                <div class="profile-name" id="view-name">...</div>
-                <div class="profile-username" id="view-username">@...</div>
-                <div id="view-presence" style="font-size:11px;color:var(--text3);margin-bottom:6px;min-height:14px;display:flex;align-items:center;justify-content:center;gap:4px;"></div>
-                <div class="profile-status" id="view-status">...</div>
-                <div class="link-row" id="view-link-row"><span class="link-url" id="view-link-url"></span><button class="link-copy-btn" onclick="copyProfileLink()" data-lang="copy_btn">Копировать</button></div>
-                <div class="profile-stats">
-                    <div class="stat-box" id="view-fans-btn"><div class="stat-val" id="view-count-fans">0</div><div class="stat-lbl" data-lang="fans_label">Фанаты</div></div>
-                    <div class="stat-box"><div class="stat-val" id="view-coins">0</div><div class="stat-lbl" data-lang="coins_label">Монеты</div></div>
-                    <div class="stat-box" id="view-idols-btn"><div class="stat-val" id="view-count-idols">0</div><div class="stat-lbl" data-lang="idols_label">Кумиры</div></div>
-                </div>
-            </div>
-            <div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:8px;">
-                <button class="btn btn-accent" id="view-action-btn" data-lang="fan_btn">Стать фанатом</button>
-                <button class="btn btn-blue" id="view-msg-btn" data-lang="write_btn">Написать</button>
-            </div>
+            <div class="profile-top-new" id="profile-top-view">
+    <div class="profile-top-row">
+        <img src="/avatar1.png" id="view-avatar" class="profile-av-new">
+        <div class="profile-stats-new">
+            <div class="stat" id="view-fans-btn"><div class="stat-val" id="view-count-fans">0</div><div class="stat-lbl" data-lang="fans_label">Фанаты</div></div>
+            <div class="stat"><div class="stat-val" id="view-coins">0</div><div class="stat-lbl" data-lang="coins_label">Монеты</div></div>
+            <div class="stat" id="view-idols-btn"><div class="stat-val" id="view-count-idols">0</div><div class="stat-lbl" data-lang="idols_label">Кумиры</div></div>
+        </div>
+    </div>
+    <div class="profile-info-new">
+        <div class="profile-name-new" id="view-name">...</div>
+        <div class="profile-username-new" id="view-username">@...</div>
+        <div id="view-presence" style="font-size:11px;color:var(--text3);margin:6px 0;min-height:14px;display:flex;align-items:center;gap:4px;"></div>
+        <div class="profile-status-new" id="view-status">...</div>
+        <div class="link-row" id="view-link-row" style="margin-top:8px"><span class="link-url" id="view-link-url"></span><button class="link-copy-btn" onclick="copyProfileLink()" data-lang="copy_btn">Копировать</button></div>
+    </div>
+</div>
+<div style="padding:0 12px 10px;display:flex;gap:8px;">
+    <button class="btn btn-accent" id="view-action-btn" style="flex:1" data-lang="fan_btn">Стать фанатом</button>
+    <button class="btn btn-blue" id="view-msg-btn" style="flex:1" data-lang="write_btn">Написать</button>
+</div>
             <div id="view-posts-list"></div>
         </div>
 
@@ -1010,7 +1030,14 @@
 </div>
 
 <!-- CHAT INFO PANEL -->
-<div id="chat-info-panel" class="slide-panel">
+    <div id="requests-panel" class="slide-panel">
+    <div class="slide-hd">
+        <button class="slide-hd-back" onclick="closeRequestsPanel()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> <span data-lang="back_btn">Назад</span></button>
+        <div style="flex:1;font-size:15px;font-weight:bold;" data-lang="requests_label">Запросы</div>
+    </div>
+    <div id="requests-list" style="overflow-y:auto;flex:1;padding:12px;"></div>
+</div>
+    <div id="chat-info-panel" class="slide-panel">
     <div class="slide-hd">
         <button class="slide-hd-back" onclick="closeChatInfo()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> <span data-lang="back_btn">Назад</span></button>
         <div style="flex:1;font-size:15px;font-weight:bold;" data-lang="chat_info_title">Информация</div>
