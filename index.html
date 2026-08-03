@@ -688,37 +688,38 @@
             </div>
         </div>
 
-        <!-- ACCOUNT -->
+               <!-- ACCOUNT -->
         <div id="screen-account" class="screen">
-    <div class="screen-hd" style="padding-top:max(14px, env(safe-area-inset-top));">
-        <div class="screen-hd-title" data-lang="my_profile">Мой профиль</div>
-        <button class="screen-hd-btn" onclick="openPostCreate()" title="Новый пост">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-        <button class="screen-hd-btn" onclick="openSettingsSection('s-account')" title="Редактировать">
-            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
-    </div>
-    <div class="profile-top-new" id="profile-top-my">
-        <div class="profile-top-row">
-            <img src="/avatar1.png" id="my-avatar" class="profile-av-new" onclick="openSettingsSection('s-account')">
-            <div class="profile-stats-new">
-                <div class="stat" onclick="showListScreen('fans')"><div class="stat-val" id="count-fans">0</div><div class="stat-lbl" data-lang="fans_label">Фанаты</div></div>
-                <div class="stat"><div class="stat-val" id="my-coins">0</div><div class="stat-lbl" data-lang="coins_label">Монеты</div></div>
-                <div class="stat" onclick="showListScreen('idols')"><div class="stat-val" id="count-idols">0</div><div class="stat-lbl" data-lang="idols_label">Кумиры</div></div>
+            <div class="screen-hd" style="padding-top:max(14px, env(safe-area-inset-top));">
+                <div class="screen-hd-title" data-lang="my_profile">Мой профиль</div>
+                <button class="screen-hd-btn" onclick="openPostCreate()" title="Новый пост">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <button class="screen-hd-btn" onclick="openSettingsSection('s-account')" title="Редактировать">
+                    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
             </div>
-        </div>
-        <div class="profile-info-new">
-            <div class="profile-name-new" id="my-name">USER</div>
-            <div class="profile-username-new" id="my-username">@username</div>
-            <div class="profile-status-new" id="my-status">NO STATUS</div>
-        </div>
-        <div class="profile-actions-new">
-            <button class="btn btn-ghost" onclick="openSettingsSection('s-account')" style="flex:1" data-lang="edit_profile">Редактировать</button>
-            <button class="btn btn-accent" onclick="openPostCreate()" style="flex:1" data-lang="new_post_btn">+ Пост</button>
-        </div>
-    <div id="my-posts-list"></div>
-</div>
+            <div class="profile-top-new" id="profile-top-my">
+                <div class="profile-top-row">
+                    <img src="/avatar1.png" id="my-avatar" class="profile-av-new" onclick="openSettingsSection('s-account')">
+                    <div class="profile-stats-new">
+                        <div class="stat" onclick="showListScreen('fans')"><div class="stat-val" id="count-fans">0</div><div class="stat-lbl" data-lang="fans_label">Фанаты</div></div>
+                        <div class="stat"><div class="stat-val" id="my-coins">0</div><div class="stat-lbl" data-lang="coins_label">Монеты</div></div>
+                        <div class="stat" onclick="showListScreen('idols')"><div class="stat-val" id="count-idols">0</div><div class="stat-lbl" data-lang="idols_label">Кумиры</div></div>
+                    </div>
+                </div>
+                <div class="profile-info-new">
+                    <div class="profile-name-new" id="my-name">PLAYER</div>
+                    <div class="profile-username-new" id="my-username">@username</div>
+                    <div class="profile-status-new" id="my-status">NO STATUS</div>
+                </div>
+                <div class="profile-actions-new">
+                    <button class="btn btn-ghost" onclick="openSettingsSection('s-account')" style="flex:1" data-lang="edit_profile">Редактировать</button>
+                    <button class="btn btn-accent" onclick="openPostCreate()" style="flex:1" data-lang="new_post_btn">+ Пост</button>
+                </div>
+            </div> <!-- конец profile-top-new -->
+            <div id="my-posts-list"></div>
+        </div> <!-- конец screen-account - ЭТОГО ТЕБЕ НЕ ХВАТАЛО -->
 
         <!-- FEED -->
         <div id="screen-feed" class="screen">
@@ -2676,7 +2677,6 @@ if(isGroup){
     }
 }
 
-        document.getElementById('view-msg-btn').onclick = () => openChat(uid, u);
         document.getElementById('view-report-btn').onclick = () => openReportModal(uid);
 
         const profileUrl = `${location.origin}/user/${u.username || uid}`;
