@@ -1814,7 +1814,7 @@ function declineRequest(fromUid){
         document.querySelectorAll('.color-swatch').forEach(s=>s.classList.toggle('active',s.dataset.color===hex));}
     function shadeColor(col,pct){const n=parseInt(col.slice(1),16),t=pct<0?0:255,p=Math.abs(pct)/100;const R=(n>>16)+Math.round((t-(n>>16))*p);const G=(n>>8&0xff)+Math.round((t-(n>>8&0xff))*p);const B=(n&0xff)+Math.round((t-(n&0xff))*p);return'#'+[R,G,B].map(x=>Math.max(0,Math.min(255,x)).toString(16).padStart(2,'0')).join('');}
     function initTheme(){const t=localStorage.getItem('akanchik_theme')||'light';setTheme(t);const a=localStorage.getItem('akanchik_accent')||'#f39c12';const wrap=document.getElementById('accent-swatches');ACCENT_PRESETS.forEach(hex=>{const s=document.createElement('div');s.className='color-swatch';s.dataset.color=hex;s.style.background=hex;s.onclick=()=>setAccentColor(hex);wrap.appendChild(s);});setAccentColor(a);}
-    function hideSplash(){const s=document.getElementById('splash');if(!s)return; s.classList.add('out'); setTimeout(()=>{s.style.display='none';},600);},600);}
+    function hideSplash(){const s=document.getElementById('splash');if(!s)return; s.classList.add('out'); setTimeout(()=>{s.style.display='none';},600);}
 
     // ═══ LANG ═══
     let currentLang=localStorage.getItem('akanchik_lang')||'ru';
