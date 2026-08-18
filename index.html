@@ -1084,7 +1084,39 @@
 /* MESSAGE FOCUS BLUR */
 #msg-focus-overlay{ position:absolute; inset:0; background:rgba(0,0,0,0.32); backdrop-filter: blur(14px) saturate(130%); -webkit-backdrop-filter: blur(14px) saturate(130%); z-index:1500; }
 .msg-focused{ position:relative !important; z-index:1501 !important; transform: scale(1.04) !important; box-shadow: 0 16px 40px rgba(0,0,0,0.28) !important; }
-#quick-reactions{ display:grid !important; grid-template-columns:repeat(5,1fr) !important; gap:8px !important; margin-bottom:16px !important; }
+#quick-reactions.reactions-carousel{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:6px 2px 14px;
+  margin-bottom:10px;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+#quick-reactions.reactions-carousel::-webkit-scrollbar{ display:none; }
+
+#quick-reactions.reactions-carousel span{
+  flex:0 0 48px;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  background:var(--bg3);
+  border:1.5px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  cursor:pointer;
+  scroll-snap-align:center;
+  transition:transform .15s, background .15s;
+  user-select:none;
+}
+#quick-reactions.reactions-carousel span:active{
+  transform:scale(.86);
+  background:var(--bg4);
+}
 #quick-reactions span{ font-size:26px !important; background:var(--bg3); border:1px solid var(--border); border-radius:14px; padding:10px 4px !important; text-align:center; cursor:pointer; }
 
 
@@ -2247,28 +2279,34 @@
 </div>
 
 <!-- MSG ACTIONS MODAL -->
-<div id="msg-modal" class="msg-ctx-overlay hidden" onclick="if(event.target===this)closeMsgModal()">
-  <div class="msg-ctx-card">
-    <div class="msg-ctx-preview" id="msg-modal-preview"></div>
-    <div class="msg-ctx-reactions" id="quick-reactions">
-      <span onclick="addReaction('❤️',activeMenuMsg?.key);closeMsgModal()">❤️</span>
-      <span onclick="addReaction('😂',activeMenuMsg?.key);closeMsgModal()">😂</span>
-      <span onclick="addReaction('👍',activeMenuMsg?.key);closeMsgModal()">👍</span>
-      <span onclick="addReaction('🔥',activeMenuMsg?.key);closeMsgModal()">🔥</span>
-      <span onclick="addReaction('😍',activeMenuMsg?.key);closeMsgModal()">😍</span>
-      <span onclick="addReaction('😭',activeMenuMsg?.key);closeMsgModal()">😭</span>
-      <span onclick="addReaction('🙏',activeMenuMsg?.key);closeMsgModal()">🙏</span>
-      <span onclick="addReaction('😡',activeMenuMsg?.key);closeMsgModal()">😡</span>
+<div id="msg-modal" class="overlay hidden" onclick="if(event.target===this)closeMsgModal()">
+    <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div id="msg-modal-preview" class="sheet-title" style="font-size:12px;color:var(--text2);background:var(--bg3);border-radius:10px;padding:10px;margin-bottom:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:normal;"></div>
+        
+        <!-- КАРУСЕЛЬ ЭМОДЗИ -->
+        <div id="quick-reactions" class="reactions-carousel">
+            <span onclick="addReaction('❤️',activeMenuMsg?.key);closeMsgModal()">❤️</span>
+            <span onclick="addReaction('😂',activeMenuMsg?.key);closeMsgModal()">😂</span>
+            <span onclick="addReaction('👍',activeMenuMsg?.key);closeMsgModal()">👍</span>
+            <span onclick="addReaction('🔥',activeMenuMsg?.key);closeMsgModal()">🔥</span>
+            <span onclick="addReaction('😍',activeMenuMsg?.key);closeMsgModal()">😍</span>
+            <span onclick="addReaction('😭',activeMenuMsg?.key);closeMsgModal()">😭</span>
+            <span onclick="addReaction('🙏',activeMenuMsg?.key);closeMsgModal()">🙏</span>
+            <span onclick="addReaction('😡',activeMenuMsg?.key);closeMsgModal()">😡</span>
+            <span onclick="addReaction('🥺',activeMenuMsg?.key);closeMsgModal()">🥺</span>
+            <span onclick="addReaction('🤯',activeMenuMsg?.key);closeMsgModal()">🤯</span>
+            <span onclick="addReaction('👏',activeMenuMsg?.key);closeMsgModal()">👏</span>
+            <span onclick="addReaction('💀',activeMenuMsg?.key);closeMsgModal()">💀</span>
+        </div>
+
+        <button class="btn btn-ghost" id="modal-reply-btn" onclick="replyToMsg()" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--text);fill:none;stroke-width:2;"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg> <span data-lang="reply_btn">Ответить</span></button>
+        <button class="btn btn-ghost" id="modal-copy-btn" onclick="copyMsg()" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--text);fill:none;stroke-width:2;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> <span data-lang="copy_btn">Копировать</span></button>
+        <button class="btn btn-ghost" id="modal-edit-btn" onclick="if(activeMenuMsg)startEdit(activeMenuMsg);closeMsgModal();" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--text);fill:none;stroke-width:2;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span data-lang="edit_btn">Изменить</span></button>
+        <button class="btn btn-ghost" id="modal-pin-btn" onclick="if(activeMenuMsg)pinMessage(activeMenuMsg);closeMsgModal();" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--text);fill:none;stroke-width:2;"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24z"/></svg> <span data-lang="pin_btn">Закрепить</span></button>
+        <button class="btn btn-ghost" id="modal-del-me-btn" onclick="if(activeMenuMsg)deleteMessageForMe(activeMenuMsg);" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--text);fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> <span data-lang="delete_for_me">Удалить у себя</span></button>
+        <button class="btn btn-danger" id="modal-del-both-btn" onclick="if(activeMenuMsg)deleteMessageForBoth(activeMenuMsg);" style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> <span data-lang="delete_for_both">Удалить у обоих</span></button>
     </div>
-    <div class="msg-ctx-grid">
-      <button class="mctx-btn" id="modal-reply-btn" onclick="replyToMsg()"><div class="mctx-ic">↩</div><span data-lang="reply_btn">Ответить</span></button>
-      <button class="mctx-btn" id="modal-copy-btn" onclick="copyMsg()"><div class="mctx-ic">⎙</div><span data-lang="copy_btn">Копия</span></button>
-      <button class="mctx-btn" id="modal-pin-btn" onclick="if(activeMenuMsg)pinMessage(activeMenuMsg);closeMsgModal();"><div class="mctx-ic">📌</div><span data-lang="pin_btn">Закрепить</span></button>
-      <button class="mctx-btn" id="modal-edit-btn" onclick="if(activeMenuMsg)startEdit(activeMenuMsg);closeMsgModal();"><div class="mctx-ic">✎</div><span data-lang="edit_btn">Изм.</span></button>
-      <button class="mctx-btn danger" id="modal-del-me-btn" onclick="if(activeMenuMsg)deleteMessageForMe(activeMenuMsg);"><div class="mctx-ic">🗑</div><span data-lang="delete_for_me">У себя</span></button>
-      <button class="mctx-btn danger full" id="modal-del-both-btn" onclick="if(activeMenuMsg)deleteMessageForBoth(activeMenuMsg);"><div class="mctx-ic">⛔</div><span data-lang="delete_for_both">У всех</span></button>
-    </div>
-  </div>
 </div>
 
 <!-- REPORT MODAL -->
