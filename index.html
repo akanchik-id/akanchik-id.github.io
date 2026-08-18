@@ -470,8 +470,28 @@
         .type-badge.channel{background:rgba(155,89,182,0.12);color:#9b59b6;}
         .group-section{background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:10px;border:1px solid var(--border);}
         .group-section h4{margin:0 0 10px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
-        .sticker-panel{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);border-radius:20px 20px 0 0;z-index:1800;transform:translateY(100%);transition:transform .3s cubic-bezier(0.4,0,0.2,1);padding:12px 12px;padding-bottom:max(12px,env(safe-area-inset-bottom));max-height:52vh;overflow-y:auto;}
-        .sticker-panel.open{transform:translateY(0);}
+.sticker-panel{
+  position:absolute !important;
+  bottom: calc(56px + env(safe-area-inset-bottom) + 8px) !important; /* прямо над инпутом */
+  left:8px !important; right:8px !important; top:auto !important;
+  background: var(--bg2) !important;
+  border:1px solid var(--border) !important;
+  border-radius:18px !important;
+  z-index:50 !important;
+  transform: translateY(20px) scale(.97) !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  transition: transform .24s cubic-bezier(.32,.72,0,1), opacity .2s ease !important;
+  max-height: 36vh !important;
+  padding:10px !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.18) !important;
+  overflow-y:auto !important;
+}
+.sticker-panel.open{
+  transform: translateY(0) scale(1) !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+}
         .sticker-panel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
         .sticker-panel-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
         .sticker-panel-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;padding:2px 4px;}
@@ -1938,7 +1958,7 @@
                     <div style="font-size:11px;color:var(--text2);background:var(--bg3);padding:12px;border-radius:10px;line-height:1.8;">
                         <b>UID:</b> <span id="user-uid" style="-webkit-user-select:text;user-select:text;"></span><br>
                         <b data-lang="created_at">Аккаунт создан:</b> <span id="user-date"></span><br>
-                        <b data-lang="version">Версия:</b> 1.0 ВСЁ ЕЩЕ БЕТА СМЕРТНЫЕ НИЩИЕ
+                        <b data-lang="version">Версия:</b> 2026.08.18
                     </div>
                 </div>
             </div>
@@ -2104,6 +2124,18 @@
         </div>
         <input type="file" id="photo-input" accept="image/*" style="display:none">
     </div>
+    <div id="sticker-panel" class="sticker-panel">
+    <div class="sticker-panel-hd">
+        <span class="sticker-panel-title" data-lang="stickers_title">Стикеры</span>
+        <button class="sticker-panel-close" onclick="closeStickerPanel()">✕</button>
+    </div>
+    <div id="sticker-recently-used" style="display:none;margin-bottom:10px;">
+        <div class="sticker-section-label" data-lang="recent_stickers">Недавние</div>
+        <div id="sticker-recent-grid" class="sticker-grid"></div>
+    </div>
+    <div class="sticker-section-label" data-lang="all_stickers">Все стикеры</div>
+    <div id="sticker-all-grid" class="sticker-grid"></div>
+</div>
 </div>
 
 <!-- CHAT INFO PANEL -->
@@ -2352,18 +2384,7 @@
 </div>
 
 <!-- STICKER PANEL -->
-<div id="sticker-panel" class="sticker-panel">
-    <div class="sticker-panel-hd">
-        <span class="sticker-panel-title" data-lang="stickers_title">Стикеры</span>
-        <button class="sticker-panel-close" onclick="closeStickerPanel()">✕</button>
-    </div>
-    <div id="sticker-recently-used" style="display:none;margin-bottom:10px;">
-        <div class="sticker-section-label" data-lang="recent_stickers">Недавние</div>
-        <div id="sticker-recent-grid" class="sticker-grid"></div>
-    </div>
-    <div class="sticker-section-label" data-lang="all_stickers">Все стикеры</div>
-    <div id="sticker-all-grid" class="sticker-grid"></div>
-</div>
+
     <div id="onboarding-modal" class="overlay hidden center" style="z-index:5000;">
   <div class="sheet" style="border-radius:24px;max-width:380px;width:92%;">
     <div class="sheet-title" data-lang="welcome_title">Добро пожаловать в Under</div>
