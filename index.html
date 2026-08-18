@@ -5857,222 +5857,163 @@ function attachChatLongPress(row, c){
 
     // === FIXED: Android back + correct back navigation + comments support ===
     (function(){
-      if(window.__navFixed) return;
-      window.__navFixed=true;
-      let isPop=false;
-      const TAB_SECTIONS = ['feed','explore','chats','account'];
-      const DRILL_SECTIONS = ['view','fans','idols','activity','cabinet'];
+  let _isPop = false;
+  let _lastPush = 0;
 
-      function safePush(state){
-        if(isPop) return;
-        try{
-          const cur=history.state;
-          if(cur && JSON.stringify(cur)===JSON.stringify(state)) return;
-          history.pushState(state,'',location.href);
-        }catch(e){}
+  function safePush(state){
+    if(_isPop) return;
+    const now = Date.now();
+    if(now - _lastPush < 150) return; // анти-дабл клик
+    try{
+      const cur = history.state;
+      if(cur && JSON.stringify(cur) === JSON.stringify(state)) return;
+      history.pushState(state,'','');
+      _lastPush = now;
+    }catch(e){}
+  }
+
+  const origShowSection = window.showSection;
+  const origOpenSettings = window.openSettingsSection;
+  const origCloseSettings = window.closeSettingsSection;
+  const origOpenChatInfo = window.openChatInfo;
+  const origCloseChatInfo = window.closeChatInfo;
+  const origOpenRequests = window.openRequestsPanel;
+  const origCloseRequests = window.closeRequestsPanel;
+  const origOpenComments = window.openComments;
+  const origCloseComments = window.closeComments;
+  const origOpenChatRoom = window._openChatRoom;
+  const origCloseSilent = window.closeChatRoomSilent;
+  const origCloseChatRoom = window.closeChatRoom;
+
+  // --- обертки ---
+  window.showSection = function(section, fromPop){
+    if(!fromPop && !_isPop && window.currentSection !== section){
+      safePush({type:'section', section});
+    }
+    if(origShowSection) return origShowSection.call(this, section);
+  };
+
+  window.openSettingsSection = function(id, fromPop){
+    if(!fromPop && !_isPop) safePush({type:'settings-sub', id});
+    if(origOpenSettings) return origOpenSettings.call(this, id);
+  };
+  window.closeSettingsSection = function(fromPop){
+    if(fromPop === true){ if(origCloseSettings) return origCloseSettings.call(this); return; }
+    if(!_isPop && history.state?.type === 'settings-sub'){ history.back(); return; }
+    if(origCloseSettings) return origCloseSettings.call(this);
+  };
+
+  window.openChatInfo = function(fromPop){
+    if(!fromPop && !_isPop) safePush({type:'chat-info'});
+    if(origOpenChatInfo) return origOpenChatInfo.call(this);
+  };
+  window.closeChatInfo = function(fromPop){
+    if(fromPop === true){ if(origCloseChatInfo) return origCloseChatInfo.call(this, true); return; }
+    if(!_isPop && history.state?.type === 'chat-info'){ history.back(); return; }
+    if(origCloseChatInfo) return origCloseChatInfo.call(this);
+  };
+
+  window.openRequestsPanel = function(fromPop){
+    if(!fromPop && !_isPop) safePush({type:'requests'});
+    if(origOpenRequests) return origOpenRequests.call(this);
+  };
+  window.closeRequestsPanel = function(fromPop){
+    if(!_isPop && history.state?.type === 'requests'){ history.back(); return; }
+    if(origCloseRequests) return origCloseRequests.call(this);
+  };
+
+  window._openChatRoom = function(av,name,verified){
+    if(!_isPop) safePush({type:'chat-room'});
+    if(origOpenChatRoom) return origOpenChatRoom.call(this, av,name,verified);
+  };
+  window.closeChatRoom = function(fromPop){
+    if(fromPop === true){ if(origCloseChatRoom) return origCloseChatRoom.call(this); return; }
+    if(!_isPop && history.state?.type === 'chat-room'){ history.back(); return; }
+    if(origCloseChatRoom) return origCloseChatRoom.call(this);
+  };
+
+  window.openComments = function(postId, fromPop){
+    if(!fromPop && !_isPop) safePush({type:'comments', postId});
+    if(origOpenComments) return origOpenComments.call(this, postId);
+  };
+  window.closeComments = function(fromPop){
+    if(!_isPop && history.state?.type === 'comments'){ history.back(); return; }
+    if(origCloseComments) return origCloseComments.call(this);
+  };
+
+  window.goBackFromView = function(){ history.back(); };
+  window.goBackFromList = function(){ history.back(); };
+
+  // --- popstate ---
+  window.addEventListener('popstate', (e)=>{
+    _isPop = true;
+    const st = e.state;
+    try{
+      const chatRoomEl = document.getElementById('screen-chat-room');
+      const chatInfoEl = document.getElementById('chat-info-panel');
+      const reqEl = document.getElementById('requests-panel');
+      const commentsEl = document.getElementById('comments-panel');
+
+      // закрываем все оверлеи по дефолту
+      const closeAllOverlays = ()=>{
+        if(chatInfoEl) chatInfoEl.classList.remove('open');
+        if(reqEl) reqEl.classList.remove('open');
+        if(commentsEl) commentsEl.classList.remove('open');
+        document.querySelectorAll('.settings-sub.active').forEach(s=>s.classList.remove('active'));
+        const main = document.getElementById('cabinet-main');
+        if(main && document.querySelector('.settings-sub.active')==null) main.style.display='';
+      };
+
+      if(!st){
+        // вышли в корень
+        if(chatRoomEl?.classList.contains('open')){
+          if(origCloseChatRoom) origCloseChatRoom.call(window); else chatRoomEl.classList.remove('open');
+        }
+        closeAllOverlays();
+        if(origShowSection) origShowSection.call(window, 'feed');
+        return;
       }
-      function safeReplace(state){
-        try{ history.replaceState(state,'',location.href);}catch(e){}
+
+      switch(st.type){
+        case 'section':
+          if(chatRoomEl?.classList.contains('open')){
+            if(origCloseChatRoom) origCloseChatRoom.call(window); else chatRoomEl.classList.remove('open');
+          }
+          closeAllOverlays();
+          if(origShowSection) origShowSection.call(window, st.section, true);
+          break;
+        case 'chat-room':
+          closeAllOverlays();
+          // если чат был закрыт - не открываем автоматом, он уже открыт в истории
+          // главное - закрыть инфо
+          break;
+        case 'chat-info':
+          if(chatInfoEl) chatInfoEl.classList.add('open');
+          break;
+        case 'requests':
+          if(reqEl){ reqEl.classList.add('open'); if(window.renderRequestsList) window.renderRequestsList(); }
+          break;
+        case 'settings-sub':
+          if(origOpenSettings) origOpenSettings.call(window, st.id, true);
+          break;
+        case 'comments':
+          if(commentsEl){
+            commentsEl.classList.add('open');
+            if(window._loadComments && st.postId) window._loadComments(st.postId);
+          }
+          break;
       }
+    }catch(err){ console.log('popstate err', err); }
+    finally{
+      setTimeout(()=>{ _isPop=false; }, 120);
+    }
+  });
 
-      const origShowSection = window.showSection;
-      const origOpenSettings = window.openSettingsSection;
-      const origCloseSettings = window.closeSettingsSection;
-      const origOpenChatInfo = window.openChatInfo;
-      const origCloseChatInfo = window.closeChatInfo;
-      const origOpenRequests = window.openRequestsPanel;
-      const origCloseRequests = window.closeRequestsPanel;
-      const origOpenChatRoom = window._openChatRoom;
-      const origCloseChatRoom = window.closeChatRoom;
-      const origCloseSilent = window.closeChatRoomSilent;
-      const origOpenComments = window.openComments;
-      const origCloseComments = window.closeComments;
-
-      if(!history.state){
-        safeReplace({type:'section', section: window.currentSection||'feed'});
-      }
-
-      window.showSection = function(section, opts){
-        opts=opts||{};
-        const fromPop = opts.fromPop || isPop;
-        if(!fromPop){
-          const curSec = window.currentSection;
-          const isTab = TAB_SECTIONS.includes(section);
-          const curIsTab = TAB_SECTIONS.includes(curSec);
-          if(isTab && curIsTab){
-            safeReplace({type:'section', section});
-          } else {
-            // drill or tab switch from drill -> replace to avoid chain
-            if(isTab) safeReplace({type:'section', section});
-            else safePush({type:'section', section});
-          }
-        }
-        if(origShowSection) return origShowSection.call(this, section);
-      };
-
-      window.openSettingsSection = function(id, fromPop){
-        if(!fromPop && !isPop){
-          safePush({type:'settings-sub', id});
-        }
-        if(origOpenSettings) return origOpenSettings.call(this, id);
-      };
-      window.closeSettingsSection = function(fromPop){
-        if(!fromPop && !isPop){
-          if(history.state && history.state.type==='settings-sub'){
-            history.back(); return;
-          }
-        }
-        if(origCloseSettings) return origCloseSettings.call(this);
-      };
-
-      window.openChatInfo = function(fromPop){
-        if(!fromPop && !isPop){
-          safePush({type:'chat-info'});
-        }
-        if(origOpenChatInfo) return origOpenChatInfo.call(this);
-      };
-      window.closeChatInfo = function(fromPop){
-        // if fromPop is true boolean (force), skip history
-        if(fromPop===true){ if(origCloseChatInfo) return origCloseChatInfo.call(this, true); return; }
-        if(!fromPop && !isPop){
-          if(history.state && history.state.type==='chat-info'){
-            history.back(); return;
-          }
-        }
-        if(origCloseChatInfo) return origCloseChatInfo.call(this);
-      };
-
-      window.openRequestsPanel = function(fromPop){
-        if(!fromPop && !isPop){
-          safePush({type:'requests'});
-        }
-        if(origOpenRequests) return origOpenRequests.call(this);
-      };
-      window.closeRequestsPanel = function(fromPop){
-        if(!fromPop && !isPop){
-          if(history.state && history.state.type==='requests'){
-            history.back(); return;
-          }
-        }
-        if(origCloseRequests) return origCloseRequests.call(this);
-      };
-
-      window._openChatRoom = function(av,name,verified){
-        if(!isPop){
-          safePush({type:'chat-room'});
-        }
-        if(origOpenChatRoom) return origOpenChatRoom.call(this, av,name,verified);
-      };
-      window.closeChatRoom = function(fromPop){
-        if(!fromPop && !isPop){
-          if(history.state && history.state.type==='chat-room'){
-            history.back(); return;
-          }
-        }
-        if(origCloseChatRoom) return origCloseChatRoom.call(this);
-      };
-
-      window.openComments = function(postId, fromPop){
-        if(!fromPop && !isPop){
-          safePush({type:'comments', postId});
-        }
-        if(origOpenComments) return origOpenComments.call(this, postId);
-      };
-      window.closeComments = function(fromPop){
-        if(!fromPop && !isPop){
-          if(history.state && history.state.type==='comments'){
-            history.back(); return;
-          }
-        }
-        if(origCloseComments) return origCloseComments.call(this);
-      };
-
-      window.goBackFromView = function(){
-        if(history.state && history.state.type==='section' && history.state.section==='view'){
-          history.back();
-        } else {
-          // if we are in view but history is not view (direct link), go to explore
-          if(window.currentSection==='view'){
-            window.showSection('explore');
-          } else {
-            history.back();
-          }
-        }
-      };
-      window.goBackFromList = function(){
-        if(history.state && history.state.type==='section' && ['fans','idols'].includes(history.state.section)){
-          history.back();
-        } else {
-          window.showSection(window.previousSection||'account');
-        }
-      };
-
-      window.addEventListener('popstate', (e)=>{
-        isPop=true;
-        const st=e.state;
-        try{
-          const chatRoomEl=document.getElementById('screen-chat-room');
-          const chatInfoEl=document.getElementById('chat-info-panel');
-          const reqEl=document.getElementById('requests-panel');
-          const commentsEl=document.getElementById('comments-panel');
-          const settingsActive=document.querySelector('.settings-sub.active');
-
-          if(!st){
-            if(chatRoomEl && chatRoomEl.classList.contains('open')){
-              if(origCloseSilent) origCloseSilent(); else chatRoomEl.classList.remove('open');
-            }
-            if(chatInfoEl) chatInfoEl.classList.remove('open');
-            if(reqEl) reqEl.classList.remove('open');
-            if(commentsEl) commentsEl.classList.remove('open');
-            if(settingsActive){
-              document.getElementById('cabinet-main').style.display='';
-              document.querySelectorAll('.settings-sub').forEach(s=>s.classList.remove('active'));
-            }
-            setTimeout(()=>{isPop=false;}, 60);
-            return;
-          }
-
-          switch(st.type){
-            case 'section':
-              if(chatRoomEl && chatRoomEl.classList.contains('open')){
-                if(origCloseSilent) origCloseSilent(); else chatRoomEl.classList.remove('open');
-              }
-              if(chatInfoEl) chatInfoEl.classList.remove('open');
-              if(reqEl) reqEl.classList.remove('open');
-              if(commentsEl) commentsEl.classList.remove('open');
-              if(settingsActive){
-                document.getElementById('cabinet-main').style.display='';
-                document.querySelectorAll('.settings-sub').forEach(s=>s.classList.remove('active'));
-              }
-              if(origShowSection){
-                origShowSection.call(window, st.section);
-              }
-              break;
-            case 'chat-room':
-              break;
-            case 'chat-info':
-              if(chatInfoEl) chatInfoEl.classList.add('open');
-              break;
-            case 'requests':
-              if(reqEl){ reqEl.classList.add('open'); if(window.renderRequestsList) window.renderRequestsList(); }
-              break;
-            case 'settings-sub':
-              if(origOpenSettings) origOpenSettings.call(window, st.id, true);
-              break;
-            case 'comments':
-              if(commentsEl){
-                commentsEl.classList.add('open');
-                if(window._loadComments && st.postId) window._loadComments(st.postId);
-              }
-              break;
-          }
-        }catch(err){ console.log('popstate err', err); }
-        finally{
-          setTimeout(()=>{isPop=false;}, 80);
-        }
-      });
-
-    })();
+  // инициализация начального state
+  if(!history.state){
+    history.replaceState({type:'section', section: window.currentSection||'feed'},'','');
+  }
+})();
 </script>
 
 </div>
