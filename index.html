@@ -3799,35 +3799,38 @@ function checkEmptyChatGreeting(msgs){
         else deleteMessageForMe(msg);
     }
     function deleteMessageForMe(msg){
-        if(!activeChatId||!msg)return;
-        if(msg.key===pinnedMsgKey)unpinMessage();
-        // optimistic UI: remove immediately
-        try{
-            const el=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
-            if(el){ el.style.transition='opacity .2s, transform .2s'; el.style.opacity='0'; el.style.transform='scale(0.96)'; setTimeout(()=>el.remove(), 200); }
-            currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
-        }catch(e){}
+    if(!activeChatId||!msg) return;
+    if(msg.key===pinnedMsgKey) unpinMessage();
+    // СРАЗУ закрываем меню - это фикс
+    closeMsgModal();
+    try{
+        const el=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
+        if(el){ el.style.transition='opacity .2s, transform .2s'; el.style.opacity='0'; el.style.transform='scale(0.96)'; setTimeout(()=>el.remove(), 200); }
+        currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
+    }catch(e){}
+    db.ref(`Chats/${activeChatId}/messages/${msg.key}/deletedFor/${currentUser.uid}`).set(true).catch(err=>alert(err.message));
+}
+
+function deleteMessageForBoth(msg){
+    if(!activeChatId||!msg) return;
+    if(msg.from!==currentUser.uid){
+        alert(L('cannot_delete_others')||'Нельзя удалить чужое сообщение для всех');
         closeMsgModal();
-        // soft delete for current user in DB
-        db.ref(`Chats/${activeChatId}/messages/${msg.key}/deletedFor/${currentUser.uid}`).set(true).catch(err=>alert(err.message));
+        return;
     }
-    function deleteMessageForBoth(msg){
-        if(!activeChatId||!msg)return;
-        if(msg.from!==currentUser.uid){
-            alert(L('cannot_delete_others')||'Нельзя удалить чужое сообщение для всех');
-            return;
-        }
-        if(!confirm((L('delete_confirm')||'Удалить?')+' '+(L('delete_for_both')||'У всех?'))) return;
-        if(msg.key===pinnedMsgKey)unpinMessage();
-        // optimistic UI
-        try{
-            const el=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
-            if(el){ el.style.transition='opacity .2s, transform .2s'; el.style.opacity='0'; el.style.transform='scale(0.96)'; setTimeout(()=>el.remove(), 200); }
-            currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
-        }catch(e){}
-        closeMsgModal();
-        db.ref(`Chats/${activeChatId}/messages/${msg.key}`).remove().catch(err=>alert(err.message));
+    if(!confirm((L('delete_confirm')||'Удалить?')+' '+(L('delete_for_both')||'У всех?'))) {
+        closeMsgModal(); // даже при отмене закрываем
+        return;
     }
+    if(msg.key===pinnedMsgKey) unpinMessage();
+    closeMsgModal(); // закрываем до удаления
+    try{
+        const el=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
+        if(el){ el.style.transition='opacity .2s, transform .2s'; el.style.opacity='0'; el.style.transform='scale(0.96)'; setTimeout(()=>el.remove(), 200); }
+        currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
+    }catch(e){}
+    db.ref(`Chats/${activeChatId}/messages/${msg.key}`).remove().catch(err=>alert(err.message));
+}
     function addReaction(emoji,key){
         if(!activeChatId||!key)return;
         const msg=currentMsgsArr.find(m=>m.key===key);
