@@ -1728,70 +1728,6 @@
         }
 
 
-/* === ANIMATIONS: SEND & DELETE === */
-@keyframes msgSendAnim {
-  0% { opacity:0; transform: translateY(20px) scale(0.88) translateZ(0); }
-  60% { opacity:1; transform: translateY(-4px) scale(1.03) translateZ(0); }
-  100% { opacity:1; transform: translateY(0) scale(1) translateZ(0); }
-}
-@keyframes msgInAnim {
-  0% { opacity:0; transform: translateY(12px) scale(0.92) translateZ(0); }
-  100% { opacity:1; transform: translateY(0) scale(1) translateZ(0); }
-}
-@keyframes msgDeleteMine {
-  0% { opacity:1; transform: translateX(0) scale(1); max-height:200px; margin:8px 0 2px; }
-  35% { opacity:0; transform: translateX(90px) scale(0.92); }
-  100% { opacity:0; transform: translateX(90px) scale(0.8); max-height:0; margin:0; padding:0; }
-}
-@keyframes msgDeleteOther {
-  0% { opacity:1; transform: translateX(0) scale(1); max-height:200px; margin:8px 0 2px; }
-  35% { opacity:0; transform: translateX(-90px) scale(0.92); }
-  100% { opacity:0; transform: translateX(-90px) scale(0.8); max-height:0; margin:0; padding:0; }
-}
-@keyframes btnSendPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.25); }
-  100% { transform: scale(1); }
-}
-
-.msg {
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-}
-.msg.msg-enter {
-  animation-fill-mode: both !important;
-}
-.msg.mine.msg-enter {
-  animation: msgSendAnim .45s cubic-bezier(0.34,1.56,0.64,1) both !important;
-}
-.msg.other.msg-enter {
-  animation: msgInAnim .32s cubic-bezier(0.2,0.8,0.2,1) both !important;
-}
-
-/* оптимистичная отправка */
-.msg-row.is-sending {
-  opacity: 0.7;
-}
-.msg-row.is-sending .msg {
-  animation: msgSendAnim .45s cubic-bezier(0.34,1.56,0.64,1) both !important;
-}
-
-/* удаление */
-.msg-row.deleting {
-  overflow: hidden;
-  pointer-events: none;
-  animation-duration: .36s;
-  animation-timing-function: cubic-bezier(0.4,0,0.2,1);
-  animation-fill-mode: forwards;
-}
-.msg-row.deleting.mine { animation-name: msgDeleteMine; }
-.msg-row.deleting.other { animation-name: msgDeleteOther; }
-
-#btn-send.sending {
-  animation: btnSendPulse .42s ease;
-}
-
 .msg-ctx-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.32); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:2000; display:flex; align-items:center; justify-content:center; padding:18px; }
 .msg-ctx-overlay.hidden{ display:none; }
 .msg-ctx-card{ width:100%; max-width:320px; background:color-mix(in srgb, var(--bg2) 92%, transparent); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border:1px solid var(--border); border-radius:22px; padding:12px; box-shadow:0 20px 50px rgba(0,0,0,.25); animation:ctxIn .24s cubic-bezier(.32,.72,0,1); }
@@ -1847,69 +1783,49 @@
 #chat-messages.msg-row.deleting.mine { animation-name: msgDeleteMine!important; }
 #chat-messages.msg-row.deleting.other { animation-name: msgDeleteOther!important; }
 #btn-send.sending { animation: btnSendPulse.42s ease!important; }
-        /* === ANIMATIONS: SEND & DELETE === */
-@keyframes msgSendAnim {
-  0% { opacity:0; transform: translateY(20px) scale(0.88) translateZ(0); }
-  60% { opacity:1; transform: translateY(-4px) scale(1.03) translateZ(0); }
-  100% { opacity:1; transform: translateY(0) scale(1) translateZ(0); }
-}
-@keyframes msgInAnim {
-  0% { opacity:0; transform: translateY(12px) scale(0.92) translateZ(0); }
-  100% { opacity:1; transform: translateY(0) scale(1) translateZ(0); }
-}
-@keyframes msgDeleteMine {
-  0% { opacity:1; transform: translateX(0) scale(1); max-height:200px; margin:8px 0 2px; }
-  35% { opacity:0; transform: translateX(90px) scale(0.92); }
-  100% { opacity:0; transform: translateX(90px) scale(0.8); max-height:0; margin:0; padding:0; }
-}
-@keyframes msgDeleteOther {
-  0% { opacity:1; transform: translateX(0) scale(1); max-height:200px; margin:8px 0 2px; }
-  35% { opacity:0; transform: translateX(-90px) scale(0.92); }
-  100% { opacity:0; transform: translateX(-90px) scale(0.8); max-height:0; margin:0; padding:0; }
-}
-@keyframes btnSendPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.25); }
-  100% { transform: scale(1); }
-}
-
-.msg {
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-}
-.msg.msg-enter {
-  animation-fill-mode: both !important;
-}
-.msg.mine.msg-enter {
-  animation: msgSendAnim .45s cubic-bezier(0.34,1.56,0.64,1) both !important;
-}
-.msg.other.msg-enter {
-  animation: msgInAnim .32s cubic-bezier(0.2,0.8,0.2,1) both !important;
-}
-
-/* оптимистичная отправка */
-.msg-row.is-sending {
-  opacity: 0.7;
-}
-.msg-row.is-sending .msg {
-  animation: msgSendAnim .45s cubic-bezier(0.34,1.56,0.64,1) both !important;
-}
 
 /* удаление */
-.msg-row.deleting {
-  overflow: hidden;
-  pointer-events: none;
-  animation-duration: .36s;
-  animation-timing-function: cubic-bezier(0.4,0,0.2,1);
-  animation-fill-mode: forwards;
-}
-.msg-row.deleting.mine { animation-name: msgDeleteMine; }
-.msg-row.deleting.other { animation-name: msgDeleteOther; }
-
 #btn-send.sending {
   animation: btnSendPulse .42s ease;
 }
+        /* === FIXED ANIMATIONS v3 - только этот блок должен остаться === */
+@keyframes msgSendAnim {
+  0% { opacity:0; transform: translateY(18px) scale(0.9); }
+  100% { opacity:1; transform: translateY(0) scale(1); }
+}
+@keyframes msgInAnim {
+  0% { opacity:0; transform: translateY(10px) scale(0.96); }
+  100% { opacity:1; transform: translateY(0) scale(1); }
+}
+@keyframes msgDeleteMine {
+  0% { opacity:1; transform: translateX(0) scale(1); max-height:200px; margin:2px 0; }
+  100% { opacity:0; transform: translateX(80px) scale(0.88); max-height:0; margin:0; padding:0; }
+}
+@keyframes msgDeleteOther {
+  0% { opacity:1; transform: translateX(0) scale(1); max-height:200px; margin:2px 0; }
+  100% { opacity:0; transform: translateX(-80px) scale(0.88); max-height:0; margin:0; padding:0; }
+}
+
+.msg,.msg-row { animation:none!important; transition:none!important; }
+.msg-row { transform:translateZ(0); will-change: max-height, margin, transform, opacity; overflow:hidden; }
+
+.msg.msg-enter {
+  animation: msgInAnim.34s cubic-bezier(0.2,0.8,0.2,1) both!important;
+}
+.msg.mine.msg-enter {
+  animation-name: msgSendAnim!important;
+  animation-duration:.42s!important;
+  animation-timing-function: cubic-bezier(0.34,1.56,0.64,1)!important;
+}
+
+.msg-row.deleting {
+  pointer-events:none!important;
+  animation-duration:.38s!important;
+  animation-timing-function:cubic-bezier(0.4,0,0.2,1)!important;
+  animation-fill-mode:forwards!important;
+}
+.msg-row.deleting.mine { animation-name: msgDeleteMine!important; }
+.msg-row.deleting.other { animation-name: msgDeleteOther!important; }
     </style>
 </head>
 <body>
@@ -3708,11 +3624,13 @@ function handleChatInfoProfile(){
         function renderMessages(arr){
     const cont=document.getElementById('chat-messages');
     if(!cont) return;
-    const isAtBottom = cont.scrollHeight - cont.scrollTop - cont.clientHeight < 140;
+    const isAtBottom = cont.scrollHeight - cont.scrollTop - cont.clientHeight < 160;
     const typingEl = document.getElementById('typing-bubble-row');
     const typingHTML = typingEl? typingEl.outerHTML : null;
     if(typingEl) typingEl.remove();
+
     arr = (arr||[]).filter(m=>!(m.deletedFor && m.deletedFor[currentUser.uid]));
+
     const existingMap = new Map();
     cont.querySelectorAll('.msg-row').forEach(row=>{
         const msgEl = row.querySelector('.msg[data-key]');
@@ -3720,12 +3638,32 @@ function handleChatInfoProfile(){
     });
     const existingKeys = new Set(existingMap.keys());
     const arrKeys = new Set((arr||[]).map(m=>m.key));
-    let hasDeletion = false;
-    for(const k of existingKeys){ if(!arrKeys.has(k)){ hasDeletion=true; break; } }
-    const isInitial = cont.children.length===0 || existingKeys.size===0;
-    const shouldFull = isInitial || hasDeletion; // УБРАЛИ hasEdit - из-за него не было анимации
 
-    if(shouldFull){
+    // ticks
+    try{
+        for(const m of arr){
+            const row = existingMap.get(m.key);
+            if(!row) continue;
+            const ticksEl = row.querySelector('.ticks');
+            if(!ticksEl) continue;
+            if(m.from===currentUser.uid){
+                const targetUid = chatTargetUid;
+                const allows = usersCache[targetUid]?.privacy? usersCache[targetUid].privacy.readReceipts!==false : true;
+                if(!allows){ ticksEl.style.display='none'; continue; }
+                ticksEl.style.display='';
+                const isSeen = m.readBy && targetUid && m.readBy[targetUid];
+                const txt = isSeen? '✓✓' : '✓';
+                if(ticksEl.textContent!==txt){
+                    ticksEl.textContent=txt;
+                    ticksEl.classList.toggle('seen',!!isSeen);
+                }
+            }
+        }
+    }catch(e){}
+
+    const isInitial = cont.querySelectorAll('.msg-row').length===0 || existingKeys.size===0;
+
+    if(isInitial){
         cont.innerHTML='';
         let lastDateKey = null;
         const frag = document.createDocumentFragment();
@@ -3739,20 +3677,16 @@ function handleChatInfoProfile(){
                     lastDateKey = dateKey;
                 }
             }
-            const row = buildMsgRow(m,arr,i);
-            if(row){
-                const msgEl = row.querySelector('.msg');
-                if(msgEl &&!existingKeys.has(m.key)){
-                    msgEl.classList.add('msg-enter');
-                    setTimeout(()=>msgEl.classList.remove('msg-enter'),700);
-                }
-                frag.appendChild(row);
-            }
+            frag.appendChild(buildMsgRow(m,arr,i));
         });
         cont.appendChild(frag);
     } else {
+        // удаление - плавно, без innerHTML
         for(const [k,row] of existingMap.entries()){
-            if(!arrKeys.has(k) &&!row.classList.contains('deleting')) row.remove();
+            if(!arrKeys.has(k) &&!row.classList.contains('deleting')){
+                row.classList.add('deleting');
+                row.addEventListener('animationend', ()=> { if(row.parentNode) row.remove(); }, {once:true});
+            }
         }
         let lastDateKey = null;
         for(let i=arr.length-1;i>=0;i--){
@@ -3762,10 +3696,9 @@ function handleChatInfoProfile(){
                 break;
             }
         }
-        let startIdx = arr.length;
-        for(let i=0;i<arr.length;i++){ if(!existingKeys.has(arr[i].key)){ startIdx = i; break; } }
-        for(let i=startIdx;i<arr.length;i++){
+        for(let i=0;i<arr.length;i++){
             const m = arr[i];
+            if(existingKeys.has(m.key)) continue;
             if(m.time){
                 const d = new Date(m.time);
                 const dateKey = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -3781,13 +3714,13 @@ function handleChatInfoProfile(){
                 }
             }
             const row = buildMsgRow(m,arr,i);
-            if(row){
-                const msgEl = row.querySelector('.msg');
-                if(msgEl){ msgEl.classList.add('msg-enter'); setTimeout(()=>msgEl.classList.remove('msg-enter'),700); }
-                cont.appendChild(row);
-            }
+            const msgEl = row.querySelector('.msg');
+            msgEl.classList.add('msg-enter');
+            msgEl.addEventListener('animationend', ()=> msgEl.classList.remove('msg-enter'), {once:true});
+            cont.appendChild(row);
         }
     }
+
     if(typingHTML) cont.insertAdjacentHTML('beforeend', typingHTML);
     if(isAtBottom || isInitial) cont.scrollTop = cont.scrollHeight;
     if(window._updateScrollBtn) window._updateScrollBtn();
@@ -4001,11 +3934,17 @@ function checkEmptyChatGreeting(msgs){
     closeMsgModal();
     try{
         const row=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
-        if(row){ row.classList.add('deleting'); row.addEventListener('animationend', ()=> row.remove(), {once:true}); }
+        if(row &&!row.classList.contains('deleting')){
+            row.classList.add('deleting');
+            row.addEventListener('animationend', ()=> { if(row.parentNode) row.remove(); }, {once:true});
+        }
         currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
     }catch(e){}
-    setTimeout(()=>{ db.ref(`Chats/${activeChatId}/messages/${msg.key}/deletedFor/${currentUser.uid}`).set(true).catch(err=>alert(err.message)); }, 360);
+    setTimeout(()=>{
+        db.ref(`Chats/${activeChatId}/messages/${msg.key}/deletedFor/${currentUser.uid}`).set(true).catch(err=>alert(err.message));
+    }, 380);
 }
+
 function deleteMessageForBoth(msg){
     if(!activeChatId||!msg) return;
     if(msg.from!==currentUser.uid){ alert(L('cannot_delete_others')||'Нельзя удалить чужое'); closeMsgModal(); return; }
@@ -4014,10 +3953,15 @@ function deleteMessageForBoth(msg){
     closeMsgModal();
     try{
         const row=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
-        if(row){ row.classList.add('deleting'); row.addEventListener('animationend', ()=> row.remove(), {once:true}); }
+        if(row &&!row.classList.contains('deleting')){
+            row.classList.add('deleting');
+            row.addEventListener('animationend', ()=> { if(row.parentNode) row.remove(); }, {once:true});
+        }
         currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
     }catch(e){}
-    setTimeout(()=>{ db.ref(`Chats/${activeChatId}/messages/${msg.key}`).remove().catch(err=>alert(err.message)); }, 360);
+    setTimeout(()=>{
+        db.ref(`Chats/${activeChatId}/messages/${msg.key}`).remove().catch(err=>alert(err.message));
+    }, 380);
 }
     function addReaction(emoji,key){
         if(!activeChatId||!key)return;
