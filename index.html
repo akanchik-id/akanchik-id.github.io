@@ -1763,6 +1763,11 @@
 .chat-tab-content.hidden{display:none}
 .chat-media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .chat-media-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}
+.chat-info-dropdown{position:absolute;top:52px;right:12px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:20;min-width:170px;padding:6px}
+.chat-info-dropdown.hidden{display:none}
+.chat-info-dropdown button{width:100%;text-align:left;padding:10px 12px;border:none;background:none;font-family:'ZeroCool';font-size:12px;color:var(--text);border-radius:8px;cursor:pointer}
+.chat-info-dropdown button.danger{color:var(--danger)}
+.chat-info-dropdown button:hover{background:var(--bg3)}
     </style>
 </head>
 <body>
@@ -2205,10 +2210,15 @@
     <div id="requests-list" style="overflow-y:auto;flex:1;padding:12px;"></div>
 </div>
     <div id="chat-info-panel" class="slide-panel">
-    <div class="slide-hd">
-        <button class="slide-hd-back" onclick="closeChatInfo()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> <span data-lang="back_btn">Назад</span></button>
-        <div style="flex:1;font-size:15px;font-weight:bold;" data-lang="chat_info_title">Информация</div>
-    </div>
+    <div class="slide-hd" style="position:relative">
+  <button class="slide-hd-back" onclick="closeChatInfo()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> <span data-lang="back_btn">Назад</span></button>
+  <div style="flex:1;font-size:15px;font-weight:bold" data-lang="chat_info_title">Информация</div>
+  <button class="slide-hd-more" onclick="toggleChatInfoMenu(event)" style="width:36px;height:36px;border:none;background:var(--bg3);border-radius:50%;font-size:20px;cursor:pointer">⋮</button>
+  <div id="chat-info-menu" class="chat-info-dropdown hidden">
+    <button onclick="handleChatInfoProfile()">Profile</button>
+    <button onclick="handleChatInfoBlock()" class="danger"><span data-lang="block_btn">Заблокировать</span></button>
+  </div>
+</div>
     <div id="chat-info-content" style="overflow-y:auto;flex:1;"></div>
 </div>
 
@@ -2749,6 +2759,9 @@ function declineRequest(fromUid){
     if(user){
         if(!user.emailVerified){
             currentUser=user;
+            db.ref(`Users/${currentUser.uid}/blocked`).on('value',snap=>{
+  if(currentUserData) currentUserData.blocked = snap.val()||{};
+});
             document.getElementById('nav-bar').classList.add('hidden');
             showSection('verify');
             if(window._verifyInterval) clearInterval(window._verifyInterval);
@@ -3490,7 +3503,22 @@ async function enableNotifications(){
 }
     function closeChatRoomSilent(){document.getElementById('screen-chat-room').classList.remove('open');}
     function closeChatRoom(){clearChatListeners();stopTypingNow();stopRecording();chatTargetUid=null;chatTargetData={};activeChatId=null;chatIsGroup=false;chatGroupData={};replyingTo=null;pinnedMsgKey=null;currentMsgsArr=[];editingMsgKey=null;cancelEdit();cancelReply();closeStickerPanel();closeChatRoomSilent();}
-    function viewProfileFromChat(uid){closeChatRoom();viewProfile(uid);}
+    function viewProfileFromChat(uid){
+  closeChatInfo(true);
+  closeChatRoom(true);
+  setTimeout(()=> viewProfile(uid), 180);
+}
+function handleChatInfoProfile(){
+  const uid = chatTargetUid;
+  if(!uid) return;
+  const menu=document.getElementById('chat-info-menu');
+  if(menu) menu.classList.add('hidden');
+  closeChatInfo(true);
+  setTimeout(()=>{
+    closeChatRoom(true);
+    setTimeout(()=> viewProfile(uid), 180);
+  }, 100);
+}
     function handleChatHeaderClick(){
         // Always open chat info panel (with photos etc), for both private and group
         // Private: panel now has Profile button instead of Back
@@ -3990,7 +4018,19 @@ function deleteMessageForBoth(msg){
     });
 }
     function leaveGroup(gid){if(!confirm('Покинуть группу?'))return;const upd={[`Chats/${gid}/info/members/${currentUser.uid}`]:null,[`UserChats/${currentUser.uid}/${gid}`]:null};db.ref().update(upd).then(()=>closeChatRoom()).catch(err=>alert(err.message));}
-    function blockUser(uid){if(!confirm('Заблокировать пользователя?'))return;db.ref(`Users/${currentUser.uid}/blocked/${uid}`).set(true).then(()=>closeChatInfo()).catch(err=>alert(err.message));}
+    function blockUser(uid){
+  if(!uid) return;
+  if(!confirm(currentLang==='ru'?'Заблокировать? Он не сможет писать вам, а вы ему. Для него ваш онлайн станет «Неизвестно».':'Block? He won\'t be able to message you and will see Unknown.')) return;
+  db.ref(`Users/${currentUser.uid}/blocked/${uid}`).set(true).then(()=>{
+    closeChatInfo(true);
+    closeChatRoom(true);
+    const cid=makeChatId(currentUser.uid,uid);
+    db.ref(`UserChats/${currentUser.uid}/${cid}`).remove();
+    delete chatsCache[cid];
+    renderChatsList();
+    updateChatsBadge();
+  }).catch(err=>alert(err.message));
+}
     function subscribeToCurrentChat() {
     if (!activeChatId || !chatIsGroup) return;
     const g = chatGroupData;
@@ -5680,6 +5720,19 @@ function attachChatLongPress(row, c){
       const el=document.getElementById('t-'+id); if(el) el.classList.add('selected');
       setTimeout(closeTrackPicker, 400);
     }
+    function toggleChatInfoMenu(e){
+  e.stopPropagation();
+  document.getElementById('chat-info-menu').classList.toggle('hidden');
+}
+function handleChatInfoBlock(){
+  const menu=document.getElementById('chat-info-menu');
+  if(menu) menu.classList.add('hidden');
+  if(chatTargetUid) blockUser(chatTargetUid);
+}
+document.addEventListener('click',(e)=>{
+  const menu=document.getElementById('chat-info-menu');
+  if(menu &&!menu.contains(e.target) &&!e.target.closest('.slide-hd-more')) menu.classList.add('hidden');
+});
     function useManualTrack(){
       const url = document.getElementById('manual-track-url')?.value.trim()||'';
       const title = document.getElementById('manual-track-title')?.value.trim()||'Трек';
