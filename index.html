@@ -1863,6 +1863,28 @@
 .share-icon-btn{ transition: transform .15s, opacity .15s; }
 #screen-cabinet.active ~ #nav-bar{ display:none !important; }
 
+
+/* === PATCHED: group avatar selector === */
+.group-avatar-selector{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:12px;}
+.group-avatar-preview{width:64px;height:64px;border-radius:50%;border:3px solid var(--accent);object-fit:cover;cursor:pointer;}
+.group-avatar-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:260px;}
+.group-avatar-grid img{width:44px;height:44px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .2s;object-fit:cover;}
+.group-avatar-grid img.active{border-color:var(--accent);transform:scale(1.1);}
+.group-avatar-grid img:hover{transform:scale(1.05);}
+
+/* typing avatars stacked */
+.typing-avatars{display:flex;align-items:center;margin-right:6px;}
+.typing-avatar{width:22px;height:22px;border-radius:50%;border:2px solid var(--bg2);object-fit:cover;margin-left:-6px;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.typing-avatar:first-child{margin-left:0;}
+.typing-bubble-wrap{display:flex;align-items:center;gap:4px;}
+.typing-row-custom{display:flex;align-items:flex-end;gap:6px;padding:4px 0;animation:msgSlideUpOther .36s ease both;}
+/* smooth delete - ensure rows transition */
+#chat-messages .msg-row{transition: max-height .38s cubic-bezier(0.4,0,0.2,1), opacity .32s ease, transform .38s cubic-bezier(0.34,1.56,0.64,1), margin .38s ease !important; will-change: transform, opacity, max-height;}
+#chat-messages .msg-row.deleting{max-height:0 !important; opacity:0 !important; margin-top:0 !important; margin-bottom:0 !important; transform: translateY(12px) scale(0.96) !important; pointer-events:none;}
+/* new message slide from bottom */
+@keyframes msgSlideUpReal{0%{opacity:0; transform:translateY(24px) scale(0.96);}100%{opacity:1; transform:translateY(0) scale(1);}}
+.msg-row.msg-new-anim{animation:msgSlideUpReal .44s cubic-bezier(0.34,1.56,0.64,1) both;}
+
 </style>
 </head>
 <body>
@@ -2324,8 +2346,9 @@
   <div style="flex:1;font-size:15px;font-weight:bold" data-lang="chat_info_title">Информация</div>
   <button class="slide-hd-more" onclick="toggleChatInfoMenu(event)" style="width:36px;height:36px;border:none;background:var(--bg3);border-radius:50%;font-size:20px;cursor:pointer">⋮</button>
   <div id="chat-info-menu" class="chat-info-dropdown hidden">
-    <button onclick="handleChatInfoProfile()">Profile</button>
+    <button onclick="handleChatInfoProfile()" data-lang="view_profile">Profile</button>
     <button id="ci-block-btn" onclick="handleChatInfoBlock()" class="danger"><span id="ci-block-span" data-lang="block_btn">Заблокировать</span></button>
+    <button id="ci-leave-btn" onclick="leaveGroup(activeChatId)" class="hidden" style="color:var(--danger)"><span id="ci-leave-span">Покинуть</span></button>
   </div>
 </div>
     <div id="chat-info-content" style="overflow-y:auto;flex:1;"></div>
@@ -2469,6 +2492,11 @@
         <div class="sheet-title" id="create-group-title" data-lang="create_group_title">Создать группу</div>
         <div class="group-section">
             <h4 data-lang="basic_info">Основное</h4>
+            <div class="group-avatar-selector">
+                <img id="group-avatar-preview" src="/avatar1.png" class="group-avatar-preview" onclick="document.getElementById('group-avatar-grid').classList.toggle('hidden')">
+                <div id="group-avatar-grid" class="group-avatar-grid hidden"></div>
+                <div style="font-size:10px;color:var(--text3);" data-lang="avatar_hint">Выберите аватар</div>
+            </div>
             <div class="field-wrap"><input type="text" id="group-name-input" class="field" placeholder="Название" style="text-transform:uppercase"></div>
             <div class="field-wrap"><input type="text" id="group-username-input" class="field" placeholder="@username (уникальный)"></div>
             <div class="field-wrap"><input type="text" id="group-desc-input" class="field" placeholder="Описание"></div>
@@ -2492,6 +2520,10 @@
         <div class="sheet-title" id="group-settings-title" data-lang="group_settings_title">Настройки группы</div>
         <div class="group-section">
             <h4 data-lang="edit_info">Изменить</h4>
+            <div class="group-avatar-selector">
+                <img id="gs-avatar-preview" src="/avatar1.png" class="group-avatar-preview" onclick="document.getElementById('gs-avatar-grid').classList.toggle('hidden')">
+                <div id="gs-avatar-grid" class="group-avatar-grid hidden"></div>
+            </div>
             <div class="field-wrap"><input type="text" id="gs-name" class="field" placeholder="Название"></div>
             <div class="field-wrap"><input type="text" id="gs-username" class="field" placeholder="@username"></div>
             <div class="field-wrap"><input type="text" id="gs-desc" class="field" placeholder="Описание"></div>
@@ -2612,6 +2644,7 @@
     let hasTextInInput=false,isRecording=false;
     let chatIsGroup=false,chatGroupData={};
     let createGroupType='group',selectedGroupMembers={};
+    let groupAvatarTemp='/avatar1.png',gsAvatarTemp='/avatar1.png';
     let activeCommentsPostId=null,currentPostOptionsId=null,currentPostOptionsAuthor=null;
     let currentSection='feed',searchTab='users',previousSection='account';
     let exploreAllUsers=[],exploreAllGroups=[],exploreAllPosts=[];
@@ -2720,27 +2753,39 @@ function declineRequest(fromUid){
     function hideSplash(){
   const s=document.getElementById('splash');
   if(!s) return;
-  if(s.dataset.hiding==='1') return;
-  s.dataset.hiding='1';
-  s.classList.add('out');
-  setTimeout(()=>{ s.style.display='none'; s.style.pointerEvents='none'; },600);
+  try{
+    if(s.dataset.hiding==='1'){
+      setTimeout(()=>{ s.style.display='none'; s.style.opacity='0'; s.style.pointerEvents='none'; s.classList.add('out'); },300);
+      return;
+    }
+    s.dataset.hiding='1';
+    s.classList.add('out');
+    setTimeout(()=>{ s.style.display='none'; s.style.opacity='0'; s.style.pointerEvents='none'; },600);
+  }catch(e){
+    try{ s.style.display='none'; s.style.opacity='0'; s.style.pointerEvents='none'; }catch(_){}
+  }
 }
 
-// === FAILSAFE от бесконечной загрузки ===
+// === FAILSAFE от бесконечной загрузки - FIXED ALL FEATURES ===
 (function(){
   let alreadyHidden=false;
   function forceHide(reason){
-    if(alreadyHidden) return;
     const s=document.getElementById('splash');
-    if(!s) return;
-    if(s.style.display==='none') { alreadyHidden=true; return; }
-    if(s.dataset.hiding==='1' && reason!=='ultimate-timeout') return;
+    if(!s) { alreadyHidden=true; return; }
+    if(s.style.display==='none' && alreadyHidden) return;
     console.warn('[splash] force hide:', reason);
     alreadyHidden=true;
+    try{ 
+      s.classList.add('out');
+      s.style.display='none'; 
+      s.style.opacity='0'; 
+      s.style.pointerEvents='none';
+      s.dataset.hiding='1';
+    }catch(e){}
     try{ hideSplash(); }catch(e){}
     setTimeout(()=>{
       const ss=document.getElementById('splash');
-      if(ss){ ss.classList.add('out'); ss.style.display='none'; ss.style.opacity='0'; ss.style.pointerEvents='none'; }
+      if(ss){ ss.classList.add('out'); ss.style.display='none'; ss.style.opacity='0'; ss.style.pointerEvents='none'; ss.dataset.hiding='1'; }
       if(!document.querySelector('.screen.active')){
         const authScreen=document.getElementById('screen-auth');
         if(authScreen){
@@ -2750,21 +2795,39 @@ function declineRequest(fromUid){
           if(nav) nav.classList.add('hidden');
         }
       }
-    },700);
+    },200);
   }
+  setTimeout(()=>forceHide('timeout 1500ms'), 1500);
+  setTimeout(()=>forceHide('timeout 2500ms'), 2500);
   setTimeout(()=>forceHide('timeout 3500ms'), 3500);
-  window.addEventListener('load', ()=> setTimeout(()=>forceHide('window.load + 1500'), 1500));
-  window.addEventListener('error', (e)=>{ console.error(e); setTimeout(()=>forceHide('js error'), 300); });
-  window.addEventListener('unhandledrejection', ()=> setTimeout(()=>forceHide('unhandledrejection'), 300));
-  setTimeout(()=>forceHide('ultimate-timeout'), 5000);
+  window.addEventListener('load', ()=> setTimeout(()=>forceHide('window.load + 800'), 800));
+  window.addEventListener('DOMContentLoaded', ()=> setTimeout(()=>forceHide('DOMContentLoaded + 1000'), 1000));
+  window.addEventListener('error', (e)=>{ console.error('[splash] js error', e); setTimeout(()=>forceHide('js error'), 100); });
+  window.addEventListener('unhandledrejection', (e)=>{ console.error('[splash] unhandled', e); setTimeout(()=>forceHide('unhandledrejection'), 100); });
+  setTimeout(()=>forceHide('ultimate-timeout 5000'), 5000);
+  setTimeout(()=>{
+    const ss=document.getElementById('splash');
+    if(ss && ss.style.display!=='none'){
+      ss.style.display='none';
+      ss.style.opacity='0';
+      ss.style.pointerEvents='none';
+    }
+    if(!document.querySelector('.screen.active')){
+      const authScreen=document.getElementById('screen-auth');
+      if(authScreen){
+        document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+        authScreen.classList.add('active');
+      }
+    }
+  }, 6000);
 })();
 
 
     // ═══ LANG ═══
     let currentLang=localStorage.getItem('akanchik_lang')||'ru';
     const T={
-        ru:{fan_btn:'Стать фанатом',unfan_btn:'Отписаться',online:'Онлайн',offline:'Не в сети',typing:'печатает…',edited_tag:'(изм.)',send_err:'Ошибка: ',load_err:'Ошибка: ',empty_chats:'Чатов пока нет',empty_notifs:'Событий пока нет',empty_users:'Пусто',empty_fans:'Фанатов пока нет',empty_idols:'Кумиров пока нет',notif_new_fan:'стал твоим фанатом',notif_new_msg:'написал тебе:',voice_too_short:'Слишком короткое',img_only:'Только изображения!',report_sent:'Жалоба отправлена. Спасибо!',report_select:'Выберите причину',report_post_title:'Жалоба на пост',pin_bar:'Закреплено:',reply_to:'Ответ:',notif_new_like:'лайкнул ваш пост',notif_new_comment:'прокомментировал ваш пост',no_posts:'Постов пока нет',no_comments:'Нет комментариев',just_now:'только что',seen:'Просмотрено',messages:'Сообщения',events:'События',explore:'Поиск',feed:'Лента',subscriptions:'Подписки',recommendations:'Рекомендации',refresh:'Обновить',no_feed:'Постов в ленте пока нет',no_recommendations:'Рекомендаций пока нет',verify_title:'Подтвердите email',verify_desc:'Проверьте почту и подтвердите аккаунт',verify_resend:'Отправить повторно',verify_confirm:'Я подтвердил',signout:'Выйти',auth_sub:'Войдите или создайте аккаунт',email_label:'Email',pass_label:'Пароль',forgot_pass:'Забыли пароль?',login_btn:'Войти',register_btn:'Создать аккаунт',terms:'Регистрируясь, вы принимаете условия использования',fans_label:'Фанаты',coins_label:'Монеты',idols_label:'Кумиры',new_post_btn:'Новый пост',feed_title:'Лента',subs_tab:'Подписки',rec_tab:'Рекомендации',explore_title:'Поиск',search_users:'Люди',search_groups:'Группы',search_channels:'Каналы',search_posts:'Посты',chats_title:'Сообщения',settings_title:'Настройки',account_label:'Аккаунт',appearance_label:'Оформление',privacy_label:'Приватность',notifs_label:'Уведомления',lang_label:'Язык',info_label:'Информация',delete_account:'Удалить аккаунт',avatar_hint:'Выберите аватар',theme_label:'Тема',light_theme:'Светлая',dark_theme:'Тёмная',accent_label:'Цвет акцента',who_can_msg:'Кто может писать',everyone:'Все',only_fans:'Только фанаты',unknown:'Неизвестно',nobody:'Никто',show_online:'Показывать онлайн',show_fans:'Показывать фанатов',show_idols:'Показывать кумиров',searchable:'Найти в поиске',read_receipts:'Уведомления о прочтении',allow_reactions:'Разрешить реакции',save_btn:'Сохранить',enable_notifs:'Включить уведомления',created_at:'Аккаунт создан:',version:'Версия:',back_btn:'Назад',write_btn:'Написать',report_btn:'Пожаловаться',nav_profile:'Профиль',nav_feed:'Лента',nav_explore:'Поиск',nav_chats:'Чаты',nav_settings:'Настройки',editing_label:'Редактирование',replying_label:'Ответ',send_voice:'Отправить',chat_info_title:'Информация',comments_title:'Комментарии',new_post_title:'Новый пост',publish_btn:'Опубликовать',add_photo_hint:'Нажмите, чтобы добавить фото',none:'Нет',draw:'Рисовать',undo_btn:'Отмена',save_photo:'⬇ Сохранить',preview_title:'Предпросмотр',crop:'Обрезать',cancel_btn:'Отмена',send_btn:'Отправить',reply_btn:'Ответить',copy_btn:'Копировать',edit_btn:'Изменить',pin_btn:'Закрепить',delete_btn:'Удалить',report_title:'Жалоба',report_send_btn:'Отправить жалобу',pin_title:'Закрепить сообщение',create_group_title:'Создать группу',basic_info:'Основное',public_label:'Публичный (виден в поиске)',add_members:'Добавить участников',create_btn:'Создать',group_settings_title:'Настройки группы',edit_info:'Изменить',who_can_write:'Кто может писать',all_members:'Все участники',only_admins:'Только админы',admins_label:'Администраторы',username_prompt_title:'Выберите @username',username_prompt_desc:'Уникальный username для поиска',later_btn:'Позже',share_title:'Поделиться постом',post_actions_title:'Действия с постом',edit_caption:'Изменить подпись',delete_post:'Удалить пост',edit_caption_label:'Изменить подпись',stickers_title:'Стикеры',recent_stickers:'Недавние',all_stickers:'Все стикеры',profile_color_label:'Цвет профиля',subscribe_btn:'Подписаться',music_label:'♪ Музыка — только ссылка, без загрузки на сайт',search_track_placeholder:'Поиск трека, артиста...',searching:'Ищем...',nothing_found:'Ничего не нашли',enter_track_name:'Введи название трека',enter_query:'Введи запрос',searching_itunes:'Ищем в iTunes...',error_search:'Ошибка',error_search_full:'Ошибка поиска',delete_confirm:'Удалить?',delete_for_me:'Удалить у себя',delete_for_both:'Удалить у обоих',confirm_delete_both:'Удалить чат у обоих? Это удалит всю переписку',cannot_delete_others:'Нельзя удалить чужое сообщение для всех',view_profile:'Профиль',mute_btn:'Замутить',pin_chat:'Закрепить',delete_chat:'Удалить чат',search_placeholder_track:'Поиск трека, артиста...',unsubscribe_btn:'Отписаться',join_btn:'Присоединиться',leave_btn:'Покинуть',requests_label:'Запросы', request_accept:'Принять', request_decline:'Отклонить', request_sent:'Запрос отправлен', request_already:'Запрос уже отправлен', mutual_only:'Вы не подписаны друг на друга', edit_profile:'Редактировать', my_profile:'Мой профиль',events_title:'События',search_placeholder:'Поиск...',message_placeholder:'Сообщение...',comment_placeholder:'Написать комментарий...',caption_placeholder:'Подпись... (необязательно)',group_name_placeholder:'Название',group_username_placeholder:'@username (уникальный)',group_desc_placeholder:'Описание',member_search_placeholder:'Поиск пользователей...',admin_search_placeholder:'Добавить админа...',username_placeholder:'@username (буквы, цифры, _)',name_placeholder:'Твое имя',status_placeholder:'Статус',share_profile_title:'Поделиться профилем',share_my_profile_title:'Мой профиль',link_copied:'Ссылка скопирована!',copied:'Скопировано!',only_admins_write:'Только админы могут писать',user_blocked:'Пользователь заблокирован',you_blocked_user:'Вы заблокировали пользователя',user_restricted:'Пользователь ограничил доступ',avatar_choose_title:'Выберите аватар',joined_label:'Вы участник',subscribed_label:'Вы подписаны',join_prompt:'Присоединитесь чтобы писать',sub_prompt:'Подпишитесь чтобы получать обновления',posts_hidden_blocked:'Посты скрыты — пользователь заблокирован',blocked_cannot_send:'Нельзя отправить — пользователь заблокирован',admin_only_pin:'Только админы могут закреплять',unmute_btn:'Размутить',mute_subs_btn:'🔕 Замутить',not_member_label:'Вы не участник',channel_muted:'Канал замьючен',admin_add_hint:'Введите имя или @username',admin_remove_confirm:'Удалить админа?',creator_only:'Только создатель может это делать'},
-        en:{fan_btn:'Become Fan',unfan_btn:'Unfollow',online:'Online',offline:'Offline',typing:'typing…',edited_tag:'(edited)',send_err:'Error: ',load_err:'Error: ',empty_chats:'No chats yet',empty_notifs:'No events yet',empty_users:'Empty',empty_fans:'No fans yet',empty_idols:'No idols yet',notif_new_fan:'became your fan',notif_new_msg:'wrote you:',voice_too_short:'Too short',img_only:'Images only!',report_sent:'Report sent. Thank you!',report_select:'Select a reason',report_post_title:'Report post',pin_bar:'Pinned:',reply_to:'Reply:',notif_new_like:'liked your post',notif_new_comment:'commented on your post',no_posts:'No posts yet',no_comments:'No comments yet',just_now:'just now',seen:'Seen',messages:'Messages',events:'Events',explore:'Explore',feed:'Feed',subscriptions:'Subscriptions',recommendations:'Recommendations',refresh:'Refresh',no_feed:'No posts in feed yet',no_recommendations:'No recommendations yet',verify_title:'Verify email',verify_desc:'Check your email and verify your account',verify_resend:'Resend',verify_confirm:'I confirmed',signout:'Sign out',auth_sub:'Sign in or create an account',email_label:'Email',pass_label:'Password',forgot_pass:'Forgot password?',login_btn:'Sign in',register_btn:'Create account',terms:'By registering you agree to the terms',fans_label:'Fans',coins_label:'Coins',idols_label:'Idols',new_post_btn:'New post',feed_title:'Feed',subs_tab:'Subscriptions',rec_tab:'Recommendations',explore_title:'Explore',search_users:'People',search_groups:'Groups',search_channels:'Channels',search_posts:'Posts',chats_title:'Messages',settings_title:'Settings',account_label:'Account',appearance_label:'Appearance',privacy_label:'Privacy',notifs_label:'Notifications',lang_label:'Language',info_label:'Info',delete_account:'Delete account',avatar_hint:'Choose avatar',theme_label:'Theme',light_theme:'Light',dark_theme:'Dark',accent_label:'Accent color',who_can_msg:'Who can write',everyone:'Everyone',only_fans:'Only fans',nobody:'Nobody',show_online:'Show online',show_fans:'Show fans',show_idols:'Show idols',unknown:'Unknown',searchable:'Searchable',read_receipts:'Read receipts',allow_reactions:'Allow reactions',save_btn:'Save',enable_notifs:'Enable notifications',created_at:'Account created:',version:'Version:',back_btn:'Back',write_btn:'Write',report_btn:'Report',nav_profile:'Profile',nav_feed:'Feed',nav_explore:'Explore',nav_chats:'Chats',nav_settings:'Settings',editing_label:'Editing',replying_label:'Replying',send_voice:'Send',chat_info_title:'Info',comments_title:'Comments',new_post_title:'New post',publish_btn:'Publish',add_photo_hint:'Tap to add photo',none:'None',draw:'Draw',undo_btn:'Undo',save_photo:'⬇ Save',preview_title:'Preview',crop:'Crop',cancel_btn:'Cancel',send_btn:'Send',reply_btn:'Reply',copy_btn:'Copy',edit_btn:'Edit',pin_btn:'Pin',delete_btn:'Delete',report_title:'Report',report_send_btn:'Send report',pin_title:'Pin message',create_group_title:'Create group',basic_info:'Basic',public_label:'Public (visible in search)',add_members:'Add members',create_btn:'Create',group_settings_title:'Group settings',edit_info:'Edit',who_can_write:'Who can write',all_members:'All members',only_admins:'Only admins',admins_label:'Admins',username_prompt_title:'Choose @username',username_prompt_desc:'Unique username for search',later_btn:'Later',share_title:'Share post',post_actions_title:'Post actions',edit_caption:'Edit caption',delete_post:'Delete post',edit_caption_label:'Edit caption',stickers_title:'Stickers',recent_stickers:'Recent',all_stickers:'All stickers',profile_color_label:'Profile color',subscribe_btn:'Subscribe',music_label:'♪ Music — link only, no upload',search_track_placeholder:'Search track, artist...',searching:'Searching...',nothing_found:'Nothing found',enter_track_name:'Enter track name',enter_query:'Enter query',searching_itunes:'Searching iTunes...',error_search:'Error',error_search_full:'Search error',delete_confirm:'Delete?',delete_for_me:'Delete for me',delete_for_both:'Delete for everyone',confirm_delete_both:'Delete chat for both? This will delete all messages',cannot_delete_others:'Cannot delete others message for everyone',view_profile:'Profile',mute_btn:'Mute',pin_chat:'Pin',delete_chat:'Delete chat',search_placeholder_track:'Search track, artist...',welcome_title:'Welcome to Under',choose_avatar:'Choose avatar',name_label:'Name',status_label:'Status',start_btn:'Start',block_btn:'Block',voice_msg:'Voice message',photo_msg:'Photo',sticker_msg:'Sticker',unsubscribe_btn:'Unsubscribe',join_btn:'Join',leave_btn:'Leave',requests_label:'Requests', request_accept:'Accept', request_decline:'Decline', request_sent:'Request sent', request_already:'Request already sent', mutual_only:'Not mutual following', edit_profile:'Edit', my_profile:'My profile',events_title:'Events',search_placeholder:'Search...',message_placeholder:'Message...',comment_placeholder:'Write a comment...',caption_placeholder:'Caption... (optional)',group_name_placeholder:'Name',group_username_placeholder:'@username (unique)',group_desc_placeholder:'Description',member_search_placeholder:'Search users...',admin_search_placeholder:'Add admin...',username_placeholder:'@username (letters, numbers, _)',name_placeholder:'Your name',status_placeholder:'Status',share_profile_title:'Share profile',share_my_profile_title:'My profile',link_copied:'Link copied!',copied:'Copied!',only_admins_write:'Only admins can write',user_blocked:'User blocked',you_blocked_user:'You blocked user',user_restricted:'User restricted access',avatar_choose_title:'Choose avatar',joined_label:'You are a member',subscribed_label:'You are subscribed',join_prompt:'Join to write',sub_prompt:'Subscribe to get updates',posts_hidden_blocked:'Posts hidden — user blocked',blocked_cannot_send:'Cannot send — user blocked',admin_only_pin:'Only admins can pin',unmute_btn:'Unmute',mute_subs_btn:'🔕 Mute',not_member_label:'Not a member',channel_muted:'Channel muted',admin_add_hint:'Enter name or @username',admin_remove_confirm:'Remove admin?',creator_only:'Only creator can do this'}
+        ru:{fan_btn:'Стать фанатом',unfan_btn:'Отписаться',online:'Онлайн',offline:'Не в сети',typing:'печатает…',edited_tag:'(изм.)',send_err:'Ошибка: ',load_err:'Ошибка: ',empty_chats:'Чатов пока нет',empty_notifs:'Событий пока нет',empty_users:'Пусто',empty_fans:'Фанатов пока нет',empty_idols:'Кумиров пока нет',notif_new_fan:'стал твоим фанатом',notif_new_msg:'написал тебе:',voice_too_short:'Слишком короткое',img_only:'Только изображения!',report_sent:'Жалоба отправлена. Спасибо!',report_select:'Выберите причину',report_post_title:'Жалоба на пост',pin_bar:'Закреплено:',reply_to:'Ответ:',notif_new_like:'лайкнул ваш пост',notif_new_comment:'прокомментировал ваш пост',no_posts:'Постов пока нет',no_comments:'Нет комментариев',just_now:'только что',seen:'Просмотрено',messages:'Сообщения',events:'События',explore:'Поиск',feed:'Лента',subscriptions:'Подписки',recommendations:'Рекомендации',refresh:'Обновить',no_feed:'Постов в ленте пока нет',no_recommendations:'Рекомендаций пока нет',verify_title:'Подтвердите email',verify_desc:'Проверьте почту и подтвердите аккаунт',verify_resend:'Отправить повторно',verify_confirm:'Я подтвердил',signout:'Выйти',auth_sub:'Войдите или создайте аккаунт',email_label:'Email',pass_label:'Пароль',forgot_pass:'Забыли пароль?',login_btn:'Войти',register_btn:'Создать аккаунт',terms:'Регистрируясь, вы принимаете условия использования',fans_label:'Фанаты',coins_label:'Монеты',idols_label:'Кумиры',new_post_btn:'Новый пост',feed_title:'Лента',subs_tab:'Подписки',rec_tab:'Рекомендации',explore_title:'Поиск',search_users:'Люди',search_groups:'Группы',search_channels:'Каналы',search_posts:'Посты',chats_title:'Сообщения',settings_title:'Настройки',account_label:'Аккаунт',appearance_label:'Оформление',privacy_label:'Приватность',notifs_label:'Уведомления',lang_label:'Язык',info_label:'Информация',delete_account:'Удалить аккаунт',avatar_hint:'Выберите аватар',theme_label:'Тема',light_theme:'Светлая',dark_theme:'Тёмная',accent_label:'Цвет акцента',who_can_msg:'Кто может писать',everyone:'Все',only_fans:'Только фанаты',unknown:'Неизвестно',nobody:'Никто',show_online:'Показывать онлайн',show_fans:'Показывать фанатов',show_idols:'Показывать кумиров',searchable:'Найти в поиске',read_receipts:'Уведомления о прочтении',allow_reactions:'Разрешить реакции',save_btn:'Сохранить',enable_notifs:'Включить уведомления',created_at:'Аккаунт создан:',version:'Версия:',back_btn:'Назад',write_btn:'Написать',report_btn:'Пожаловаться',nav_profile:'Профиль',nav_feed:'Лента',nav_explore:'Поиск',nav_chats:'Чаты',nav_settings:'Настройки',editing_label:'Редактирование',replying_label:'Ответ',send_voice:'Отправить',chat_info_title:'Информация',comments_title:'Комментарии',new_post_title:'Новый пост',publish_btn:'Опубликовать',add_photo_hint:'Нажмите, чтобы добавить фото',none:'Нет',draw:'Рисовать',undo_btn:'Отмена',save_photo:'⬇ Сохранить',preview_title:'Предпросмотр',crop:'Обрезать',cancel_btn:'Отмена',send_btn:'Отправить',reply_btn:'Ответить',copy_btn:'Копировать',edit_btn:'Изменить',pin_btn:'Закрепить',delete_btn:'Удалить',report_title:'Жалоба',report_send_btn:'Отправить жалобу',pin_title:'Закрепить сообщение',create_group_title:'Создать группу',basic_info:'Основное',public_label:'Публичный (виден в поиске)',add_members:'Добавить участников',create_btn:'Создать',group_settings_title:'Настройки группы',edit_info:'Изменить',who_can_write:'Кто может писать',all_members:'Все участники',only_admins:'Только админы',admins_label:'Администраторы',username_prompt_title:'Выберите @username',username_prompt_desc:'Уникальный username для поиска',later_btn:'Позже',share_title:'Поделиться постом',post_actions_title:'Действия с постом',edit_caption:'Изменить подпись',delete_post:'Удалить пост',edit_caption_label:'Изменить подпись',stickers_title:'Стикеры',recent_stickers:'Недавние',all_stickers:'Все стикеры',profile_color_label:'Цвет профиля',subscribe_btn:'Подписаться',music_label:'♪ Музыка — только ссылка, без загрузки на сайт',search_track_placeholder:'Поиск трека, артиста...',searching:'Ищем...',nothing_found:'Ничего не нашли',enter_track_name:'Введи название трека',enter_query:'Введи запрос',searching_itunes:'Ищем в iTunes...',error_search:'Ошибка',error_search_full:'Ошибка поиска',delete_confirm:'Удалить?',delete_for_me:'Удалить у себя',delete_for_both:'Удалить у обоих',confirm_delete_both:'Удалить чат у обоих? Это удалит всю переписку',cannot_delete_others:'Нельзя удалить чужое сообщение для всех',view_profile:'Профиль',mute_btn:'Замутить',pin_chat:'Закрепить',delete_chat:'Удалить чат',search_placeholder_track:'Поиск трека, артиста...',unsubscribe_btn:'Отписаться',join_btn:'Присоединиться',leave_btn:'Покинуть',requests_label:'Запросы', request_accept:'Принять', request_decline:'Отклонить', request_sent:'Запрос отправлен', request_already:'Запрос уже отправлен', mutual_only:'Вы не подписаны друг на друга', edit_profile:'Редактировать', my_profile:'Мой профиль',events_title:'События',search_placeholder:'Поиск...',message_placeholder:'Сообщение...',comment_placeholder:'Написать комментарий...',caption_placeholder:'Подпись... (необязательно)',group_name_placeholder:'Название',group_username_placeholder:'@username (уникальный)',group_desc_placeholder:'Описание',member_search_placeholder:'Поиск пользователей...',admin_search_placeholder:'Добавить админа...',username_placeholder:'@username (буквы, цифры, _)',name_placeholder:'Твое имя',status_placeholder:'Статус',share_profile_title:'Поделиться профилем',share_my_profile_title:'Мой профиль',link_copied:'Ссылка скопирована!',copied:'Скопировано!',only_admins_write:'Только админы могут писать',user_blocked:'Пользователь заблокирован',you_blocked_user:'Вы заблокировали пользователя',user_restricted:'Пользователь ограничил доступ',avatar_choose_title:'Выберите аватар',joined_label:'Вы участник',subscribed_label:'Вы подписаны',join_prompt:'Присоединитесь чтобы писать',sub_prompt:'Подпишитесь чтобы получать обновления',posts_hidden_blocked:'Посты скрыты — пользователь заблокирован',blocked_cannot_send:'Нельзя отправить — пользователь заблокирован',admin_only_pin:'Только админы могут закреплять',unmute_btn:'Размутить',mute_subs_btn:'🔕 Замутить',not_member_label:'Вы не участник',channel_muted:'Канал замьючен',admin_add_hint:'Введите имя или @username',admin_remove_confirm:'Удалить админа?',creator_only:'Только создатель может это делать',no_photos:L('no_photos'),greet_with_sticker:'Поприветствуйте собеседника стикером 👋',today:'Сегодня',yesterday:'Вчера',channel:'канал',group:'группа',subscribers_label:'подписчиков',members_label:'участников',group_created_text:'Группа создана',channel_created_text:'Канал создан',joined_text:'Вступил',channel_joined_text:'Подписался',enter_name:'Введите название',enter_username:'Введите username',username_taken:'Username занят',deleted:'Удалено',left_group:'Вы покинули группу',unsubscribed:'Вы отписались',unsubscribe_confirm:'Отписаться от канала?',leave_confirm:'Покинуть группу?',block_btn:'Заблокировать',today_label:'Сегодня',yesterday_label:'Вчера',weekday_monday:'Понедельник',weekday_tuesday:'Вторник',weekday_wednesday:'Среда',weekday_thursday:'Четверг',weekday_friday:'Пятница',weekday_saturday:'Суббота',weekday_sunday:'Воскресенье'},
+        en:{fan_btn:'Become Fan',unfan_btn:'Unfollow',online:'Online',offline:'Offline',typing:'typing…',edited_tag:'(edited)',send_err:'Error: ',load_err:'Error: ',empty_chats:'No chats yet',empty_notifs:'No events yet',empty_users:'Empty',empty_fans:'No fans yet',empty_idols:'No idols yet',notif_new_fan:'became your fan',notif_new_msg:'wrote you:',voice_too_short:'Too short',img_only:'Images only!',report_sent:'Report sent. Thank you!',report_select:'Select a reason',report_post_title:'Report post',pin_bar:'Pinned:',reply_to:'Reply:',notif_new_like:'liked your post',notif_new_comment:'commented on your post',no_posts:'No posts yet',no_comments:'No comments yet',just_now:'just now',seen:'Seen',messages:'Messages',events:'Events',explore:'Explore',feed:'Feed',subscriptions:'Subscriptions',recommendations:'Recommendations',refresh:'Refresh',no_feed:'No posts in feed yet',no_recommendations:'No recommendations yet',verify_title:'Verify email',verify_desc:'Check your email and verify your account',verify_resend:'Resend',verify_confirm:'I confirmed',signout:'Sign out',auth_sub:'Sign in or create an account',email_label:'Email',pass_label:'Password',forgot_pass:'Forgot password?',login_btn:'Sign in',register_btn:'Create account',terms:'By registering you agree to the terms',fans_label:'Fans',coins_label:'Coins',idols_label:'Idols',new_post_btn:'New post',feed_title:'Feed',subs_tab:'Subscriptions',rec_tab:'Recommendations',explore_title:'Explore',search_users:'People',search_groups:'Groups',search_channels:'Channels',search_posts:'Posts',chats_title:'Messages',settings_title:'Settings',account_label:'Account',appearance_label:'Appearance',privacy_label:'Privacy',notifs_label:'Notifications',lang_label:'Language',info_label:'Info',delete_account:'Delete account',avatar_hint:'Choose avatar',theme_label:'Theme',light_theme:'Light',dark_theme:'Dark',accent_label:'Accent color',who_can_msg:'Who can write',everyone:'Everyone',only_fans:'Only fans',nobody:'Nobody',show_online:'Show online',show_fans:'Show fans',show_idols:'Show idols',unknown:'Unknown',searchable:'Searchable',read_receipts:'Read receipts',allow_reactions:'Allow reactions',save_btn:'Save',enable_notifs:'Enable notifications',created_at:'Account created:',version:'Version:',back_btn:'Back',write_btn:'Write',report_btn:'Report',nav_profile:'Profile',nav_feed:'Feed',nav_explore:'Explore',nav_chats:'Chats',nav_settings:'Settings',editing_label:'Editing',replying_label:'Replying',send_voice:'Send',chat_info_title:'Info',comments_title:'Comments',new_post_title:'New post',publish_btn:'Publish',add_photo_hint:'Tap to add photo',none:'None',draw:'Draw',undo_btn:'Undo',save_photo:'⬇ Save',preview_title:'Preview',crop:'Crop',cancel_btn:'Cancel',send_btn:'Send',reply_btn:'Reply',copy_btn:'Copy',edit_btn:'Edit',pin_btn:'Pin',delete_btn:'Delete',report_title:'Report',report_send_btn:'Send report',pin_title:'Pin message',create_group_title:'Create group',basic_info:'Basic',public_label:'Public (visible in search)',add_members:'Add members',create_btn:'Create',group_settings_title:'Group settings',edit_info:'Edit',who_can_write:'Who can write',all_members:'All members',only_admins:'Only admins',admins_label:'Admins',username_prompt_title:'Choose @username',username_prompt_desc:'Unique username for search',later_btn:'Later',share_title:'Share post',post_actions_title:'Post actions',edit_caption:'Edit caption',delete_post:'Delete post',edit_caption_label:'Edit caption',stickers_title:'Stickers',recent_stickers:'Recent',all_stickers:'All stickers',profile_color_label:'Profile color',subscribe_btn:'Subscribe',music_label:'♪ Music — link only, no upload',search_track_placeholder:'Search track, artist...',searching:'Searching...',nothing_found:'Nothing found',enter_track_name:'Enter track name',enter_query:'Enter query',searching_itunes:'Searching iTunes...',error_search:'Error',error_search_full:'Search error',delete_confirm:'Delete?',delete_for_me:'Delete for me',delete_for_both:'Delete for everyone',confirm_delete_both:'Delete chat for both? This will delete all messages',cannot_delete_others:'Cannot delete others message for everyone',view_profile:'Profile',mute_btn:'Mute',pin_chat:'Pin',delete_chat:'Delete chat',search_placeholder_track:'Search track, artist...',welcome_title:'Welcome to Under',choose_avatar:'Choose avatar',name_label:'Name',status_label:'Status',start_btn:'Start',block_btn:'Block',voice_msg:'Voice message',photo_msg:'Photo',sticker_msg:'Sticker',unsubscribe_btn:'Unsubscribe',join_btn:'Join',leave_btn:'Leave',requests_label:'Requests', request_accept:'Accept', request_decline:'Decline', request_sent:'Request sent', request_already:'Request already sent', mutual_only:'Not mutual following', edit_profile:'Edit', my_profile:'My profile',events_title:'Events',search_placeholder:'Search...',message_placeholder:'Message...',comment_placeholder:'Write a comment...',caption_placeholder:'Caption... (optional)',group_name_placeholder:'Name',group_username_placeholder:'@username (unique)',group_desc_placeholder:'Description',member_search_placeholder:'Search users...',admin_search_placeholder:'Add admin...',username_placeholder:'@username (letters, numbers, _)',name_placeholder:'Your name',status_placeholder:'Status',share_profile_title:'Share profile',share_my_profile_title:'My profile',link_copied:'Link copied!',copied:'Copied!',only_admins_write:'Only admins can write',user_blocked:'User blocked',you_blocked_user:'You blocked user',user_restricted:'User restricted access',avatar_choose_title:'Choose avatar',joined_label:'You are a member',subscribed_label:'You are subscribed',join_prompt:'Join to write',sub_prompt:'Subscribe to get updates',posts_hidden_blocked:'Posts hidden — user blocked',blocked_cannot_send:'Cannot send — user blocked',admin_only_pin:'Only admins can pin',unmute_btn:'Unmute',mute_subs_btn:'🔕 Mute',not_member_label:'Not a member',channel_muted:'Channel muted',admin_add_hint:'Enter name or @username',admin_remove_confirm:'Remove admin?',creator_only:'Only creator can do this',no_photos:'No photos',greet_with_sticker:'Greet with a sticker 👋',today:'Today',yesterday:'Yesterday',channel:'channel',group:'group',subscribers_label:'subscribers',members_label:'members',group_created_text:'Group created',channel_created_text:'Channel created',joined_text:'Joined',channel_joined_text:'Subscribed',enter_name:'Enter name',enter_username:'Enter username',username_taken:'Username taken',deleted:'Deleted',left_group:'Left group',unsubscribed:'Unsubscribed',unsubscribe_confirm:'Unsubscribe from channel?',leave_confirm:'Leave group?',block_btn:'Block',today_label:'Today',yesterday_label:'Yesterday',weekday_monday:'Monday',weekday_tuesday:'Tuesday',weekday_wednesday:'Wednesday',weekday_thursday:'Thursday',weekday_friday:'Friday',weekday_saturday:'Saturday',weekday_sunday:'Sunday'}
     };
     function L(k){return(T[currentLang]||T.ru)[k]||k;}
     const REPORT_REASONS={ru:['Спам','Оскорбления','Мошенничество','Угрозы','Неприемлемый контент','Другое'],en:['Spam','Harassment','Scam','Threats','Inappropriate content','Other']};
@@ -3479,6 +3542,24 @@ async function enableNotifications(){
         return true;
     }
 
+    
+    function ensureUserCached(uid){
+        if(!uid || usersCache[uid]) return;
+        db.ref(`Users/${uid}`).once('value').then(s=>{ if(s.exists()){ usersCache[uid]=s.val(); } });
+    }
+    function preloadGroupMembers(chatId, info){
+        const allUids = new Set();
+        if(info.members) Object.keys(info.members).forEach(u=>allUids.add(u));
+        if(info.subscribers) Object.keys(info.subscribers).forEach(u=>allUids.add(u));
+        if(info.creator) allUids.add(info.creator);
+        if(info.admins) Object.keys(info.admins).forEach(u=>allUids.add(u));
+        allUids.forEach(uid=>{
+            if(!usersCache[uid]){
+                db.ref(`Users/${uid}`).once('value').then(s=>{ if(s.exists()) usersCache[uid]=s.val(); });
+            }
+        });
+    }
+
     function canWriteInChat(){
         if(!activeChatId)return false;
         if(chatIsGroup && chatGroupData.type==='channel'){
@@ -3535,12 +3616,14 @@ async function enableNotifications(){
         chatTargetUid=chatId;chatTargetData=chatData||{};activeChatId=chatId;chatIsGroup=true;chatGroupData=chatData||{};chatGroupData._isPreview=!!isPreview;
         pinnedMsgKey=null;replyingTo=null;editingMsgKey=null;currentMsgsArr=[];
         _openChatRoom(chatData.avatar||'/avatar1.png',chatData.name||'GROUP',false);
-        const type=chatData.type==='channel'?'канал':'группа';
+        const type=chatData.type==='channel'?L('channel')||'канал':L('group')||'группа';
         const count=chatData.type==='channel'?(chatData.subscribers?Object.keys(chatData.subscribers).length:0):(chatData.memberCount||'?');
-        document.getElementById('chat-target-status').innerText=`${count} ${chatData.type==='channel'?'подписчиков':'участников'}`;
+        const subText=chatData.type==='channel'? (L('subscribers_label')||'подписчиков') : (L('members_label')||'участников');
+        document.getElementById('chat-target-status').innerText=`${count} ${subText}`;
         if(!isPreview){
             db.ref(`UserChats/${currentUser.uid}/${chatId}/unread`).set(0);
         }
+        preloadGroupMembers(chatId, chatData);
         trackRef(db.ref(`Chats/${chatId}/pinned`),'value',snap=>{const p=snap.val();if(p?.key){pinnedMsgKey=p.key;showPinnedBar(p.text||'');}else{pinnedMsgKey=null;document.getElementById('pinned-bar').classList.add('hidden');}});
         _subscribeChatMessages(chatId);_subscribeTyping(chatId,null);
         const infoRef=db.ref(`Chats/${chatId}/info`);
@@ -3721,19 +3804,26 @@ function muteChatActionForChannel(){
         msgRef.on('value',msgCb);listeners.push({ref:msgRef,event:'value',cb:msgCb});
     }
     function _subscribeTyping(chatId,targetUid){
-    const showTypingBubble = (uid) => {
+    const showTypingBubble = (uidOrUids) => {
         const cont = document.getElementById('chat-messages');
         if(!cont) return;
         let old = document.getElementById('typing-bubble-row');
         if(old) old.remove();
-
-        const u = usersCache[uid] || chatTargetData || {};
-        const av = `/avatar${u.Avatar||1}.png`;
-
+        const uids = Array.isArray(uidOrUids) ? uidOrUids : [uidOrUids];
+        const validUids = uids.filter(u=>u && u!==currentUser.uid);
+        if(!validUids.length) return;
         const row = document.createElement('div');
         row.id = 'typing-bubble-row';
-        row.className = 'msg-row other';
-        row.innerHTML = `<div class="msg other typing-msg"><div class="typing-dots-msg"><span></span><span></span><span></span></div></div>`;
+        row.className = 'msg-row other typing-row-custom';
+        let avatarsHtml = '<div class="typing-avatars">';
+        validUids.slice(0,5).forEach(uid=>{
+            const u = usersCache[uid] || {};
+            const av = u.Avatar ? `/avatar${u.Avatar}.png` : '/avatar1.png';
+            avatarsHtml += `<img src="${av}" class="typing-avatar" onerror="this.src='/avatar1.png'">`;
+        });
+        if(validUids.length>5) avatarsHtml += `<div style="width:22px;height:22px;border-radius:50%;background:var(--bg3);border:2px solid var(--bg2);margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3);">+${validUids.length-5}</div>`;
+        avatarsHtml += '</div>';
+        row.innerHTML = `<div class="typing-bubble-wrap">${avatarsHtml}<div class="msg other typing-msg"><div class="typing-dots-msg"><span></span><span></span><span></span></div></div></div>`;
         cont.appendChild(row);
         cont.scrollTop = cont.scrollHeight;
     };
@@ -3749,11 +3839,11 @@ function muteChatActionForChannel(){
             const typers=snap.val();
             if(!typers){ hideTypingBubble(); return; }
             const now=Date.now();
-            let foundUid = null;
+            const activeTypers=[];
             Object.entries(typers).forEach(([uid,ts])=>{
-                if(uid!=currentUser.uid && ts && now-ts<5000) foundUid = uid;
+                if(uid!=currentUser.uid && ts && now-ts<5000) activeTypers.push(uid);
             });
-            if(foundUid) showTypingBubble(foundUid);
+            if(activeTypers.length) showTypingBubble(activeTypers);
             else hideTypingBubble();
         };
         typRef.on('value',typCb); listeners.push({ref:typRef,event:'value',cb:typCb});
@@ -3802,8 +3892,8 @@ function handleChatInfoProfile(){
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const dStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
         const diffDays = Math.floor((todayStart - dStart)/86400000);
-        if(diffDays===0) return 'Сегодня';
-        if(diffDays===1) return 'Вчера';
+        if(diffDays===0) return L('today')||'Сегодня';
+        if(diffDays===1) return L('yesterday')||'Вчера';
         // if within week, show weekday?
         if(diffDays<7){
             const wd = d.toLocaleDateString('ru-RU', {weekday:'long'});
@@ -3898,12 +3988,13 @@ function handleChatInfoProfile(){
                 const h = row.offsetHeight;
                 row.style.maxHeight = h+'px';
                 row.style.overflow='hidden';
+                // for both self and other - smooth drop
                 requestAnimationFrame(()=>{
                     row.style.maxHeight='0px';
                     row.style.opacity='0';
                     row.style.marginTop='0';
                     row.style.marginBottom='0';
-                    row.style.transform='translateY(16px) scale(0.96)';
+                    row.style.transform='translateY(12px) scale(0.96)';
                 });
                 row.addEventListener('transitionend', ()=> { if(row.parentNode) row.remove(); }, {once:true});
             }
@@ -3917,10 +4008,11 @@ function handleChatInfoProfile(){
                 break;
             }
         }
+        // FIXED: messages rise from bottom, no jump to top
         for(let i=0;i<arr.length;i++){
             const m = arr[i];
             if(existingKeys.has(m.key)) continue;
-            if(m.time && lastTime && m.time < lastTime - 1000) continue;
+            // removed time filter that caused jump
             if(m.time){
                 const d = new Date(m.time);
                 const dateKey = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -3939,28 +4031,23 @@ function handleChatInfoProfile(){
             }
             const row = buildMsgRow(m,arr,i);
             if(row){
-                const msgEl = row.querySelector('.msg');
-                if(msgEl){
-                    msgEl.classList.add('msg-enter-new');
-                    msgEl.classList.add(m.from===currentUser.uid ? 'mine' : 'other');
-                    row.style.opacity='0';
-                    row.style.transform='translateY(28px)';
-                    row.style.maxHeight='0px';
-                    cont.appendChild(row);
-                    const targetH = row.scrollHeight;
-                    void row.offsetWidth;
-                    row.style.transition='all .44s cubic-bezier(0.34,1.56,0.64,1)';
+                row.classList.add('msg-new-anim');
+                row.style.opacity='0';
+                row.style.transform='translateY(24px)';
+                cont.appendChild(row);
+                // force reflow then animate
+                void row.offsetWidth;
+                requestAnimationFrame(()=>{
+                    row.style.transition='transform .44s cubic-bezier(0.34,1.56,0.64,1), opacity .36s ease';
                     row.style.opacity='1';
                     row.style.transform='translateY(0)';
-                    row.style.maxHeight=targetH+'px';
                     setTimeout(()=>{
+                        row.classList.remove('msg-new-anim');
                         row.style.transition='';
-                        row.style.maxHeight='';
-                        if(msgEl) msgEl.classList.remove('msg-enter-new');
-                    }, 500);
-                } else {
-                    cont.appendChild(row);
-                }
+                        row.style.transform='';
+                        row.style.opacity='';
+                    }, 460);
+                });
             }
         }
     }
@@ -3989,7 +4076,7 @@ function checkEmptyChatGreeting(msgs){
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;color:var(--text3);font-size:12px;text-align:center;';
 
     const label = document.createElement('div');
-    label.innerText = currentLang=='ru' ? 'Поприветствуйте собеседника стикером 👋' : 'Greet with a sticker 👋';
+    label.innerText = L('greet_with_sticker')|| (currentLang=='ru' ? 'Поприветствуйте собеседника стикером 👋' : 'Greet with a sticker 👋');
     label.style.marginBottom = '12px';
     wrap.appendChild(label);
 
@@ -4025,7 +4112,9 @@ function checkEmptyChatGreeting(msgs){
         else groupClass='group-single';
         const wrap=document.createElement('div');wrap.className='msg-row '+(isMine?'mine':'other')+' '+groupClass;
         if(chatIsGroup&&!isMine){
-            const av=document.createElement('img');av.className='msg-av';const u=usersCache[m.from]||{};av.src=`/avatar${u.Avatar||1}.png`;av.onclick=()=>viewProfile(m.from);wrap.appendChild(av);
+            const av=document.createElement('img');av.className='msg-av';const u=usersCache[m.from]||{};
+            if(!usersCache[m.from]) ensureUserCached(m.from);
+            av.src=`/avatar${u.Avatar||1}.png`;av.onerror=()=>{ av.src='/avatar1.png'; };av.onclick=()=>viewProfile(m.from);wrap.appendChild(av);
         }
         const swipe=document.createElement('div');swipe.className='msg-swipe '+(isMine?'mine':'other');
         const arrow=document.createElement('span');arrow.className='reply-arrow';arrow.innerHTML=`<svg viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;swipe.appendChild(arrow);
@@ -4187,6 +4276,12 @@ function checkEmptyChatGreeting(msgs){
         const row=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
         if(row &&!row.classList.contains('deleting')){
             pendingDeletions.add(msg.key);
+            // capture for smooth drop
+            const cont=document.getElementById('chat-messages');
+            const rows=[...cont.querySelectorAll('.msg-row')];
+            const idx=rows.indexOf(row);
+            const afterRows=rows.slice(idx+1);
+            const afterPositions=afterRows.map(r=>r.getBoundingClientRect().top);
             row.classList.add('deleting');
             const h=row.offsetHeight;
             row.style.maxHeight=h+'px';
@@ -4196,7 +4291,12 @@ function checkEmptyChatGreeting(msgs){
                 row.style.opacity='0';
                 row.style.marginTop='0';
                 row.style.marginBottom='0';
-                row.style.transform='translateY(16px) scale(0.96)';
+                row.style.transform='translateY(12px) scale(0.96)';
+                // animate following rows dropping down to fill gap - they will transition via CSS max-height/margin
+                afterRows.forEach((r,i)=>{
+                    const delta = afterPositions[i] - r.getBoundingClientRect().top;
+                    // if needed FLIP, but CSS transition on margin will handle
+                });
             });
             row.addEventListener('transitionend', ()=> { if(row.parentNode) row.remove(); }, {once:true});
         }
@@ -4217,6 +4317,10 @@ function deleteMessageForBoth(msg){
         const row=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
         if(row &&!row.classList.contains('deleting')){
             pendingDeletions.add(msg.key);
+            const cont=document.getElementById('chat-messages');
+            const rows=[...cont.querySelectorAll('.msg-row')];
+            const idx=rows.indexOf(row);
+            const afterRows=rows.slice(idx+1);
             row.classList.add('deleting');
             const h=row.offsetHeight;
             row.style.maxHeight=h+'px';
@@ -4226,7 +4330,7 @@ function deleteMessageForBoth(msg){
                 row.style.opacity='0';
                 row.style.marginTop='0';
                 row.style.marginBottom='0';
-                row.style.transform='translateY(16px) scale(0.96)';
+                row.style.transform='translateY(12px) scale(0.96)';
             });
             row.addEventListener('transitionend', ()=> { if(row.parentNode) row.remove(); }, {once:true});
         }
@@ -4286,7 +4390,7 @@ function deleteMessageForBoth(msg){
   }
   const mg=document.getElementById('chat-info-media-grid');
   const photos=currentMsgsArr.filter(m=>m.type==='photo');
-  if(!photos.length) mg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:11px">Нет фото</div>';
+  if(!photos.length) mg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:11px">"+L("no_photos")+"</div>';
   else photos.forEach(m=>{const img=document.createElement('img');img.src=m.url||'';img.onclick=()=>viewPhoto(m.url||'');mg.appendChild(img);});
   setTimeout(()=>{
     const span=document.getElementById('ci-block-span');
@@ -4330,19 +4434,23 @@ function deleteMessageForBoth(msg){
     `;
 
     const ml = document.getElementById('group-members-list');
+    if(!ml){ return; }
+    ml.innerHTML='';
     const allUids = new Set();
     if (g.members) Object.keys(g.members).forEach(u => allUids.add(u));
+    if (g.subscribers) Object.keys(g.subscribers).forEach(u => allUids.add(u));
     if (g.admins) Object.keys(g.admins).forEach(u => allUids.add(u));
     if (g.creator) allUids.add(g.creator);
 
     allUids.forEach(uid => {
-        db.ref(`Users/${uid}`).once('value').then(s => {
-            const u = s.val() || {};
+        const cached = usersCache[uid];
+        const loadAndRender = (uData) => {
+            const u = uData || {};
             const role = uid === g.creator ? '👑' : (g.admins && g.admins[uid]) ? '⭐' : '';
             const row = document.createElement('div');
             row.className = 'user-row rounded';
             row.innerHTML = `
-                <img src="/avatar${u.Avatar || 1}.png" class="urow-av">
+                <img src="/avatar${u.Avatar || 1}.png" class="urow-av" onerror="this.src='/avatar1.png'">
                 <div class="urow-info">
                     <div class="urow-name">${escapeHtml((u.DisplayName || 'PLAYER').toUpperCase())} ${role}</div>
                     <div class="urow-sub">@${escapeHtml(u.username || '')}</div>
@@ -4350,22 +4458,64 @@ function deleteMessageForBoth(msg){
             `;
             row.onclick = () => viewProfile(uid);
             ml.appendChild(row);
-        });
+        };
+        if(cached){
+            loadAndRender(cached);
+        } else {
+            db.ref(`Users/${uid}`).once('value').then(s => {
+                const u = s.val() || {};
+                if(u) usersCache[uid]=u;
+                loadAndRender(u);
+            });
+        }
     });
+    // Add leave/unsubscribe button instead of block
+    const existingLeave = document.getElementById('group-leave-btn');
+    if(existingLeave) existingLeave.remove();
+    const isChannel = g.type==='channel';
+    const isMember = (g.members && g.members[currentUser.uid]) || (g.subscribers && g.subscribers[currentUser.uid]) || g.creator===currentUser.uid;
+    if(isMember && g.creator!==currentUser.uid){
+        const leaveBtn = document.createElement('button');
+        leaveBtn.id='group-leave-btn';
+        leaveBtn.className='btn btn-ghost';
+        leaveBtn.style.cssText='margin-top:12px;border:1.5px solid var(--danger);color:var(--danger);';
+        leaveBtn.innerText = isChannel ? (L('unsubscribe_btn')||'Отписаться') : (L('leave_btn')||'Покинуть');
+        leaveBtn.onclick=()=>{ leaveGroup(activeChatId); };
+        ml.parentNode.appendChild(leaveBtn);
+    }
+    // Add delete/unsubscribe for creator too - auto leave handling
+    const isCreator = g.creator===currentUser.uid;
+    if(isCreator){
+        const delBtn = document.createElement('button');
+        delBtn.id='group-leave-btn';
+        delBtn.className='btn btn-danger';
+        delBtn.style.cssText='margin-top:12px;';
+        delBtn.innerText = isChannel ? (L('delete_btn')||'Удалить канал') : (L('delete_btn')||'Удалить группу');
+        delBtn.onclick=()=>{ deleteGroupChat(); };
+        // avoid duplicate if already exists
+        const existing = document.getElementById('group-leave-btn');
+        if(existing) existing.remove();
+        ml.parentNode.appendChild(delBtn);
+    }
 }
     function leaveGroup(gid){
         const isChannel = chatGroupData.type==='channel';
-        const confirmText = isChannel ? (currentLang==='ru'?'Отписаться от канала?':'Unsubscribe from channel?') : (currentLang==='ru'?'Покинуть группу?':'Leave group?');
+        const confirmText = isChannel ? (L('unsubscribe_confirm')|| (currentLang==='ru'?'Отписаться от канала?':'Unsubscribe from channel?')) : (L('leave_confirm')|| (currentLang==='ru'?'Покинуть группу?':'Leave group?'));
         if(!confirm(confirmText))return;
         const upd={};
         if(isChannel){
             upd[`Chats/${gid}/info/subscribers/${currentUser.uid}`]=null;
         } else {
             upd[`Chats/${gid}/info/members/${currentUser.uid}`]=null;
+            upd[`Chats/${gid}/info/admins/${currentUser.uid}`]=null;
             upd[`Chats/${gid}/info/memberCount`]=firebase.database.ServerValue.increment(-1);
         }
         upd[`UserChats/${currentUser.uid}/${gid}`]=null;
-        db.ref().update(upd).then(()=>closeChatRoom()).catch(err=>alert(err.message));
+        db.ref().update(upd).then(()=>{
+            closeChatInfo(true);
+            closeChatRoom();
+            showToast(isChannel ? (L('unsubscribed')||'Отписались') : (L('left_group')||'Покинули группу'));
+        }).catch(err=>alert(err.message));
     }
     function blockUser(uid){
   if(!uid) return;
@@ -4968,12 +5118,26 @@ function loadMoreRecs(){
         if(replyingTo){msgData.replyTo={...replyingTo};cancelReply();}
         const updates={[`Chats/${cid}/messages/${msgKey}`]:msgData};
         if(chatIsGroup){
-            updates[`UserChats/${currentUser.uid}/${cid}/lastTime`]=time;updates[`UserChats/${currentUser.uid}/${cid}/lastText`]=shortText;
+            updates[`UserChats/${currentUser.uid}/${cid}/lastTime`]=time;updates[`UserChats/${currentUser.uid}/${cid}/lastText`]=shortText;updates[`UserChats/${currentUser.uid}/${cid}/unread`]=0;
             const members=chatGroupData.members||{};Object.keys(members).forEach(uid=>{if(uid===currentUser.uid)return;updates[`UserChats/${uid}/${cid}/lastTime`]=time;updates[`UserChats/${uid}/${cid}/lastText`]=shortText;});
+            const subs=chatGroupData.subscribers||{};Object.keys(subs).forEach(uid=>{if(uid===currentUser.uid)return;updates[`UserChats/${uid}/${cid}/lastTime`]=time;updates[`UserChats/${uid}/${cid}/lastText`]=shortText;});
         } else {
             updates[`UserChats/${currentUser.uid}/${cid}`]={with:tgtUid,lastTime:time,lastText:shortText,unread:0};
             updates[`UserChats/${tgtUid}/${cid}/with`]=currentUser.uid;updates[`UserChats/${tgtUid}/${cid}/lastTime`]=time;updates[`UserChats/${tgtUid}/${cid}/lastText`]=shortText;
         }
+        // Unread increment for groups
+        if(chatIsGroup){
+          db.ref().update(updates).then(()=>{
+            playSound('send');
+            const allOther = new Set([...Object.keys(chatGroupData.members||{}), ...Object.keys(chatGroupData.subscribers||{})]);
+            allOther.forEach(uid=>{
+              if(uid===currentUser.uid) return;
+              db.ref(`UserChats/${uid}/${cid}/unread`).transaction(v=>(v||0)+1);
+              const nKey=db.ref(`Notifications/${uid}`).push().key;
+              db.ref(`Notifications/${uid}/${nKey}`).set({type:'message',from:currentUser.uid,fromName:currentUserData.DisplayName||'PLAYER',fromAvatar:currentUserData.Avatar||1,text:shortText,time,read:false});
+            });
+          }).catch(err=>alert(L('send_err')+err.message));
+        } else {
         // ПРОВЕРКА БЛОКА - не отправляем если нас заблокировали
         if(tgtUid){
           db.ref(`Users/${tgtUid}/blocked/${currentUser.uid}`).once('value').then(bsnap=>{
@@ -4994,6 +5158,7 @@ function loadMoreRecs(){
         } else {
           db.ref().update(updates).then(()=>playSound('send')).catch(err=>alert(L('send_err')+err.message));
         }
+        }
     }
     function sendMediaMessage(type,url,duration,caption){
         if(!canWriteInChat()){
@@ -5013,8 +5178,34 @@ function loadMoreRecs(){
     }
 
     // ═══ GROUPS ═══
+    function renderGroupAvatarChoices(containerId, previewId, tempVarName){
+        const cont=document.getElementById(containerId);
+        const preview=document.getElementById(previewId);
+        if(!cont) return;
+        cont.innerHTML='';
+        for(let i=1;i<=12;i++){
+            const src='/avatar'+i+'.png';
+            const img=document.createElement('img');
+            img.src=src;
+            img.onerror=()=>{ img.style.display='none'; };
+            const currentTemp = tempVarName==='group' ? groupAvatarTemp : gsAvatarTemp;
+            if(src===currentTemp) img.classList.add('active');
+            img.onclick=()=>{
+                if(tempVarName==='group'){ groupAvatarTemp=src; }
+                else { gsAvatarTemp=src; }
+                if(preview) preview.src=src;
+                cont.querySelectorAll('img').forEach(im=>im.classList.remove('active'));
+                img.classList.add('active');
+                cont.classList.add('hidden');
+            };
+            cont.appendChild(img);
+        }
+        if(preview){
+            preview.src = tempVarName==='group' ? groupAvatarTemp : gsAvatarTemp;
+        }
+    }
     function openCreateGroup(type){
-      createGroupType=type;selectedGroupMembers={};
+      createGroupType=type;selectedGroupMembers={};groupAvatarTemp='/avatar1.png';
       document.getElementById('create-group-title').innerText=type==='group'?L('create_group_title'):L('search_channels');
       ['group-name-input','group-username-input','group-desc-input'].forEach(id=>document.getElementById(id).value='');
       document.getElementById('group-public-toggle').checked=true;
@@ -5022,6 +5213,9 @@ function loadMoreRecs(){
       const list=document.getElementById('group-member-list');
       list.innerHTML='<div class="loader">...</div>';
       document.getElementById('group-members-section').style.display=type==='channel'?'none':'';
+      const preview=document.getElementById('group-avatar-preview');
+      if(preview) preview.src=groupAvatarTemp;
+      renderGroupAvatarChoices('group-avatar-grid','group-avatar-preview','group');
       db.ref('Users').once('value').then(snap=>{
         list.innerHTML='';
         let found=0;
@@ -5046,24 +5240,29 @@ function loadMoreRecs(){
     function toggleGroupMember(uid,u,row){if(selectedGroupMembers[uid]){delete selectedGroupMembers[uid];row.style.background='';}else{selectedGroupMembers[uid]=u;row.style.background='rgba(243,156,18,0.1)';}const sel=document.getElementById('group-selected-members');sel.innerHTML='';Object.entries(selectedGroupMembers).forEach(([uid,u])=>{const chip=document.createElement('span');chip.style.cssText='background:var(--accent);color:#fff;border-radius:12px;padding:3px 10px;font-size:10px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;';chip.innerHTML=`${escapeHtml((u.DisplayName||'P').toUpperCase())} ×`;chip.onclick=()=>{delete selectedGroupMembers[uid];chip.remove();};sel.appendChild(chip);});}
     function createGroupChat(){
         const name=document.getElementById('group-name-input').value.trim();const rawUname=document.getElementById('group-username-input').value;const uname=cleanUsername(rawUname);const desc=document.getElementById('group-desc-input').value.trim();const isPublic=document.getElementById('group-public-toggle').checked;
-        if(!name){alert('Введите название');return;}
-        if(!uname){alert('Введите username для группы');return;}
+        const chosenAvatar=groupAvatarTemp||'/avatar1.png';
+        if(!name){alert(L('enter_name')||'Введите название');return;}
+        if(!uname){alert(L('enter_username')||'Введите username для группы');return;}
         checkUsernameUnique(uname,null,null,ok=>{
-            if(!ok){alert('Username занят');return;}
+            if(!ok){alert(L('username_taken')||'Username занят');return;}
             const members={[currentUser.uid]:true};if(createGroupType==='group')Object.keys(selectedGroupMembers).forEach(uid=>{members[uid]=true;});
             const chatId=db.ref('Chats').push().key;
-            const chatData={name,username:uname,description:desc||'',type:createGroupType,creator:currentUser.uid,members,memberCount:Object.keys(members).length,createdAt:Date.now(),avatar:'/avatar1.png',public:isPublic,whoCanWrite:'all'};
+            const chatData={name,username:uname,description:desc||'',type:createGroupType,creator:currentUser.uid,members,memberCount:Object.keys(members).length,createdAt:Date.now(),avatar:chosenAvatar,public:isPublic,whoCanWrite:'all'};
             if(createGroupType==='channel') chatData.whoCanWrite='admins';
             const updates={[`Chats/${chatId}/info`]:chatData,[`Usernames/${uname}`]:{uid:chatId,type:createGroupType}};
-            if(createGroupType==='channel'){updates[`UserChats/${currentUser.uid}/${chatId}`]={name,type:'channel',avatar:'/avatar1.png',lastTime:Date.now(),lastText:'Канал создан',unread:0};}
-            else{Object.keys(members).forEach(uid=>{updates[`UserChats/${uid}/${chatId}`]={name,type:'group',avatar:'/avatar1.png',lastTime:Date.now(),lastText:'Группа создана',unread:0};});}
+            if(createGroupType==='channel'){updates[`UserChats/${currentUser.uid}/${chatId}`]={name,type:'channel',avatar:chosenAvatar,lastTime:Date.now(),lastText:L('channel_created_text')||'Канал создан',unread:0};}
+            else{Object.keys(members).forEach(uid=>{updates[`UserChats/${uid}/${chatId}`]={name,type:'group',avatar:chosenAvatar,lastTime:Date.now(),lastText:L('group_created_text')||'Группа создана',unread:0};});}
             db.ref().update(updates).then(()=>{document.getElementById('create-group-modal').classList.add('hidden');openGroupChat(chatId,{...chatData,id:chatId});}).catch(err=>alert(err.message));
         });
     }
     function openGroupSettings(gid){
         currentGroupSettingsId=gid;const g=chatGroupData;
+        gsAvatarTemp=g.avatar||'/avatar1.png';
         document.getElementById('group-settings-title').innerText=g.type==='channel'?L('search_channels')+' '+L('settings_title'):L('group_settings_title');
         document.getElementById('gs-name').value=g.name||'';document.getElementById('gs-username').value=g.username||'';document.getElementById('gs-desc').value=g.description||'';document.getElementById('gs-public').checked=g.public!==false;
+        const gsPreview=document.getElementById('gs-avatar-preview');
+        if(gsPreview) gsPreview.src=gsAvatarTemp;
+        renderGroupAvatarChoices('gs-avatar-grid','gs-avatar-preview','gs');
         if(g.type==='channel'){
             document.getElementById('gs-who-can-write').parentElement.style.display='none';
         } else {
@@ -5124,25 +5323,45 @@ function loadMoreRecs(){
         let whoCanWrite=document.getElementById('gs-who-can-write').value;
         if(chatGroupData.type==='channel') whoCanWrite='admins';
         const doSave=(ok)=>{
-            if(!ok){alert('Username занят');return;}
-            const upd={[`Chats/${gid}/info/name`]:name,[`Chats/${gid}/info/username`]:uname,[`Chats/${gid}/info/description`]:desc,[`Chats/${gid}/info/public`]:isPublic,[`Chats/${gid}/info/whoCanWrite`]:whoCanWrite};
+            if(!ok){alert(L('username_taken')||'Username занят');return;}
+            const newAvatar=gsAvatarTemp||chatGroupData.avatar||'/avatar1.png';
+            const upd={[`Chats/${gid}/info/name`]:name,[`Chats/${gid}/info/username`]:uname,[`Chats/${gid}/info/description`]:desc,[`Chats/${gid}/info/public`]:isPublic,[`Chats/${gid}/info/whoCanWrite`]:whoCanWrite,[`Chats/${gid}/info/avatar`]:newAvatar};
             const oldUname=chatGroupData.username;if(oldUname&&oldUname!==uname)upd[`Usernames/${oldUname}`]=null;if(uname)upd[`Usernames/${uname}`]={uid:gid,type:chatGroupData.type||'group'};
             const members = chatGroupData.members ? Object.keys(chatGroupData.members) : [];
             const subs = chatGroupData.subscribers ? Object.keys(chatGroupData.subscribers) : [];
             const allUids = [...new Set([...members, ...subs, chatGroupData.creator].filter(Boolean))];
-            allUids.forEach(uid=>{ upd[`UserChats/${uid}/${gid}/name`]=name; upd[`UserChats/${uid}/${gid}/avatar`]=chatGroupData.avatar||'/avatar1.png'; });
+            allUids.forEach(uid=>{ upd[`UserChats/${uid}/${gid}/name`]=name; upd[`UserChats/${uid}/${gid}/avatar`]=newAvatar; });
             db.ref().update(upd).then(()=>{
-                chatGroupData={...chatGroupData,name,username:uname,description:desc,public:isPublic,whoCanWrite};
+                chatGroupData={...chatGroupData,name,username:uname,description:desc,public:isPublic,whoCanWrite,avatar:newAvatar};
                 document.getElementById('group-settings-modal').classList.add('hidden');
                 const nameEl=document.getElementById('chat-target-name'); if(nameEl) nameEl.innerText=name.toUpperCase();
+                const avEl=document.getElementById('chat-target-avatar'); if(avEl) avEl.src=newAvatar;
                 renderChatsList();
                 renderChatState();
-                alert(L('save_btn'));
+                showToast(L('save_btn')||'Сохранено');
+            }).catch(err=>alert(err.message));
             }).catch(err=>alert(err.message));
         };
         if(uname&&uname!==chatGroupData.username)checkUsernameUnique(uname,null,gid,doSave);else doSave(true);
     }
-    function deleteGroupChat(){const gid=currentGroupSettingsId;if(!gid||!confirm(L('delete_btn')))return;db.ref(`Chats/${gid}`).remove().then(()=>{db.ref(`UserChats/${currentUser.uid}/${gid}`).remove();document.getElementById('group-settings-modal').classList.add('hidden');closeChatInfo();closeChatRoom();}).catch(err=>alert(err.message));}
+    function deleteGroupChat(){
+        const gid=currentGroupSettingsId || activeChatId;
+        if(!gid||!confirm(L('delete_confirm')||'Удалить?'))return;
+        const g=chatGroupData;
+        const members = g.members ? Object.keys(g.members) : [];
+        const subs = g.subscribers ? Object.keys(g.subscribers) : [];
+        const allUids = [...new Set([...members, ...subs, g.creator].filter(Boolean))];
+        const upd={};
+        upd[`Chats/${gid}`]=null;
+        if(g.username) upd[`Usernames/${g.username}`]=null;
+        allUids.forEach(uid=>{ upd[`UserChats/${uid}/${gid}`]=null; });
+        db.ref().update(upd).then(()=>{
+            document.getElementById('group-settings-modal').classList.add('hidden');
+            closeChatInfo(true);
+            closeChatRoom();
+            showToast(L('deleted')||'Удалено');
+        }).catch(err=>alert(err.message));
+    }
     function copyGroupLink(){const url=document.getElementById('gs-link-url').innerText;if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>alert(L('copy_btn')));}
 
     // ═══ INPUT / VOICE ═══
@@ -6350,13 +6569,28 @@ function attachChatLongPress(row, c){
     function toggleChatInfoMenu(e){
   e.stopPropagation();
   const menu=document.getElementById('chat-info-menu');
-  if(menu){
-    const isHidden = menu.classList.contains('hidden');
-    if(isHidden){
-      const isBlocked = currentUserData && currentUserData.blocked && currentUserData.blocked[chatTargetUid];
-      const span=document.getElementById('ci-block-span');
-      if(span) span.innerText = isBlocked ? (currentLang==='ru'?'Разблокировать':'Unblock') : (currentLang==='ru'?'Заблокировать':'Block');
+  if(!menu) return;
+  const blockBtn=document.getElementById('ci-block-btn');
+  const leaveBtn=document.getElementById('ci-leave-btn');
+  if(chatIsGroup){
+    if(blockBtn) blockBtn.classList.add('hidden');
+    if(leaveBtn){
+        leaveBtn.classList.remove('hidden');
+        const isChannel=chatGroupData.type==='channel';
+        const span=document.getElementById('ci-leave-span');
+        if(span) span.innerText = isChannel ? (L('unsubscribe_btn')||'Отписаться') : (L('leave_btn')||'Покинуть');
     }
+  } else {
+    if(blockBtn) blockBtn.classList.remove('hidden');
+    if(leaveBtn) leaveBtn.classList.add('hidden');
+  }
+  menu.classList.toggle('hidden');
+}
+function handleChatInfoBlock(){
+  const menu=document.getElementById('chat-info-menu');
+  if(menu) menu.classList.add('hidden');
+  toggleBlockCurrent();
+}
     menu.classList.toggle('hidden');
   }
 }
@@ -6835,5 +7069,34 @@ document.addEventListener('click',(e)=>{
 </div>
 
 
+
+<script>
+// EXTRA SAFETY NET FOR INFINITE LOADING - ALL FEATURES VERSION
+(function(){
+  function finalHide(){
+    const s=document.getElementById('splash');
+    if(s){
+      s.classList.add('out');
+      s.style.display='none';
+      s.style.opacity='0';
+      s.style.pointerEvents='none';
+    }
+    try{
+      if(!document.querySelector('.screen.active')){
+        const auth=document.getElementById('screen-auth');
+        if(auth){
+          document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+          auth.classList.add('active');
+          const nav=document.getElementById('nav-bar');
+          if(nav) nav.classList.add('hidden');
+        }
+      }
+    }catch(e){}
+  }
+  setTimeout(finalHide, 2000);
+  window.addEventListener('load', ()=> setTimeout(finalHide, 900));
+  setTimeout(finalHide, 3500);
+})();
+</script>
 </body>
 </html>
