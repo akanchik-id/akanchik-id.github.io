@@ -3810,6 +3810,7 @@ function checkEmptyChatGreeting(msgs){
         swipe.addEventListener('touchcancel',()=>{swipe.style.transform='';arrow.style.opacity='0';swiping=false;},{passive:true});
     }
     function openMessageMenu(msg){
+        hideChatKeyboard();
         if(!msg)return;
         activeMenuMsg=msg;
         const isMine=msg.from===currentUser.uid;
@@ -5221,7 +5222,9 @@ function initPostCarouselNative(safeId, count){
         wrap.style.display='block';grid.innerHTML='';
         recentStickers.slice(0,10).forEach(src=>{const item=document.createElement('div');item.className='sticker-item';const img=document.createElement('img');img.src=src;img.onerror=()=>item.style.display='none';item.appendChild(img);item.onclick=()=>sendSticker(src);grid.appendChild(item);});
     }
+    function hideChatKeyboard(){try{const inp=document.getElementById('chat-input');if(inp)inp.blur();if(document.activeElement)document.activeElement.blur();if(inp){inp.setAttribute('readonly','readonly');setTimeout(()=>inp.removeAttribute('readonly'),100);}}catch(e){}}
     function toggleStickerPanel(){
+        hideChatKeyboard();
         if(!canWriteInChat()){
             alert(currentLang==='ru'?'У вас нет прав отправлять стикеры':'You cannot send stickers');
             return;
