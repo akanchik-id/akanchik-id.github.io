@@ -3,8 +3,7 @@
   "target": {
     "namespace": "android_app",
     "package_name": "com.under.app",
-    "sha256_cert_fingerprints": [
-      "СЮДА_ВСТАВИШЬ_SHA256_ПОЗЖЕ"
-    ]
+    "sha256_cert_fingerprints":
+    ["2A:D0:F7:33:E6:2D:4E:60:B1:51:83:BF:A8:BD:DC:85:24:28:47:6D:00:4D:FA:F0:AF:D7:37:67:92:33:BF:87"]
   }
 }]
