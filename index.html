@@ -242,7 +242,7 @@
         .msg-swipe.other .reply-arrow{left:-24px;}
         .reply-arrow svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
         .msg{display:inline-block;padding:8px 10px;border-radius:18px;font-size:13px;line-height:1.4;position:relative;cursor:default;animation:msgIn .2s cubic-bezier(0.34,1.56,0.64,1) both;-webkit-user-select:text;user-select:text;max-width:100%;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;}
-        to{opacity:1;transform:scale(1) translateY(0)}}
+        @keyframes msgIn{from{opacity:0;transform:scale(0.9) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}
         .msg.mine{background: var(--msg-mine);color:#fff;border-bottom-right-radius:4px;}
         .msg.other{background: color-mix(in srgb, var(--accent) 8%, var(--msg-other));border-color: color-mix(in srgb, var(--accent) 18%, var(--msg-other-border));}
         .msg.other{background: var(--msg-other);color:var(--text);border:1px solid var(--msg-other-border);border-bottom-left-radius:4px;}
@@ -1487,7 +1487,7 @@
         .nav { transition: transform .4s cubic-bezier(0.32,0.72,0,1), opacity .3s ease !important; will-change: transform; }
         .nav-item .ni-icon { transition: transform .42s cubic-bezier(0.34,1.56,0.64,1), stroke .25s ease !important; }
         .msg { will-change: transform, opacity; backface-visibility:hidden; transform: translateZ(0); }
-         to { opacity:1; transform: translateZ(0) scale(1) translateY(0); } }
+        @keyframes msgIn { from { opacity:0; transform: translateZ(0) scale(0.92) translateY(8px); } to { opacity:1; transform: translateZ(0) scale(1) translateY(0); } }
         .msg { animation: msgIn .38s cubic-bezier(0.2,0.8,0.2,1) both !important; }
         #chat-messages { scroll-behavior: auto; contain: layout paint style; padding: 86px 12px 96px 12px !important; gap: 8px !important; transform: translateZ(0); will-change: scroll-position; }
         .scroll { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
@@ -1520,10 +1520,10 @@
 
 
 /* ====== FIXES BY META AI: no flicker, animations, multi-account ====== */
-.msg { animation: none !important; } /* jitter fix */
-
-
-
+.msg-enter { animation: msgIn .38s cubic-bezier(0.2,0.8,0.2,1) both !important; }
+.msg-enter.mine { animation: msgSend .42s cubic-bezier(0.34,1.56,0.64,1) both !important; }
+@keyframes msgSend {
+  0% { opacity:0; transform: translateY(18px) scale(.92); }
   60% { opacity:1; transform: translateY(-2px) scale(1.02); }
   100% { opacity:1; transform: translateY(0) scale(1); }
 }
@@ -1729,14 +1729,6 @@
         }
 
 
-/* === FIX: no jitter for messages === */
-.msg { animation: none !important; transform: none !important; will-change: auto !important; }
-.msg-row { transition: none !important; transform: none !important; }
-.msg-row:active { transform: none !important; }
-
-
-#chat-messages { scroll-behavior: auto !important; contain: none !important; transform: none !important; will-change: auto !important; }
-
 .msg-ctx-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.32); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:2000; display:flex; align-items:center; justify-content:center; padding:18px; }
 .msg-ctx-overlay.hidden{ display:none; }
 .msg-ctx-card{ width:100%; max-width:320px; background:color-mix(in srgb, var(--bg2) 92%, transparent); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border:1px solid var(--border); border-radius:22px; padding:12px; box-shadow:0 20px 50px rgba(0,0,0,.25); animation:ctxIn .24s cubic-bezier(.32,.72,0,1); }
@@ -1753,9 +1745,9 @@
 .mctx-btn.full{ grid-column:1 / -1; flex-direction:row; justify-content:center; gap:8px; }
 @keyframes msgSendAnim{0%{opacity:0;transform:translateY(18px) scale(.92)}60%{opacity:1;transform:translateY(-2px) scale(1.02)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes msgInAnim{from{opacity:0;transform:scale(0.92) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
-
-
-
+.msg.msg-enter{will-change:transform,opacity}
+.msg.mine.msg-enter{animation:msgSendAnim .42s cubic-bezier(0.34,1.56,0.64,1) both !important}
+.msg.other.msg-enter{animation:msgInAnim .32s ease both !important}
 .settings-row[onclick*="s-account"]{display:none !important}
 .chat-profile-tabs{display:flex;gap:6px;padding:0 12px;margin:10px 0 8px}
 .chat-profile-tabs .tab-btn{flex:1;padding:8px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg3);color:var(--text2);font-family:'ZeroCool';font-size:11px;cursor:pointer}
@@ -1768,41 +1760,73 @@
 .chat-info-dropdown button{width:100%;text-align:left;padding:10px 12px;border:none;background:none;font-family:'ZeroCool';font-size:12px;color:var(--text);border-radius:8px;cursor:pointer}
 .chat-info-dropdown button.danger{color:var(--danger)}
 .chat-info-dropdown button:hover{background:var(--bg3)}
+    /* === FINAL ANIMATIONS - ВСТАВЬ ПЕРЕД === */
 
+@keyframes btnSendPulse { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
 
-/* ===== ЕДИНАЯ АНИМАЦИЯ - 1 ДЛЯ ОТПРАВКИ/ПОЛУЧЕНИЯ + ПЛАВНОЕ УДАЛЕНИЕ ВНИЗ ДЛЯ ОБОИХ ===== */
-@keyframes msgEnter {
-  0% { opacity:0; transform: translateY(12px) scale(0.96); }
+#chat-messages.msg {
+  will-change: transform, opacity!important;
+  transform: translateZ(0);
+  animation: none!important;
+}
+#chat-messages.msg.msg-enter {
+  animation: msgInAnim.32s cubic-bezier(0.2,0.8,0.2,1) both!important;
+}
+#chat-messages.msg.mine.msg-enter {
+  animation: msgSendAnim.46s cubic-bezier(0.34,1.56,0.64,1) both!important;
+}
+#chat-messages.msg-row.deleting {
+  overflow:hidden!important;
+  pointer-events:none!important;
+  animation-duration:.38s!important;
+  animation-fill-mode:forwards!important;
+}
+#chat-messages.msg-row.deleting.mine { animation-name: msgDeleteMine!important; }
+#chat-messages.msg-row.deleting.other { animation-name: msgDeleteOther!important; }
+#btn-send.sending { animation: btnSendPulse.42s ease!important; }
+
+/* удаление */
+#btn-send.sending {
+  animation: btnSendPulse .42s ease;
+}
+/* === CLEAN ANIMATIONS FIX - POLOSKI FIX === */
+@keyframes msgSendAnim {
+  0% { opacity:0; transform: translateY(14px) scale(0.94); }
   100% { opacity:1; transform: translateY(0) scale(1); }
 }
-@keyframes msgDeleteDown {
-  0% { opacity:1; transform: translateY(0) scale(1); max-height: 200px; margin: 4px 0; }
-  25% { opacity:0; transform: translateY(8px) scale(0.97); }
-  100% { opacity:0; transform: translateY(20px) scale(0.94); max-height: 0; margin: 0; padding-top:0; padding-bottom:0; }
+@keyframes msgInAnim {
+  0% { opacity:0; transform: translateY(10px) scale(0.97); }
+  100% { opacity:1; transform: translateY(0) scale(1); }
 }
-@keyframes btnSendPulse {
-  0% { transform:scale(1); } 50% { transform:scale(1.18); } 100% { transform:scale(1); }
+@keyframes msgDeleteMine {
+  0% { opacity:1; transform: translateX(0); max-height:200px; margin:4px 0; }
+  100% { opacity:0; transform: translateX(60px); max-height:0; margin:0; }
+}
+@keyframes msgDeleteOther {
+  0% { opacity:1; transform: translateX(0); max-height:200px; margin:4px 0; }
+  100% { opacity:0; transform: translateX(-60px); max-height:0; margin:0; }
 }
 
 #chat-messages .msg-row {
-  overflow: visible;
+  overflow: visible !important;
   transform: translateZ(0);
 }
 
 #chat-messages .msg.msg-enter {
-  animation: msgEnter .32s cubic-bezier(0.2,0.8,0.2,1) both !important;
-  will-change: transform, opacity;
+  animation: msgInAnim .30s ease both !important;
+}
+#chat-messages .msg.mine.msg-enter {
+  animation: msgSendAnim .38s cubic-bezier(0.34,1.56,0.64,1) both !important;
 }
 
 #chat-messages .msg-row.deleting {
   overflow: hidden !important;
   pointer-events: none !important;
-  animation: msgDeleteDown .36s cubic-bezier(0.4,0,0.2,1) forwards !important;
+  animation: msgDeleteMine .34s cubic-bezier(0.4,0,0.2,1) forwards !important;
 }
-
-#btn-send.sending {
-  animation: btnSendPulse .36s ease !important;
-}
+#chat-messages .msg-row.deleting.other { animation-name: msgDeleteOther !important; }
+#chat-messages .msg-row.deleting.mine { animation-name: msgDeleteMine !important; }
+    
 
     </style>
 </head>
