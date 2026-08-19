@@ -1751,6 +1751,11 @@
 .mctx-ic{ font-size:18px; line-height:1; }
 .mctx-btn.danger{ color:var(--danger); }
 .mctx-btn.full{ grid-column:1 / -1; flex-direction:row; justify-content:center; gap:8px; }
+        @keyframes msgSendAnim{0%{opacity:0;transform:translateY(18px) scale(.92)}60%{opacity:1;transform:translateY(-2px) scale(1.02)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes msgInAnim{from{opacity:0;transform:scale(0.92) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.msg.msg-enter{will-change:transform,opacity}
+.msg.mine.msg-enter{animation:msgSendAnim .42s cubic-bezier(0.34,1.56,0.64,1) both !important}
+.msg.other.msg-enter{animation:msgInAnim .32s ease both !important}
 </style>
 </head>
 <body>
@@ -3634,7 +3639,11 @@ async function enableNotifications(){
                 }
             }
             const row = buildMsgRow(m,arr,i);
-            if(row) cont.appendChild(row);
+            if(row){
+                const msgEl = row.querySelector('.msg');
+                if(msgEl){ msgEl.classList.add('msg-enter'); setTimeout(()=>msgEl.classList.remove('msg-enter'),600); }
+                cont.appendChild(row);
+            }
         }
     }
 
@@ -5959,6 +5968,8 @@ function attachChatLongPress(row, c){
   const origOpenChatRoom = window._openChatRoom;
   const origCloseSilent = window.closeChatRoomSilent;
   const origCloseChatRoom = window.closeChatRoom;
+  const origOpenPostCreate = window.openPostCreate;
+  const origClosePostCreate = window.closePostCreate;
 
   // --- обертки ---
   window.showSection = function(section, fromPop){
@@ -6006,6 +6017,16 @@ function attachChatLongPress(row, c){
     if(!_isPop && history.state?.type === 'chat-room'){ history.back(); return; }
     if(origCloseChatRoom) return origCloseChatRoom.call(this);
   };
+  window.openPostCreate = function(fromPop){
+    if(!fromPop && !_isPop) safePush({type:'post-create'});
+    if(origOpenPostCreate) return origOpenPostCreate.call(this, true);
+  };
+        
+  window.closePostCreate = function(fromPop){
+    if(fromPop === true){ if(origClosePostCreate) return origClosePostCreate.call(this, true); return; }
+    if(!_isPop && history.state?.type === 'post-create'){ history.back(); return; }
+    if(origClosePostCreate) return origClosePostCreate.call(this, true);
+  };
 
   window.openComments = function(postId, fromPop){
     if(!fromPop && !_isPop) safePush({type:'comments', postId});
@@ -6037,6 +6058,8 @@ function attachChatLongPress(row, c){
         document.querySelectorAll('.settings-sub.active').forEach(s=>s.classList.remove('active'));
         const main = document.getElementById('cabinet-main');
         if(main && document.querySelector('.settings-sub.active')==null) main.style.display='';
+        const postPanel = document.getElementById('post-create-panel');
+        if(postPanel) postPanel.classList.remove('open');
       };
 
       if(!st){
@@ -6044,6 +6067,8 @@ function attachChatLongPress(row, c){
         if(chatRoomEl?.classList.contains('open')){
           if(origCloseChatRoom) origCloseChatRoom.call(window); else chatRoomEl.classList.remove('open');
         }
+        const postPanelNull = document.getElementById('post-create-panel');
+        if(postPanelNull) postPanelNull.classList.remove('open');
         closeAllOverlays();
         if(origShowSection) origShowSection.call(window, 'feed');
         return;
@@ -6075,6 +6100,12 @@ function attachChatLongPress(row, c){
           if(commentsEl){
             commentsEl.classList.add('open');
             if(window._loadComments && st.postId) window._loadComments(st.postId);
+          }
+          break;
+        case 'post-create':
+          {
+            const pp = document.getElementById('post-create-panel');
+            if(pp){ pp.classList.add('open'); pp.style.transform='translateY(0)'; }
           }
           break;
       }
