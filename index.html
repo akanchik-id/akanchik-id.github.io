@@ -1519,7 +1519,6 @@
 
 
 /* ====== FIXES BY META AI: no flicker, animations, multi-account ====== */
-.msg { animation: none !important; } /* jitter fix */
 .msg-enter { animation: msgIn .38s cubic-bezier(0.2,0.8,0.2,1) both !important; }
 .msg-enter.mine { animation: msgSend .42s cubic-bezier(0.34,1.56,0.64,1) both !important; }
 @keyframes msgSend {
@@ -1824,6 +1823,48 @@
 .chat-info-dropdown button{width:100%;text-align:left;padding:10px 12px;border:none;background:none;font-family:'ZeroCool';font-size:12px;color:var(--text);border-radius:8px;cursor:pointer}
 .chat-info-dropdown button.danger{color:var(--danger)}
 .chat-info-dropdown button:hover{background:var(--bg3)}
+    /* === FINAL ANIMATIONS - ВСТАВЬ ПЕРЕД </style> === */
+@keyframes msgSendAnim {
+  0% { opacity:0; transform: translateY(20px) scale(0.88); }
+  55% { opacity:1; transform: translateY(-4px) scale(1.03); }
+  100% { opacity:1; transform: translateY(0) scale(1); }
+}
+@keyframes msgInAnim {
+  0% { opacity:0; transform: translateY(12px) scale(0.94); }
+  100% { opacity:1; transform: translateY(0) scale(1); }
+}
+@keyframes msgDeleteMine {
+  0% { opacity:1; transform: translateX(0) scale(1); max-height:200px; margin:8px 0 2px; }
+  40% { opacity:0; transform: translateX(90px) scale(0.92); }
+  100% { opacity:0; transform: translateX(90px) scale(0.8); max-height:0; margin:0; padding:0; }
+}
+@keyframes msgDeleteOther {
+  0% { opacity:1; transform: translateX(0) scale(1); max-height:200px; margin:8px 0 2px; }
+  40% { opacity:0; transform: translateX(-90px) scale(0.92); }
+  100% { opacity:0; transform: translateX(-90px) scale(0.8); max-height:0; margin:0; padding:0; }
+}
+@keyframes btnSendPulse { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+
+#chat-messages.msg {
+  will-change: transform, opacity!important;
+  transform: translateZ(0);
+  animation: none!important;
+}
+#chat-messages.msg.msg-enter {
+  animation: msgInAnim.32s cubic-bezier(0.2,0.8,0.2,1) both!important;
+}
+#chat-messages.msg.mine.msg-enter {
+  animation: msgSendAnim.46s cubic-bezier(0.34,1.56,0.64,1) both!important;
+}
+#chat-messages.msg-row.deleting {
+  overflow:hidden!important;
+  pointer-events:none!important;
+  animation-duration:.38s!important;
+  animation-fill-mode:forwards!important;
+}
+#chat-messages.msg-row.deleting.mine { animation-name: msgDeleteMine!important; }
+#chat-messages.msg-row.deleting.other { animation-name: msgDeleteOther!important; }
+#btn-send.sending { animation: btnSendPulse.42s ease!important; }
     </style>
 </head>
 <body>
@@ -3624,53 +3665,20 @@ function handleChatInfoProfile(){
     if(!cont) return;
     const isAtBottom = cont.scrollHeight - cont.scrollTop - cont.clientHeight < 140;
     const typingEl = document.getElementById('typing-bubble-row');
-    const typingHTML = typingEl ? typingEl.outerHTML : null;
+    const typingHTML = typingEl? typingEl.outerHTML : null;
     if(typingEl) typingEl.remove();
-
     arr = (arr||[]).filter(m=>!(m.deletedFor && m.deletedFor[currentUser.uid]));
-    
-    // Use document fragment and avoid animations that cause layout shift
     const existingMap = new Map();
     cont.querySelectorAll('.msg-row').forEach(row=>{
         const msgEl = row.querySelector('.msg[data-key]');
-        if(msgEl && msgEl.dataset.key){
-            existingMap.set(msgEl.dataset.key, row);
-        }
+        if(msgEl && msgEl.dataset.key) existingMap.set(msgEl.dataset.key, row);
     });
-    
     const existingKeys = new Set(existingMap.keys());
     const arrKeys = new Set((arr||[]).map(m=>m.key));
-    
     let hasDeletion = false;
     for(const k of existingKeys){ if(!arrKeys.has(k)){ hasDeletion=true; break; } }
-    
-    // Update ticks in place without rebuild
-    try{
-        for(const m of (arr||[])){
-            const row = existingMap.get(m.key);
-            if(!row) continue;
-            const ticksEl = row.querySelector('.ticks');
-            if(!ticksEl) continue;
-            if(m.from===currentUser.uid){
-                const targetUid = chatTargetUid;
-                const targetPriv = usersCache[targetUid]?.privacy;
-                const targetAllows = targetPriv ? targetPriv.readReceipts!==false : true;
-                if(!targetAllows){ ticksEl.style.display='none'; continue; }
-                ticksEl.style.display='';
-                const isSeen = m.readBy && targetUid && m.readBy[targetUid];
-                const newText = isSeen ? '✓✓' : '✓';
-                if(ticksEl.textContent!==newText){
-                    ticksEl.textContent=newText;
-                    ticksEl.classList.toggle('seen', !!isSeen);
-                }
-            }
-        }
-    }catch(e){}
-
     const isInitial = cont.children.length===0 || existingKeys.size===0;
-    let hasEdit = false;
-    for(const m of (arr||[])){ if(m.edited || m.reactions){ hasEdit=true; break; } }
-    const shouldFull = isInitial || hasDeletion || hasEdit;
+    const shouldFull = isInitial || hasDeletion; // УБРАЛИ hasEdit - из-за него не было анимации
 
     if(shouldFull){
         cont.innerHTML='';
@@ -3686,20 +3694,20 @@ function handleChatInfoProfile(){
                     lastDateKey = dateKey;
                 }
             }
-            let row = existingMap.get(m.key);
-            const needsRebuild = !row || m.edited || m.reactions;
-            if(needsRebuild){
-                row = buildMsgRow(m,arr,i);
-            }
+            const row = buildMsgRow(m,arr,i);
             if(row){
-                // no animation to prevent jitter
+                const msgEl = row.querySelector('.msg');
+                if(msgEl &&!existingKeys.has(m.key)){
+                    msgEl.classList.add('msg-enter');
+                    setTimeout(()=>msgEl.classList.remove('msg-enter'),700);
+                }
                 frag.appendChild(row);
             }
         });
         cont.appendChild(frag);
     } else {
         for(const [k,row] of existingMap.entries()){
-            if(!arrKeys.has(k)) row.remove();
+            if(!arrKeys.has(k) &&!row.classList.contains('deleting')) row.remove();
         }
         let lastDateKey = null;
         for(let i=arr.length-1;i>=0;i--){
@@ -3710,9 +3718,7 @@ function handleChatInfoProfile(){
             }
         }
         let startIdx = arr.length;
-        for(let i=0;i<arr.length;i++){
-            if(!existingKeys.has(arr[i].key)){ startIdx = i; break; }
-        }
+        for(let i=0;i<arr.length;i++){ if(!existingKeys.has(arr[i].key)){ startIdx = i; break; } }
         for(let i=startIdx;i<arr.length;i++){
             const m = arr[i];
             if(m.time){
@@ -3722,7 +3728,7 @@ function handleChatInfoProfile(){
                     const label = getDateLabel(m.time);
                     if(label){
                         const lastSep = [...cont.querySelectorAll('.date-sep')].pop();
-                        if(!lastSep || lastSep.textContent.trim() !== label.trim()){
+                        if(!lastSep || lastSep.textContent.trim()!== label.trim()){
                             cont.appendChild(createDateSeparator(label));
                         }
                     }
@@ -3730,24 +3736,15 @@ function handleChatInfoProfile(){
                 }
             }
             const row = buildMsgRow(m,arr,i);
-if(row){
-    const msgEl = row.querySelector('.msg');
-    if(msgEl){ 
-        msgEl.classList.add('msg-enter'); 
-        setTimeout(()=>msgEl.classList.remove('msg-enter'), 650); 
-    }
-    cont.appendChild(row);
-}
+            if(row){
+                const msgEl = row.querySelector('.msg');
+                if(msgEl){ msgEl.classList.add('msg-enter'); setTimeout(()=>msgEl.classList.remove('msg-enter'),700); }
+                cont.appendChild(row);
+            }
         }
     }
-
-    if(typingHTML){
-        cont.insertAdjacentHTML('beforeend', typingHTML);
-    }
-    // scroll without smooth to avoid jitter
-    if(isAtBottom || isInitial){
-        cont.scrollTop = cont.scrollHeight;
-    }
+    if(typingHTML) cont.insertAdjacentHTML('beforeend', typingHTML);
+    if(isAtBottom || isInitial) cont.scrollTop = cont.scrollHeight;
     if(window._updateScrollBtn) window._updateScrollBtn();
 }
     // вызывать после renderMessages или в конце _subscribeChatMessages
@@ -3959,42 +3956,23 @@ function checkEmptyChatGreeting(msgs){
     closeMsgModal();
     try{
         const row=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
-        if(row){ 
-            row.classList.add('deleting');
-            row.addEventListener('animationend', ()=> row.remove(), {once:true});
-        }
+        if(row){ row.classList.add('deleting'); row.addEventListener('animationend', ()=> row.remove(), {once:true}); }
         currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
     }catch(e){}
-    // удаляем с задержкой чтобы успела проиграть анимация
-    setTimeout(()=>{
-        db.ref(`Chats/${activeChatId}/messages/${msg.key}/deletedFor/${currentUser.uid}`).set(true).catch(err=>alert(err.message));
-    }, 320);
+    setTimeout(()=>{ db.ref(`Chats/${activeChatId}/messages/${msg.key}/deletedFor/${currentUser.uid}`).set(true).catch(err=>alert(err.message)); }, 360);
 }
-
 function deleteMessageForBoth(msg){
     if(!activeChatId||!msg) return;
-    if(msg.from!==currentUser.uid){
-        alert(L('cannot_delete_others')||'Нельзя удалить чужое сообщение для всех');
-        closeMsgModal();
-        return;
-    }
-    if(!confirm((L('delete_confirm')||'Удалить?')+' '+(L('delete_for_both')||'У всех?'))) {
-        closeMsgModal();
-        return;
-    }
+    if(msg.from!==currentUser.uid){ alert(L('cannot_delete_others')||'Нельзя удалить чужое'); closeMsgModal(); return; }
+    if(!confirm((L('delete_confirm')||'Удалить?')+' '+(L('delete_for_both')||'У всех?'))) { closeMsgModal(); return; }
     if(msg.key===pinnedMsgKey) unpinMessage();
     closeMsgModal();
     try{
         const row=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
-        if(row){ 
-            row.classList.add('deleting');
-            row.addEventListener('animationend', ()=> row.remove(), {once:true});
-        }
+        if(row){ row.classList.add('deleting'); row.addEventListener('animationend', ()=> row.remove(), {once:true}); }
         currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
     }catch(e){}
-    setTimeout(()=>{
-        db.ref(`Chats/${activeChatId}/messages/${msg.key}`).remove().catch(err=>alert(err.message));
-    }, 320);
+    setTimeout(()=>{ db.ref(`Chats/${activeChatId}/messages/${msg.key}`).remove().catch(err=>alert(err.message)); }, 360);
 }
     function addReaction(emoji,key){
         if(!activeChatId||!key)return;
@@ -4579,17 +4557,19 @@ if(isGroup){
 
     // ═══ SEND ═══
     function sendMessage(){
-        if(!canWriteInChat()){
-            alert(currentLang==='ru'?'У вас нет прав писать в этом канале':'You cannot write in this channel');
-            return;
-        }
-        const input=document.getElementById('chat-input');const text=input.value.trim();
-        if(!text||!activeChatId)return;
-        if(!chatIsGroup&&!chatTargetUid)return;
-        if(editingMsgKey){doEditMessage(text);return;}
-        input.value='';updateSendButton();stopTypingNow();doSendText(text);
-        input.focus();
+    if(!canWriteInChat()){
+        alert(currentLang==='ru'?'У вас нет прав писать в этом канале':'You cannot write in this channel');
+        return;
     }
+    const input=document.getElementById('chat-input');const text=input.value.trim();
+    if(!text||!activeChatId)return;
+    if(!chatIsGroup&&!chatTargetUid)return;
+    if(editingMsgKey){doEditMessage(text);return;}
+    const btn=document.getElementById('btn-send');
+    if(btn){ btn.classList.remove('sending'); void btn.offsetWidth; btn.classList.add('sending'); setTimeout(()=>btn.classList.remove('sending'), 500); }
+    input.value='';updateSendButton();stopTypingNow();doSendText(text);
+    input.focus();
+}
     function doEditMessage(text){
         const k=editingMsgKey,cid=activeChatId,tgt=chatTargetUid;
         document.getElementById('chat-input').value='';updateSendButton();cancelEdit();stopTypingNow();
