@@ -2556,6 +2556,7 @@
     let editingMsgKey=null,replyingTo=null,pinnedMsgKey=null;
     let activeMenuMsg=null,typingTimeout=null,lastTypingSent=0;
     let currentMsgsArr=[],mediaRecorder=null,audioChunks=[],recTimerInt=null,recSeconds=0;
+    let pendingDeletions = new Set();
     let hasTextInInput=false,isRecording=false;
     let chatIsGroup=false,chatGroupData={};
     let createGroupType='group',selectedGroupMembers={};
@@ -3629,6 +3630,10 @@ function handleChatInfoProfile(){
     if(typingEl) typingEl.remove();
 
     arr = (arr||[]).filter(m=>!(m.deletedFor && m.deletedFor[currentUser.uid]));
+    // не показываем те что в процессе удаления, пока база не подтвердит
+    if(pendingDeletions.size){
+        arr = arr.filter(m=>!pendingDeletions.has(m.key));
+    }
 
     const existingMap = new Map();
     cont.querySelectorAll('.msg-row').forEach(row=>{
@@ -3638,7 +3643,14 @@ function handleChatInfoProfile(){
     const existingKeys = new Set(existingMap.keys());
     const arrKeys = new Set((arr||[]).map(m=>m.key));
 
-    // ticks
+    let hasDeletion = false;
+    for(const k of existingKeys){
+        if(!arrKeys.has(k) &&!pendingDeletions.has(k)){
+            hasDeletion=true; break;
+        }
+    }
+
+    // обновляем галочки без перерисовки
     try{
         for(const m of arr){
             const row = existingMap.get(m.key);
@@ -3646,11 +3658,10 @@ function handleChatInfoProfile(){
             const ticksEl = row.querySelector('.ticks');
             if(!ticksEl) continue;
             if(m.from===currentUser.uid){
-                const targetUid = chatTargetUid;
-                const allows = usersCache[targetUid]?.privacy? usersCache[targetUid].privacy.readReceipts!==false : true;
+                const allows = usersCache[chatTargetUid]?.privacy? usersCache[chatTargetUid].privacy.readReceipts!==false : true;
                 if(!allows){ ticksEl.style.display='none'; continue; }
                 ticksEl.style.display='';
-                const isSeen = m.readBy && targetUid && m.readBy[targetUid];
+                const isSeen = m.readBy && chatTargetUid && m.readBy[chatTargetUid];
                 const txt = isSeen? '✓✓' : '✓';
                 if(ticksEl.textContent!==txt){
                     ticksEl.textContent=txt;
@@ -3662,7 +3673,8 @@ function handleChatInfoProfile(){
 
     const isInitial = cont.querySelectorAll('.msg-row').length===0 || existingKeys.size===0;
 
-    if(isInitial){
+    if(isInitial || hasDeletion){
+        // ПОЛНАЯ ПЕРЕСБОРКА - старые сообщения из limitToLast встанут сверху, а не внизу
         cont.innerHTML='';
         let lastDateKey = null;
         const frag = document.createDocumentFragment();
@@ -3680,13 +3692,15 @@ function handleChatInfoProfile(){
         });
         cont.appendChild(frag);
     } else {
-        // удаление - плавно, без innerHTML
+        // удаляем исчезнувшие
         for(const [k,row] of existingMap.entries()){
             if(!arrKeys.has(k) &&!row.classList.contains('deleting')){
                 row.classList.add('deleting');
                 row.addEventListener('animationend', ()=> { if(row.parentNode) row.remove(); }, {once:true});
             }
         }
+        // добавляем ТОЛЬКО новые которые новее последнего
+        let lastTime = currentMsgsArr.length? currentMsgsArr[currentMsgsArr.length-1].time : 0;
         let lastDateKey = null;
         for(let i=arr.length-1;i>=0;i--){
             if(existingKeys.has(arr[i].key) && arr[i].time){
@@ -3698,6 +3712,8 @@ function handleChatInfoProfile(){
         for(let i=0;i<arr.length;i++){
             const m = arr[i];
             if(existingKeys.has(m.key)) continue;
+            // ИГНОРИМ старые из limitToLast
+            if(m.time && lastTime && m.time < lastTime - 1000) continue;
             if(m.time){
                 const d = new Date(m.time);
                 const dateKey = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -3713,15 +3729,18 @@ function handleChatInfoProfile(){
                 }
             }
             const row = buildMsgRow(m,arr,i);
-            const msgEl = row.querySelector('.msg');
-            msgEl.classList.add('msg-enter');
-            msgEl.addEventListener('animationend', ()=> msgEl.classList.remove('msg-enter'), {once:true});
-            cont.appendChild(row);
+            if(row){
+                const msgEl = row.querySelector('.msg');
+                if(msgEl){ msgEl.classList.add('msg-enter'); setTimeout(()=>msgEl.classList.remove('msg-enter'), 650); }
+                cont.appendChild(row);
+            }
         }
     }
 
     if(typingHTML) cont.insertAdjacentHTML('beforeend', typingHTML);
-    if(isAtBottom || isInitial) cont.scrollTop = cont.scrollHeight;
+    if(isAtBottom || isInitial){
+        cont.scrollTop = cont.scrollHeight;
+    }
     if(window._updateScrollBtn) window._updateScrollBtn();
 }
     // вызывать после renderMessages или в конце _subscribeChatMessages
@@ -3934,14 +3953,15 @@ function checkEmptyChatGreeting(msgs){
     try{
         const row=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
         if(row &&!row.classList.contains('deleting')){
+            pendingDeletions.add(msg.key);
             row.classList.add('deleting');
             row.addEventListener('animationend', ()=> { if(row.parentNode) row.remove(); }, {once:true});
         }
-        currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
     }catch(e){}
-    setTimeout(()=>{
-        db.ref(`Chats/${activeChatId}/messages/${msg.key}/deletedFor/${currentUser.uid}`).set(true).catch(err=>alert(err.message));
-    }, 380);
+    // НЕ фильтруем currentMsgsArr локально - ждем базу, чтобы не вернуть сообщение
+    db.ref(`Chats/${activeChatId}/messages/${msg.key}/deletedFor/${currentUser.uid}`).set(true)
+     .then(()=> pendingDeletions.delete(msg.key))
+     .catch(err=>{ pendingDeletions.delete(msg.key); alert(err.message); });
 }
 
 function deleteMessageForBoth(msg){
@@ -3953,14 +3973,14 @@ function deleteMessageForBoth(msg){
     try{
         const row=document.querySelector(`.msg[data-key="${msg.key}"]`)?.closest('.msg-row');
         if(row &&!row.classList.contains('deleting')){
+            pendingDeletions.add(msg.key);
             row.classList.add('deleting');
             row.addEventListener('animationend', ()=> { if(row.parentNode) row.remove(); }, {once:true});
         }
-        currentMsgsArr=currentMsgsArr.filter(m=>m.key!==msg.key);
     }catch(e){}
-    setTimeout(()=>{
-        db.ref(`Chats/${activeChatId}/messages/${msg.key}`).remove().catch(err=>alert(err.message));
-    }, 380);
+    db.ref(`Chats/${activeChatId}/messages/${msg.key}`).remove()
+     .then(()=> pendingDeletions.delete(msg.key))
+     .catch(err=>{ pendingDeletions.delete(msg.key); alert(err.message); });
 }
     function addReaction(emoji,key){
         if(!activeChatId||!key)return;
