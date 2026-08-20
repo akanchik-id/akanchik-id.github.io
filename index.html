@@ -36,10 +36,10 @@
         .app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;}
         .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
         #splash{position:fixed;inset:0;background:var(--loader-bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:9999;transition:opacity .5s,transform .5s;}
-        #splash.out{opacity:0;pointer-events:none;transform:scale(1.04);}
+        #splash.out{opacity:0;pointer-events:none;transform:scale(1);}
         .splash-gif{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);animation:splashPulse 1s ease-in-out 2 forwards;}
         .splash-title{font-size:17px;color:var(--accent);letter-spacing:4px;text-transform:uppercase;opacity:0;animation:fadeUp .5s .4s ease forwards;}
-        @keyframes splashPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(243,156,18,.4)}50%{transform:scale(1.06);box-shadow:0 0 0 14px rgba(243,156,18,0)}}
+        @keyframes splashPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(243,156,18,.4)}50%{transform:scale(1);box-shadow:0 0 0 14px rgba(243,156,18,0)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         .nav {
           flex-shrink: 0;
@@ -1963,8 +1963,8 @@ input:focus, textarea:focus{outline-color:var(--accent) !important;}
 </head>
 <body>
 <div id="splash">
-    <img src="/logo.gif" class="splash-gif" onerror="this.style.display='none'" alt="">
-    <div class="splash-title">Under</div>
+    <img src="/logo.png" class="splash-gif" onerror="this.style.display='none'" alt="">
+    <div class="splash-title"></div>
 </div>
 
 <!-- TOAST уведомление -->
