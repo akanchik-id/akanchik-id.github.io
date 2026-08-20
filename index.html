@@ -2887,7 +2887,19 @@ input:focus, textarea:focus{outline-color:var(--accent) !important;}
     let currentUser=null,currentUserData={},currentViewedUid=null;
     let tempAvatar=1,sessionStartTime=Date.now();
     let chatsCache={},usersCache={},notifCache=[];
-    let groupAvatarsCache={}; // FIX avatar cache
+    let groupAvatarsCache={};
+const AVATARS_COUNT = 7;
+function avatarUrl(n){
+  const id = parseInt(n)||1;
+  return `https://akanchik-id.github.io/avatar${id}.png`;
+}
+function getGroupAvatarInt(g){
+  if(!g) return 1;
+  if(g.Avatar) return parseInt(g.Avatar)||1;
+  return 1;
+}
+let selectedCreateGroupAvatar = 1;
+let selectedSettingsGroupAvatar = 1;
     let activeChatId=null,chatTargetUid=null,chatTargetData={};
     let editingMsgKey=null,replyingTo=null,pinnedMsgKey=null;
     let activeMenuMsg=null,typingTimeout=null,lastTypingSent=0;
@@ -3720,7 +3732,7 @@ async function enableNotifications(){
               if(!c.muted){
                 const isGroup=c.type==='group'||c.type==='channel';
                 const displayName=isGroup?(c.name||'GROUP'):(usersCache[c.with]?.DisplayName||'PLAYER');
-                const av=isGroup?(c.avatar||'https://akanchik-id.github.io/avatar1.png'):`https://akanchik-id.github.io/avatar${usersCache[c.with]?.Avatar||1}.png`;
+                const av=isGroup? avatarUrl(c.Avatar) : avatarUrl(usersCache[c.with]?.Avatar);
                 const text=c.lastText||'Новое сообщение';
                 showToast(displayName, text, av);
                 showBrowserNotif(displayName, text, av);
@@ -3739,7 +3751,7 @@ async function enableNotifications(){
               if(!c.muted){
                 const isGroup=c.type==='group'||c.type==='channel';
                 const displayName=isGroup?(c.name||'GROUP'):(usersCache[c.with]?.DisplayName||'PLAYER');
-                const av=isGroup?(c.avatar||'https://akanchik-id.github.io/avatar1.png'):`https://akanchik-id.github.io/avatar${usersCache[c.with]?.Avatar||1}.png`;
+                const av=isGroup? avatarUrl(c.Avatar) : avatarUrl(usersCache[c.with]?.Avatar);
                 showToast(displayName, c.lastText||'Новое сообщение', av);
                 showBrowserNotif(displayName, c.lastText||'', av);
               }
@@ -3776,30 +3788,12 @@ async function enableNotifications(){
             const u=usersCache[c.with]||{};
             const displayName=isGroup?(c.name||'GROUP'):(u.DisplayName||'PLAYER');
             let av;
-            if(isGroup){
-                try{
-                    const cached = groupAvatarsCache[c.id];
-                    if(cached && cached.Avatar){ av=`https://akanchik-id.github.io/avatar${cached.Avatar}.png`; }
-                    else if(c.Avatar){ av=`https://akanchik-id.github.io/avatar${c.Avatar}.png`; }
-                    else if(cached && (cached.avatar||cached.avatars)){
-                        const tmpAvs=normalizeGroupAvatars(cached.avatars||cached.avatar);
-                        const tmpIdx=cached.avatarIdx||0;
-                        const safeIdx=tmpAvs.length? (tmpIdx % tmpAvs.length) : 0;
-                        av=tmpAvs[safeIdx]||cached.avatar||c.avatar||'https://akanchik-id.github.io/avatar1.png';
-                    } else if(c.avatars && c.avatarIdx!=null){
-                        const tmpAvs=normalizeGroupAvatars(c.avatars||c.avatar);
-                        const safeIdx=c.avatarIdx % tmpAvs.length;
-                        av=tmpAvs[safeIdx]||c.avatar||'https://akanchik-id.github.io/avatar1.png';
-                    } else {
-                        av=c.avatar||'https://akanchik-id.github.io/avatar1.png';
-                    }
-                    // 1:1 fallback to integer from URL
-                    if(!av || av.includes('avatar1.png')){ /* try parse */ }
-                    if(c.Avatar) av=`https://akanchik-id.github.io/avatar${c.Avatar}.png`;
-                }catch(e){ av=c.avatar||'https://akanchik-id.github.io/avatar1.png'; }
-                if(c.Avatar) av=`https://akanchik-id.github.io/avatar${c.Avatar}.png`;
-            } else { av=`https://akanchik-id.github.io/avatar${u.Avatar||1}.png`; }
-            if(isGroup && c.Avatar) av=`https://akanchik-id.github.io/avatar${c.Avatar}.png`;
+if(isGroup){
+  const cached = groupAvatarsCache[c.id];
+  av = avatarUrl(cached?.Avatar || c.Avatar);
+} else {
+  av = avatarUrl(u.Avatar);
+}
             const unread=c.unread||0;
             const isPinned = pinnedSet.has(c.id);
             const row=document.createElement('div');row.className='chat-row'+(isPinned?' pinned':'');row.style.animationDelay=`${i*0.03}s`;
@@ -3933,114 +3927,74 @@ async function enableNotifications(){
     presRef.on('value',presCb);listeners.push({ref:presRef,event:'value',cb:presCb});
     _subscribeTyping(chatId,uid);
 }
-    function openGroupChat(chatId,chatData,isPreview=false){
-        try{ if(activeChatId){ const _inp=document.getElementById('chat-input'); if(_inp && _inp.value.trim()) localStorage.setItem(`chat_draft_${activeChatId}`, _inp.value); } }catch(e){}
-        if(activeChatId)clearChatListeners();
-        chatTargetUid=chatId;chatTargetData=chatData||{};activeChatId=chatId;chatIsGroup=true;chatGroupData=chatData||{};chatGroupData._isPreview=!!isPreview;
-        pinnedMsgKey=null;replyingTo=null;editingMsgKey=null;currentMsgsArr=[];
-        try{ const tmpAvs=normalizeGroupAvatars(chatData.avatars||chatData.avatar); const tmpIdx=chatData.avatarIdx||0; const safeIdxChat=tmpAvs.length? (tmpIdx % tmpAvs.length) : 0; const tmpAv=tmpAvs[safeIdxChat]||chatData.avatar||'https://akanchik-id.github.io/avatar1.png'; _openChatRoom(tmpAv,chatData.name||'GROUP',false); }catch(e){ _openChatRoom(chatData.avatar||'https://akanchik-id.github.io/avatar1.png',chatData.name||'GROUP',false); }
-        setTimeout(()=>{
-            try{
-                const inp=document.getElementById('chat-input');
-                const d=loadDraft(chatId);
-                if(d && inp){ inp.value=d; updateSendButton(); autoResizeChatInput(); }
-            }catch(e){}
-        },80);
-        const type=chatData.type==='channel'?'канал':'группа';
-        const count=chatData.type==='channel'?(chatData.subscribers?Object.keys(chatData.subscribers).length:0):(chatData.memberCount||'?');
-        document.getElementById('chat-target-status').innerText=`${count} ${chatData.type==='channel'?'подписчиков':'участников'}`;
-        if(!isPreview){
-            db.ref(`UserChats/${currentUser.uid}/${chatId}/unread`).set(0);
-        }
-        try{
-            const preloadUids = new Set();
-            const g = chatData||{};
-            if(g.members) Object.keys(g.members).forEach(u=>preloadUids.add(u));
-            if(g.subscribers) Object.keys(g.subscribers).forEach(u=>preloadUids.add(u));
-            if(g.admins) Object.keys(g.admins).forEach(u=>preloadUids.add(u));
-            if(g.creator) preloadUids.add(g.creator);
-            if(chatGroupData.members) Object.keys(chatGroupData.members).forEach(u=>preloadUids.add(u));
-            if(chatGroupData.subscribers) Object.keys(chatGroupData.subscribers).forEach(u=>preloadUids.add(u));
-            preloadUids.forEach(uid=>{
-                if(!usersCache[uid]){
-                    db.ref(`Users/${uid}`).once('value').then(s=>{ if(s.exists()){ usersCache[uid]=s.val(); }});
-                }
-            });
-            // normalize avatars for new system
-            if(g.avatars || g.avatar){
-                chatGroupData.avatars = g.avatars || {};
-                if(!chatGroupData.avatars || typeof chatGroupData.avatars!=='object') chatGroupData.avatars={};
-            }
-        }catch(e){}
+    function openGroupChat(chatId, chatData, isPreview=false){
+  if(!chatId ||!chatData) return;
 
-        trackRef(db.ref(`Chats/${chatId}/pinned`),'value',snap=>{const p=snap.val();if(p?.key){pinnedMsgKey=p.key;showPinnedBar(p.text||'');}else{pinnedMsgKey=null;document.getElementById('pinned-bar').classList.add('hidden');}});
-        _subscribeChatMessages(chatId);_subscribeTyping(chatId,null);
-        const infoRef=db.ref(`Chats/${chatId}/info`);
-        const infoCb=snap=>{
-            if(activeChatId!==chatId) return;
-            if(!snap.exists()) return;
-            const wasPreview = chatGroupData._isPreview;
-            chatGroupData = {...chatGroupData, ...snap.val()};
-            chatGroupData._isPreview = wasPreview;
-            groupAvatarsCache[chatId]={Avatar:getGroupAvatarInt(chatGroupData), avatar:chatGroupData.avatar, avatars:chatGroupData.avatars, avatarIdx:chatGroupData.avatarIdx};
-            const newCount = chatGroupData.type === 'channel'
-                ? (chatGroupData.subscribers ? Object.keys(chatGroupData.subscribers).length : 0)
-                : (chatGroupData.memberCount || 0);
-            const st=document.getElementById('chat-target-status');
-            if(st) st.innerText = `${newCount} ${chatGroupData.type === 'channel' ? 'подписчиков' : 'участников'}`;
-            const nameEl=document.getElementById('chat-target-name');
-            if(nameEl) nameEl.innerText = (chatGroupData.name||'GROUP').toUpperCase();
-            const headerAv=document.getElementById('chat-target-av');
-            if(headerAv){
-                try{
-                    if(chatGroupData.Avatar){ headerAv.src=`https://akanchik-id.github.io/avatar${chatGroupData.Avatar}.png`; }
-                    else { const tmpAvs=normalizeGroupAvatars(chatGroupData.avatars||chatGroupData.avatar); const tmpIdx=chatGroupData.avatarIdx||0; const safeIdx=tmpAvs.length? (tmpIdx % tmpAvs.length) : 0; headerAv.src=tmpAvs[safeIdx]||chatGroupData.avatar||'https://akanchik-id.github.io/avatar1.png'; }
-                }catch(e){ headerAv.src=chatGroupData.avatar||'https://akanchik-id.github.io/avatar1.png'; }
-            }
-            if(chatsCache[chatId]){
-                chatsCache[chatId].name = chatGroupData.name;
-                chatsCache[chatId].avatar = chatGroupData.avatar||'https://akanchik-id.github.io/avatar1.png';
-                chatsCache[chatId].avatars = chatGroupData.avatars||chatsCache[chatId].avatars;
-                chatsCache[chatId].avatarIdx = chatGroupData.avatarIdx!=null?chatGroupData.avatarIdx:chatsCache[chatId].avatarIdx;
-            }
-            renderChatsList();
-            renderChatState();
-        };
-        infoRef.on('value',infoCb); listeners.push({ref:infoRef,event:'value',cb:infoCb});
-        db.ref(`Chats/${chatId}/info`).once('value').then(snap => {
-            if (snap.exists()) {
-                const wasPreview = chatGroupData._isPreview;
-                chatGroupData = { ...chatGroupData, ...snap.val() };
-                chatGroupData._isPreview = wasPreview;
-                groupAvatarsCache[chatId]={Avatar:getGroupAvatarInt(chatGroupData), avatar:chatGroupData.avatar, avatars:chatGroupData.avatars, avatarIdx:chatGroupData.avatarIdx};
-                const newCount = chatGroupData.type === 'channel'
-                    ? (chatGroupData.subscribers ? Object.keys(chatGroupData.subscribers).length : 0)
-                    : (chatGroupData.memberCount || 0);
-                const st=document.getElementById('chat-target-status');
-                if(st) st.innerText = `${newCount} ${chatGroupData.type === 'channel' ? 'подписчиков' : 'участников'}`;
-                const headerAv=document.getElementById('chat-target-av');
-                if(headerAv){
-                    try{
-                        const tmpAvs=normalizeGroupAvatars(chatGroupData.avatars||chatGroupData.avatar);
-                        const tmpIdx=chatGroupData.avatarIdx||0;
-                        const safeIdx=tmpAvs.length? (tmpIdx % tmpAvs.length) : 0;
-                        headerAv.src=tmpAvs[safeIdx]||chatGroupData.avatar||'https://akanchik-id.github.io/avatar1.png';
-                    }catch(e){ headerAv.src=chatGroupData.avatar||'https://akanchik-id.github.io/avatar1.png'; }
-                }
-                const nameEl=document.getElementById('chat-target-name');
-                if(nameEl) nameEl.innerText = (chatGroupData.name||'GROUP').toUpperCase();
-                if(chatsCache[chatId]){
-                    chatsCache[chatId].name=chatGroupData.name;
-                    chatsCache[chatId].avatar=chatGroupData.avatar||'https://akanchik-id.github.io/avatar1.png';
-                    chatsCache[chatId].avatars=chatGroupData.avatars||chatsCache[chatId].avatars;
-                    chatsCache[chatId].avatarIdx=chatGroupData.avatarIdx!=null?chatGroupData.avatarIdx:chatsCache[chatId].avatarIdx;
-                }
-                renderChatsList();
-                _updateChannelWriteAccess();
-                renderChatState();
-            }
-        });
+  chatTargetUid = chatId;
+  chatTargetData = chatData || {};
+  activeChatId = chatId;
+  chatIsGroup = true;
+  chatGroupData = chatData || {};
+  chatGroupData._isPreview =!!isPreview;
+
+  // === НОВАЯ СИСТЕМА АВАТАРОК КАК У ЮЗЕРОВ ===
+  // было: tmpAvs, normalizeGroupAvatars, avatar, avatars, avatarIdx - 20 строк
+  // стало: 1 строка
+  const av = avatarUrl(chatData.Avatar);
+  const displayName = (chatData.name || 'GROUP').toUpperCase();
+
+  _openChatRoom(av, displayName, false);
+
+  const headerAv = document.getElementById('chat-target-av');
+  if(headerAv){
+    headerAv.src = av;
+    headerAv.onerror = function(){ this.src = avatarUrl(1); };
+  }
+
+  const nameEl = document.getElementById('chat-target-name');
+  if(nameEl) nameEl.innerText = displayName;
+
+  const statusEl = document.getElementById('chat-target-status');
+  if(statusEl){
+    const isChannel = chatData.type === 'channel';
+    const count = isChannel
+     ? (chatData.subscribers? Object.keys(chatData.subscribers).length : 0)
+      : (chatData.members? Object.keys(chatData.members).length : (chatData.memberCount||0));
+    statusEl.innerText = `${count} ${isChannel? 'подписчиков' : 'участников'}`;
+  }
+
+  // кеш тоже только число
+  groupAvatarsCache[chatId] = {Avatar: parseInt(chatData.Avatar)||1};
+  if(chatsCache[chatId]){
+    chatsCache[chatId].Avatar = parseInt(chatData.Avatar)||1;
+    chatsCache[chatId].name = chatData.name;
+  }
+
+  // подгружаем юзеров группы
+  const preloadUids = new Set();
+  if(chatGroupData.members) Object.keys(chatGroupData.members).forEach(u=>preloadUids.add(u));
+  if(chatGroupData.subscribers) Object.keys(chatGroupData.subscribers).forEach(u=>preloadUids.add(u));
+  preloadUids.forEach(uid=>{
+    if(!usersCache[uid]){
+      db.ref(`Users/${uid}`).once('value').then(snap=>{
+        if(snap.exists()) usersCache[uid]=snap.val();
+      });
     }
+  });
+
+  // если это превью по ссылке /group/username
+  if(isPreview){
+    const joinBtn = document.getElementById('chat-join-btn');
+    if(joinBtn) joinBtn.style.display='block';
+  } else {
+    const joinBtn = document.getElementById('chat-join-btn');
+    if(joinBtn) joinBtn.style.display='none';
+    // загрузка сообщений - оставь свою функцию как была
+    if(typeof loadMessages === 'function') loadMessages(chatId, true);
+  }
+
+  if(typeof _updateChannelWriteAccess === 'function') _updateChannelWriteAccess();
+}
     function _updateChannelWriteAccess() {
     if (!chatIsGroup) return;
     const canWrite = canWriteInChat();
@@ -5397,12 +5351,19 @@ function loadMoreRecs(){
         row.onclick=()=>viewProfile(uid);return row;
     }
     function buildGroupRow(g){
-        const row=document.createElement('div');row.className='user-row';
-        const tb=g.type==='channel'?'<span class="type-badge channel">'+L('search_channels')+'</span>':'<span class="type-badge group">'+L('search_groups')+'</span>';
-        const cnt=g.type==='channel'?(g.subscribers?Object.keys(g.subscribers).length:0):(g.memberCount||0);
-        row.innerHTML=`<img src="${escapeHtml(g.avatar||'https://akanchik-id.github.io/avatar1.png')}" class="urow-av" onerror="this.src='https://akanchik-id.github.io/avatar1.png'"><div class="urow-info"><div class="urow-name">${escapeHtml((g.name||'GROUP').toUpperCase())} ${tb}</div><div class="urow-sub">@${escapeHtml(g.username||'')} · ${cnt} ${g.type==='channel'?'подписчиков':'участников'}</div></div>`;
-        row.onclick=()=>joinOrOpenGroup(g.id,g);return row;
-    }
+  const row=document.createElement('div');
+  row.className='urow';
+  const isChannel = g.type==='channel';
+  const tb = isChannel ? '<span class="type-badge channel">'+L('search_channels')+'</span>' : '<span class="type-badge group">'+L('search_groups')+'</span>';
+  const cnt = isChannel ? (g.subscribers?Object.keys(g.subscribers).length:0) : (g.members?Object.keys(g.members).length:(g.memberCount||0));
+  
+  // === ТУТ БЫЛО g.avatar СТАЛО КАК У ЮЗЕРОВ ===
+  const av = avatarUrl(g.Avatar);
+  
+  row.innerHTML=`<img src="${escapeHtml(av)}" class="urow-av" onerror="this.src='${avatarUrl(1)}'"><div class="urow-info"><div class="urow-name">${escapeHtml((g.name||'GROUP').toUpperCase())} ${tb}</div><div class="urow-sub">${cnt} ${isChannel?'подписчиков':'участников'} • @${escapeHtml(g.username||'')}</div></div>`;
+  row.onclick=()=>{ joinOrOpenGroup(g.id||g.uid||g.key, g); };
+  return row;
+}
     function joinOrOpenGroup(gid,gData){
         const cached=chatsCache[gid];
         const isMemberLocal = cached || (gData.members && gData.members[currentUser.uid]) || (gData.subscribers && gData.subscribers[currentUser.uid]) || gData.creator===currentUser.uid;
@@ -5752,41 +5713,32 @@ function loadMoreRecs(){
 
     // ═══ GROUPS ═══
     function openCreateGroup(type){
-      createGroupType=type;selectedGroupMembers={};
-      createGroupAvatars = Array.from({length:7}, (_,i)=> `https://akanchik-id.github.io/avatar${i+1}.png`);
-      createGroupActiveIdx=0;
-      createGroupAvatarData=null;
-      const avPrev=document.getElementById('create-group-avatar-preview'); if(avPrev) avPrev.src='https://akanchik-id.github.io/avatar1.png';
-      document.getElementById('create-group-title').innerText=type==='group'?L('create_group_title'):L('search_channels');
-      ['group-name-input','group-username-input','group-desc-input'].forEach(id=>document.getElementById(id).value='');
-      setTimeout(()=>{ initCreateGroupCarousel(); }, 150);
-
-      document.getElementById('group-public-toggle').checked=true;
-      document.getElementById('group-selected-members').innerHTML='';
-      const list=document.getElementById('group-member-list');
-      list.innerHTML=`<div class="skeleton-row"><div class="skeleton skeleton-avatar"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:40%"></div></div></div>`;
-      document.getElementById('group-members-section').style.display=type==='channel'?'none':'';
-      db.ref('Users').once('value').then(snap=>{
-        list.innerHTML='';
-        let found=0;
-        snap.forEach(s=>{
-          if(s.key===currentUser?.uid) return;
-          if(!isMutual(s.key)) return;
-          const u=s.val(); if(!u) return;
-          found++;
-          const row=document.createElement('div');
-          row.className='user-row rounded';
-          const badge='<span style="font-size:8px;background:var(--accent);color:#fff;padding:2px 6px;border-radius:8px;margin-left:6px;">⇄ ВЗАИМНО</span>';
-          row.innerHTML=`<img src="https://akanchik-id.github.io/avatar${u.Avatar||1}.png" class="urow-av"><div class="urow-info"><div class="urow-name">${escapeHtml((u.DisplayName||'PLAYER').toUpperCase())}${badge}</div><div class="urow-sub">@${escapeHtml(u.username||'')}</div></div>`;
-          row.onclick=()=>toggleGroupMember(s.key,u,row);
-          list.appendChild(row);
-        });
-        if(!found){
-          list.innerHTML=`<div class="empty-state" style="padding:24px 16px;text-align:center;"><div style="font-size:28px;">💬</div><div style="margin-top:8px;font-size:12px;color:var(--text3);line-height:1.5;">Только взаимные подписки могут быть добавлены в группу.<br>Подпишитесь друг на друга, чтобы добавить.</div></div>`;
-        }
-      });
-      document.getElementById('create-group-modal').classList.remove('hidden');
-    }
+  createGroupType = type;
+  selectedCreateGroupAvatar = 1;
+  document.getElementById('create-group-modal').classList.remove('hidden');
+  document.getElementById('create-group-title').innerText = type==='group' ? 'Создать группу' : 'Создать канал';
+  document.getElementById('group-members-section').style.display = type==='channel' ? 'none' : '';
+  
+  // Рисуем аватарки так же как у юзеров
+  const carousel = document.getElementById('create-group-carousel');
+  const preview = document.getElementById('create-group-avatar-preview');
+  const dots = document.getElementById('create-group-dots');
+  if(dots) dots.style.display='none';
+  carousel.innerHTML='';
+  for(let i=1;i<=AVATARS_COUNT;i++){
+    const img=document.createElement('img');
+    img.src=avatarUrl(i);
+    img.className='group-carousel-item'+(i===1?' active':'');
+    img.onclick=()=>{
+      carousel.querySelectorAll('.group-carousel-item').forEach(e=>e.classList.remove('active'));
+      img.classList.add('active');
+      preview.src=avatarUrl(i);
+      selectedCreateGroupAvatar=i;
+    };
+    carousel.appendChild(img);
+  }
+  preview.src=avatarUrl(1);
+}
     function toggleGroupMember(uid,u,row){if(selectedGroupMembers[uid]){delete selectedGroupMembers[uid];row.style.background='';}else{selectedGroupMembers[uid]=u;row.style.background='rgba(243,156,18,0.1)';}const sel=document.getElementById('group-selected-members');sel.innerHTML='';Object.entries(selectedGroupMembers).forEach(([uid,u])=>{const chip=document.createElement('span');chip.style.cssText='background:var(--accent);color:#fff;border-radius:12px;padding:3px 10px;font-size:10px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;';chip.innerHTML=`${escapeHtml((u.DisplayName||'P').toUpperCase())} ×`;chip.onclick=()=>{delete selectedGroupMembers[uid];chip.remove();};sel.appendChild(chip);});}
     // ==== GROUP/CHANNEL AVATAR SYSTEM - 7 PHOTOS CAROUSEL LIKE USER ====
     let createGroupAvatars = Array.from({length:7}, (_,i)=> `https://akanchik-id.github.io/avatar${i+1}.png`);
@@ -5968,53 +5920,70 @@ function loadMoreRecs(){
     }
 
     function createGroupChat(){
-        const name=document.getElementById('group-name-input').value.trim();const rawUname=document.getElementById('group-username-input').value;const uname=cleanUsername(rawUname);const desc=document.getElementById('group-desc-input').value.trim();const isPublic=document.getElementById('group-public-toggle').checked;
-        if(!name){alert(L('enter_group_name'));return;}
-        if(!uname){alert(L('enter_username'));return;}
-        checkUsernameUnique(uname,null,null,ok=>{
-            if(!ok){alert(L('username_taken'));return;}
-            const members={[currentUser.uid]:true};if(createGroupType==='group')Object.keys(selectedGroupMembers).forEach(uid=>{members[uid]=true;});
-            const chatId=db.ref('Chats').push().key;
-            const avInt = (createGroupActiveIdx+1);
-            const avatarToUse = `https://akanchik-id.github.io/avatar${avInt}.png`;
-            const avatarsObj={}; for(let i=0;i<7;i++) avatarsObj[i]=`https://akanchik-id.github.io/avatar${i+1}.png`;
-            const chatData={name,username:uname,description:desc||'',type:createGroupType,creator:currentUser.uid,members,memberCount:Object.keys(members).length,createdAt:Date.now(),Avatar:avInt,avatar:avatarToUse,avatars:avatarsObj,avatarIdx:createGroupActiveIdx,public:isPublic,whoCanWrite:'all'};
-            if(createGroupType==='channel') chatData.whoCanWrite='admins';
-            const updates={[`Chats/${chatId}/info`]:chatData,[`Usernames/${uname}`]:{uid:chatId,type:createGroupType}};
-            if(createGroupType==='channel'){updates[`UserChats/${currentUser.uid}/${chatId}`]={name,type:'channel',avatar:avatarToUse,lastTime:Date.now(),lastText:L('channel_created'),unread:0};}
-            else{Object.keys(members).forEach(uid=>{updates[`UserChats/${uid}/${chatId}`]={name,type:'group',avatar:avatarToUse,lastTime:Date.now(),lastText:L('group_created'),unread:0};});}
-            db.ref().update(updates).then(()=>{
-                document.getElementById('create-group-modal').classList.add('hidden');
-                createGroupAvatars=Array.from({length:7}, (_,i)=> `https://akanchik-id.github.io/avatar${i+1}.png`);
-                createGroupActiveIdx=0;
-                createGroupAvatarData=null;
-                const prev=document.getElementById('create-group-avatar-preview'); if(prev) prev.src='https://akanchik-id.github.io/avatar1.png';
-                openGroupChat(chatId,{...chatData,id:chatId});
-            }).catch(err=>alert(err.message));
-        });
-    }
-    function openGroupSettings(gid){
-        currentGroupSettingsId=gid;const g=chatGroupData;
-        document.getElementById('group-settings-title').innerText=g.type==='channel'?L('search_channels')+' '+L('settings_title'):L('group_settings_title');
-        document.getElementById('gs-name').value=g.name||'';document.getElementById('gs-username').value=g.username||'';document.getElementById('gs-desc').value=g.description||'';document.getElementById('gs-public').checked=g.public!==false;
-        const avInt = getGroupAvatarInt(g);
-        groupSettingsAvatars = Array.from({length:7}, (_,i)=> `https://akanchik-id.github.io/avatar${i+1}.png`);
-        groupSettingsActiveIdx = avInt-1;
-        const avPrev=document.getElementById('gs-avatar-preview'); if(avPrev) avPrev.src=`https://akanchik-id.github.io/avatar${avInt}.png`;
-        setTimeout(()=>{ initGroupSettingsCarousel(); }, 120);
+  const name = document.getElementById('group-name-input').value.trim();
+  if(!name) return alert('Введи название');
+  const username = document.getElementById('group-username-input').value.trim().replace('@','');
+  const desc = document.getElementById('group-desc-input').value.trim();
+  
+  const chatId = db.ref('Chats').push().key;
+  
+  // ВОТ ТУТ ГЛАВНОЕ - ОТПРАВЛЯЕМ ТОЛЬКО ЧИСЛО, КАК У ЮЗЕРОВ
+  const chatData = {
+    name: name,
+    username: username,
+    desc: desc,
+    type: createGroupType, // group или channel - одинаково
+    Avatar: selectedCreateGroupAvatar, // <-- ПРОСТО ЧИСЛО!
+    creator: currentUser.uid,
+    createdAt: Date.now(),
+    public: document.getElementById('group-public-toggle')?.checked || true
+  };
 
+  let updates = {};
+  updates[`Chats/${chatId}/info`] = chatData;
+  
+  // И в список чатов юзера тоже только число
+  updates[`UserChats/${currentUser.uid}/${chatId}`] = {
+    name: name,
+    type: createGroupType,
+    Avatar: selectedCreateGroupAvatar, // <-- ТОЖЕ ЧИСЛО
+    lastTime: Date.now(),
+    lastText: 'Группа создана',
+    unread: 0
+  };
 
-        if(g.type==='channel'){
-            document.getElementById('gs-who-can-write').parentElement.style.display='none';
-        } else {
-            document.getElementById('gs-who-can-write').parentElement.style.display='flex';
-            document.getElementById('gs-who-can-write').value=g.whoCanWrite||'all';
-        }
-        const groupLink=`${location.origin}/${g.type||'group'}/${g.username||gid}`;document.getElementById('gs-link-url').innerText=groupLink;
-        document.getElementById('gs-delete-btn').innerText=g.type==='channel'?L('delete_btn'):L('delete_btn');
-        document.getElementById('group-settings-modal').classList.remove('hidden');
-        _loadGroupAdmins(g);
-    }
+  db.ref().update(updates);
+  document.getElementById('create-group-modal').classList.add('hidden');
+}
+    function openGroupSettings(groupId, g){
+  currentGroupSettingsId = groupId;
+  document.getElementById('group-settings-modal').classList.remove('hidden');
+  document.getElementById('gs-name').value = g.name||'';
+  document.getElementById('gs-username').value = g.username||'';
+  document.getElementById('gs-desc').value = g.desc||'';
+  document.getElementById('gs-link-url').innerText = location.origin + '/' + (g.type||'group') + '/' + (g.username||groupId);
+
+  selectedSettingsGroupAvatar = getGroupAvatarInt(g);
+  
+  const carousel = document.getElementById('gs-carousel');
+  const preview = document.getElementById('gs-avatar-preview');
+  const dots = document.getElementById('gs-dots');
+  if(dots) dots.style.display='none';
+  carousel.innerHTML='';
+  for(let i=1;i<=AVATARS_COUNT;i++){
+    const img=document.createElement('img');
+    img.src=avatarUrl(i);
+    img.className='group-carousel-item'+(i===selectedSettingsGroupAvatar?' active':'');
+    img.onclick=()=>{
+      carousel.querySelectorAll('.group-carousel-item').forEach(e=>e.classList.remove('active'));
+      img.classList.add('active');
+      preview.src=avatarUrl(i);
+      selectedSettingsGroupAvatar=i;
+    };
+    carousel.appendChild(img);
+  }
+  preview.src=avatarUrl(selectedSettingsGroupAvatar);
+}
     function _loadGroupAdmins(g){
         const cont=document.getElementById('gs-admins-list');if(!cont) return; cont.innerHTML='';
         const uids=new Set();if(g.admins)Object.keys(g.admins).forEach(u=>uids.add(u));if(g.creator)uids.add(g.creator);
@@ -6056,42 +6025,51 @@ function loadMoreRecs(){
         }).catch(err=>alert(err.message));
     }
     function saveGroupSettings(){
-        const gid=currentGroupSettingsId;if(!gid)return;
-        const isCreator = chatGroupData.creator===currentUser.uid;
-        const isAdmin = chatGroupData.admins && chatGroupData.admins[currentUser.uid];
-        if(!isCreator && !isAdmin){ alert(L('creator_only')); return; }
-        const name=document.getElementById('gs-name').value.trim();const rawUname=document.getElementById('gs-username').value;const uname=cleanUsername(rawUname);const desc=document.getElementById('gs-desc').value.trim();const isPublic=document.getElementById('gs-public').checked;
-        let whoCanWrite=document.getElementById('gs-who-can-write').value;
-        if(chatGroupData.type==='channel') whoCanWrite='admins';
-        const avIntSave = (groupSettingsActiveIdx+1);
-        const avatarToSave = `https://akanchik-id.github.io/avatar${avIntSave}.png`;
-        const avatarsObj={}; for(let i=0;i<7;i++) avatarsObj[i]=`https://akanchik-id.github.io/avatar${i+1}.png`;
-        const doSave=(ok)=>{
-            if(!ok){alert(L('username_taken'));return;}
-            const upd={[`Chats/${gid}/info/name`]:name,[`Chats/${gid}/info/username`]:uname,[`Chats/${gid}/info/description`]:desc,[`Chats/${gid}/info/public`]:isPublic,[`Chats/${gid}/info/whoCanWrite`]:whoCanWrite,[`Chats/${gid}/info/Avatar`]:avIntSave,[`Chats/${gid}/info/avatar`]:avatarToSave,[`Chats/${gid}/info/avatars`]:avatarsObj,[`Chats/${gid}/info/avatarIdx`]:groupSettingsActiveIdx};
-            const oldUname=chatGroupData.username;if(oldUname&&oldUname!==uname)upd[`Usernames/${oldUname}`]=null;if(uname)upd[`Usernames/${uname}`]={uid:gid,type:chatGroupData.type||'group'};
-            const members = chatGroupData.members ? Object.keys(chatGroupData.members) : [];
-            const subs = chatGroupData.subscribers ? Object.keys(chatGroupData.subscribers) : [];
-            const allUids = [...new Set([...members, ...subs, chatGroupData.creator].filter(Boolean))];
-            allUids.forEach(uid=>{ upd[`UserChats/${uid}/${gid}/name`]=name; upd[`UserChats/${uid}/${gid}/avatar`]=avatarToSave; });
-            db.ref().update(upd).then(()=>{
-                chatGroupData={...chatGroupData,name,username:uname,description:desc,public:isPublic,whoCanWrite,Avatar:avIntSave,avatar:avatarToSave,avatars:avatarsObj,avatarIdx:groupSettingsActiveIdx};
-                if(chatsCache[gid]){ chatsCache[gid].name=name; chatsCache[gid].avatar=avatarToSave; }
-                const headerAv=document.getElementById('chat-target-av'); if(headerAv) headerAv.src=avatarToSave;
-                document.getElementById('group-settings-modal').classList.add('hidden');
-                groupSettingsAvatarData=null;
-                const nameEl=document.getElementById('chat-target-name'); if(nameEl) nameEl.innerText=name.toUpperCase();
-                renderChatsList();
-                renderChatState();
-                const infoContent=document.getElementById('chat-info-content');
-                if(infoContent && document.getElementById('chat-info-panel').classList.contains('open')){
-                    _renderGroupInfo(infoContent);
-                }
-                
-            }).catch(err=>alert(err.message));
-        };
-        if(uname&&uname!==chatGroupData.username)checkUsernameUnique(uname,null,gid,doSave);else doSave(true);
+  const name = document.getElementById('gs-name').value.trim();
+  const username = document.getElementById('gs-username').value.trim().replace('@','');
+  const desc = document.getElementById('gs-desc').value.trim();
+
+  let updates = {};
+  updates[`Chats/${currentGroupSettingsId}/info/name`] = name;
+  updates[`Chats/${currentGroupSettingsId}/info/username`] = username;
+  updates[`Chats/${currentGroupSettingsId}/info/desc`] = desc;
+  
+  // === ГЛАВНОЕ - СОХРАНЯЕМ ТОЛЬКО ЧИСЛО КАК У ЮЗЕРОВ ===
+  updates[`Chats/${currentGroupSettingsId}/info/Avatar`] = selectedSettingsGroupAvatar;
+
+  // Обновляем у всех участников / подписчиков в их списке чатов
+  db.ref(`Chats/${currentGroupSettingsId}/info`).once('value').then(snap=>{
+    const info = snap.val()||{};
+    const userChatUpdate = {
+      name: name,
+      Avatar: selectedSettingsGroupAvatar
+    };
+    
+    if(info.members){
+      Object.keys(info.members).forEach(uid=>{
+        updates[`UserChats/${uid}/${currentGroupSettingsId}/name`] = name;
+        updates[`UserChats/${uid}/${currentGroupSettingsId}/Avatar`] = selectedSettingsGroupAvatar;
+      });
     }
+    if(info.subscribers){
+      Object.keys(info.subscribers).forEach(uid=>{
+        updates[`UserChats/${uid}/${currentGroupSettingsId}/name`] = name;
+        updates[`UserChats/${uid}/${currentGroupSettingsId}/Avatar`] = selectedSettingsGroupAvatar;
+      });
+    }
+
+    db.ref().update(updates).then(()=>{
+      document.getElementById('group-settings-modal').classList.add('hidden');
+      // обновляем шапку если открыт этот чат
+      if(activeChatId === currentGroupSettingsId){
+        const headerAv = document.getElementById('chat-target-av');
+        if(headerAv) headerAv.src = avatarUrl(selectedSettingsGroupAvatar);
+        const nameEl = document.getElementById('chat-target-name');
+        if(nameEl) nameEl.innerText = name.toUpperCase();
+      }
+    });
+  });
+}
     function deleteGroupChat(){
         const gid=currentGroupSettingsId;
         if(!gid||!confirm(L('delete_btn')))return;
