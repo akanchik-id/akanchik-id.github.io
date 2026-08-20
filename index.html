@@ -7155,11 +7155,27 @@ function openOnboarding(mandatory){
   if(_onboardingMandatory){
     modal.classList.add('mandatory');
     modal.style.background='var(--bg)';
-    modal.onclick = function(e){ if(e.target===modal){ e.stopPropagation(); } };
+    modal.onclick = function(e){ if(e.target===modal){ e.stopPropagation(); e.preventDefault(); } };
   } else {
     modal.classList.remove('mandatory');
-    modal.onclick = null;
+    modal.style.background='';
+    modal.onclick = function(e){ if(e.target===modal) closeOnboardingModal(); };
   }
+}
+
+function closeOnboardingModal(){
+  if(_onboardingMandatory){
+    const d = currentUserData||{};
+    if(!d.username || !d.DisplayName || !d.Avatar) return;
+  }
+  const modal=document.getElementById('onboarding-modal');
+  if(modal){
+    modal.classList.add('hidden');
+    modal.classList.remove('mandatory');
+    modal.style.background='';
+    modal.onclick=null;
+  }
+  _onboardingMandatory=false;
 }
 function saveOnboarding(){
   let name=document.getElementById('ob-name').value.trim();
@@ -7179,19 +7195,45 @@ function saveOnboarding(){
     upd[`Users/${currentUser.uid}/Status`]=status;
     upd[`Users/${currentUser.uid}/Avatar`]=onboardAvatar;
     db.ref().update(upd).then(()=>{
-        document.getElementById('onboarding-modal').classList.add('hidden');
-        document.getElementById('onboarding-modal').classList.remove('mandatory');
+        const modal = document.getElementById('onboarding-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('mandatory');
+        modal.style.background='';
+        modal.onclick=null;
         _onboardingMandatory=false;
         localStorage.setItem('under_onboard_done','1');
+        document.getElementById('auth-onboarding-view')?.classList.add('hidden');
+        document.getElementById('screen-auth')?.classList.remove('active');
+        if(typeof showSection==='function') showSection('feed');
+        try{ hideSplash(); }catch(e){}
+    }).catch(err=>{
+        alert((currentLang==='ru'?'Ошибка: ':'Error: ')+err.message);
+        _onboardingMandatory=false;
+        document.getElementById('onboarding-modal')?.classList.remove('mandatory');
     });
   });
 }
 
 
 // вызови в syncMyData после получения данных:
+// ФИКС: проверяем реально неполный профиль, а не localStorage
 function checkOnboardingNeeded(d){
-  if(!d.username || d.Status==='NEW PLAYER' ||!d.DisplayName || localStorage.getItem('under_onboard_done')!=='1'){
-    if(!d.username) openOnboarding();
+  if(!d) return;
+  const hasProfile = d.username && d.DisplayName && d.Avatar;
+  const isNewPlayer = d.Status==='NEW PLAYER' && !d.username;
+  const notDoneFlag = localStorage.getItem('under_onboard_done')!=='1';
+  if(!hasProfile || isNewPlayer){
+    if(!document.getElementById('onboarding-modal') || document.getElementById('onboarding-modal').classList.contains('hidden')){
+        openOnboarding(true);
+    }
+  } else if(hasProfile && notDoneFlag){
+    localStorage.setItem('under_onboard_done','1');
+    document.getElementById('onboarding-modal')?.classList.add('hidden');
+    document.getElementById('onboarding-modal')?.classList.remove('mandatory');
+    document.getElementById('auth-onboarding-view')?.classList.add('hidden');
+  } else {
+    document.getElementById('onboarding-modal')?.classList.add('hidden');
+    document.getElementById('auth-onboarding-view')?.classList.add('hidden');
   }
 }
     let actionChatId=null, actionChatData=null;
