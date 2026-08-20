@@ -3207,104 +3207,88 @@ function declineRequest(fromUid){
     }
 
     // ═══ AUTH ═══
-    auth.onAuthStateChanged(user=>{
-    if(user){
-        if(!user.emailVerified){
-            currentUser=user;
-            db.ref(`Users/${currentUser.uid}/blocked`).on('value',snap=>{
-  if(currentUserData) currentUserData.blocked = snap.val()||{};
-});
-// Enhanced auth state handling for new flow (email verification & mandatory avatar)
-auth.onAuthStateChanged(async (user)=>{
+    auth.onAuthStateChanged(async (user)=>{
     if(!user){
+        clearInterval(window._verifyInterval);
+        try{ clearAllListeners(); }catch(e){}
+        currentUser=null;currentUserData={};chatsCache={};notifCache=[];usersCache={};activeChatId=null;chatTargetUid=null;
+        try{ closeChatRoomSilent(); }catch(e){}
         if(typeof showAuthView==='function') showAuthView('onboarding');
         const authScreen = document.getElementById('screen-auth');
         if(authScreen) authScreen.classList.add('active');
         if(typeof showSection==='function') showSection('auth');
+        document.getElementById('nav-bar')?.classList.add('hidden');
+        hideSplash();
         return;
     }
+
+    try{ await user.reload(); }catch(e){}
+
+    if(!user.emailVerified){
+        currentUser=user;
+        try{
+            db.ref(`Users/${currentUser.uid}/blocked`).on('value',snap=>{
+                if(currentUserData) currentUserData.blocked = snap.val()||{};
+            });
+        }catch(e){}
+        document.getElementById('nav-bar')?.classList.add('hidden');
+        if(typeof showAuthView==='function') showAuthView('verify');
+        if(typeof showSection==='function') showSection('auth');
+        document.getElementById('screen-auth')?.classList.add('active');
+        if(window._verifyInterval) clearInterval(window._verifyInterval);
+        window._verifyInterval = setInterval(()=>{
+            user.reload().then(()=>{
+                if(user.emailVerified){
+                    clearInterval(window._verifyInterval);
+                    location.reload();
+                }
+            }).catch(()=>{});
+        }, 3000);
+        hideSplash();
+        return;
+    }
+
     try{
-        await user.reload();
-        if(!user.emailVerified){
-            if(typeof showAuthView==='function') showAuthView('verify');
+        const snap = await db.ref(`Users/${user.uid}`).once('value');
+        const data = snap.val();
+        if(!data || !data.username || !data.DisplayName || !data.Avatar){
+            currentUser=user;
+            try{
+                db.ref(`Users/${user.uid}/blocked`).on('value',s=>{
+                    if(currentUserData) currentUserData.blocked = s.val()||{};
+                });
+            }catch(e){}
             if(typeof showSection==='function') showSection('auth');
-            const authScreen = document.getElementById('screen-auth');
-            if(authScreen) authScreen.classList.add('active');
+            document.getElementById('screen-auth')?.classList.add('active');
+            document.getElementById('nav-bar')?.classList.add('hidden');
+            hideSplash();
+            setTimeout(()=>{ if(typeof openOnboarding==='function') openOnboarding(true); }, 400);
             return;
         }
     }catch(e){}
-    const snap = await db.ref(`Users/${user.uid}`).once('value');
-    const data = snap.val();
-    if(!data || !data.username || !data.DisplayName || !data.Avatar){
-        if(typeof showSection==='function') showSection('auth');
-        setTimeout(()=>{ if(typeof openOnboarding==='function') openOnboarding(true); }, 400);
-    }
-});
 
-            document.getElementById('nav-bar').classList.add('hidden');
-            showSection('verify');
-            if(window._verifyInterval) clearInterval(window._verifyInterval);
-            window._verifyInterval = setInterval(()=>{
-                user.reload().then(()=>{
-                    if(user.emailVerified){
-                        clearInterval(window._verifyInterval);
-                        location.reload();
-                    }
-                }).catch(()=>{});
-            }, 3000);
-            hideSplash();
-            return;
-        }
-        clearInterval(window._verifyInterval);
-        currentUser=user; sessionStartTime=Date.now();
-        document.getElementById('nav-bar').classList.remove('hidden');
-        document.getElementById('user-uid').innerText=user.uid;
-        document.getElementById('user-date').innerText=new Date(user.metadata.creationTime).toLocaleDateString(currentLang=='ru'?'ru-RU':'en-US');
-        if('Notification' in window && Notification.permission=='default') Notification.requestPermission();
-        syncMyData();initFCM();initCarousel();initStickerPanel();setupOnlineStatus();setupChatsListener();setupRequestsListener();setupNotificationListener();loadPrivacySettings();
-        initAccountFields();
-        handleUrlRoute();
-        showSection('feed');
-        hideSplash();
-
-        const redirect = sessionStorage.getItem('redirectPath');
-        if (redirect) {
-            sessionStorage.removeItem('redirectPath');
-            const path = redirect;
-            let m = path.match(/^\/user\/([^/]+)/);
-            if (m) {
-                const uname = m[1].toLowerCase();
-                db.ref('Users').orderByChild('username').equalTo(uname).once('value').then(snap => {
-                    if (snap.exists()) snap.forEach(s => viewProfile(s.key));
-                });
-                return;
-            }
-            m = path.match(/^\/post\/([^/]+)/);
-            if (m) {
-                const postId = m[1];
-                db.ref(`Posts/${postId}`).once('value').then(snap => {
-                    if (snap.exists()) openSinglePost(postId, snap.val());
-                });
-                return;
-            }
-            m = path.match(/^\/(group|channel)\/([^/]+)/);
-            if (m) {
-                const uname = m[2].toLowerCase();
-                db.ref('Chats').once('value').then(snap => {
-                    snap.forEach(s => {
-                        const info = s.val()?.info;
-                        if (info && info.username === uname) joinOrOpenGroup(s.key, {...info, id: s.key });
-                    });
-                });
-                return;
-            }
-        }
-    } else {
-        clearInterval(window._verifyInterval);
-        clearAllListeners();currentUser=null;currentUserData={};chatsCache={};notifCache=[];usersCache={};activeChatId=null;chatTargetUid=null;
-        closeChatRoomSilent();showSection('auth');document.getElementById('nav-bar').classList.add('hidden');
-        hideSplash();
-    }
+    clearInterval(window._verifyInterval);
+    currentUser=user; sessionStartTime=Date.now();
+    const uidEl = document.getElementById('user-uid');
+    if(uidEl) uidEl.innerText=user.uid;
+    const dateEl = document.getElementById('user-date');
+    if(dateEl) dateEl.innerText=new Date(user.metadata.creationTime).toLocaleDateString(currentLang=='ru'?'ru-RU':'en-US');
+    if('Notification' in window && Notification.permission=='default') Notification.requestPermission();
+    syncMyData();initFCM();initCarousel();initStickerPanel();setupOnlineStatus();setupChatsListener();setupRequestsListener();setupNotificationListener();loadPrivacySettings();
+    initAccountFields();
+    handleUrlRoute();
+    if(typeof showSection==='function') showSection('feed');
+    hideSplash();
+    // ФИКС приветственной вкладки
+    try{
+        document.getElementById('onboarding-modal')?.classList.add('hidden');
+        document.getElementById('onboarding-modal')?.classList.remove('mandatory');
+        const om = document.getElementById('onboarding-modal');
+        if(om){ om.style.background=''; om.onclick=null; }
+        document.getElementById('auth-onboarding-view')?.classList.add('hidden');
+        document.getElementById('screen-auth')?.classList.remove('active');
+        _onboardingMandatory=false;
+    }catch(e){}
 });
     function resendVerification(){if(!currentUser)return;currentUser.sendEmailVerification().then(()=>alert('Письмо отправлено!')).catch(err=>alert(err.message));}
     function checkVerification(){if(!currentUser)return;currentUser.reload().then(()=>{if(currentUser.emailVerified){location.reload();}else{alert('Email ещё не подтверждён');}}).catch(err=>alert(err.message));}
