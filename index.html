@@ -64,13 +64,7 @@
   pointer-events:auto !important;
   isolation:isolate;
 }
-.nav-hitblock{
-  position:fixed; left:0; right:0; bottom:0;
-  height: calc(110px + env(safe-area-inset-bottom));
-  z-index:99;
-  pointer-events:auto;
-  background: linear-gradient(to top, var(--bg) 0%, var(--bg) 35%, transparent 100%);
-}
+.nav-hitblock{position:fixed;left:0;right:0;bottom:0;height:calc(110px + env(safe-area-inset-bottom));z-index:99;pointer-events:auto;background:transparent;}
 .nav-item{pointer-events:auto !important;}
 #screen-auth.onb-mode{ z-index: 300 !important; pointer-events:auto !important; }
 #screen-auth.onb-mode *{ pointer-events:auto; }
@@ -124,7 +118,7 @@
         .card{background:var(--bg2);border-radius:var(--radius-lg);overflow:hidden;margin:0 12px 12px;}
         .card-padded{background:var(--bg2);border-radius:var(--radius-lg);padding:16px;margin:0 12px 12px;}
         .field{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'ZeroCool',monospace;background:var(--input-bg);color:var(--text);font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;display:block;}
-        .field:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(243,156,18,0.15);}
+        .field:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--border);}
         .field-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
         .field-wrap{margin-bottom:12px;}
         .btn{width:100%;padding:14px;border-radius:var(--radius-sm);border:none;font-family:'ZeroCool',monospace;cursor:pointer;font-size:13px;font-weight:bold;transition:opacity .12s,transform .12s;-webkit-appearance:none;display:block;text-align:center;}
@@ -393,7 +387,7 @@
             backdrop-filter: blur(10px) saturate(170%) !important;
             -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
             color:#fff;
-            box-shadow:0 2px 10px rgba(243,156,18,0.35);
+            box-shadow:0 2px 8px rgba(0,0,0,0.08);
             border:none !important;
         }
         #btn-send svg{fill:currentColor;}
@@ -614,7 +608,7 @@
         .group-carousel{width:100%;height:90px;display:flex;align-items:center;overflow-x:auto;padding:0 50%;scrollbar-width:none;scroll-snap-type:x mandatory;touch-action:pan-x; -webkit-overflow-scrolling:touch;}
         .group-carousel::-webkit-scrollbar{display:none;}
         .group-carousel-item{flex-shrink:0;width:52px;height:52px;border-radius:50%;margin:0 8px;border:2px solid var(--border);scroll-snap-align:center;transform:scale(0.78);opacity:.55;cursor:pointer;transition:all .32s cubic-bezier(0.34,1.56,0.64,1);object-fit:cover;background:var(--bg3);}
-        .group-carousel-item.active{border-color:var(--accent);transform:scale(1.25);opacity:1;box-shadow:0 4px 12px rgba(243,156,18,.25);}
+        .group-carousel-item.active{border-color:var(--accent);transform:scale(1.25);opacity:1;box-shadow:0 4px 12px rgba(0,0,0,0.08);}
         .group-carousel-item.empty{border-style:dashed;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text3);}
         .group-avatar-main{width:84px;height:84px;border-radius:50%;border:3px solid var(--accent);object-fit:cover;transition:transform .25s cubic-bezier(0.34,1.56,0.64,1);}
         .group-avatar-main:active{transform:scale(.96);}
@@ -988,7 +982,7 @@
   box-shadow: 0 2px 12px rgba(0,0,0,0.04);
 }
 .settings-row:active{ transform: scale(0.97) !important; }
-.settings-row:hover{ border-color: var(--accent) !important; box-shadow: 0 4px 18px rgba(243,156,18,0.12) !important; }
+.settings-row:hover{ border-color: var(--accent) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
 .s-icon{
   width:42px !important;
   height:42px !important;
@@ -1050,7 +1044,7 @@
 }
 @keyframes commentIn{ from{opacity:0; transform:translateY(12px) scale(0.98)} to{opacity:1; transform:translateY(0) scale(1)} }
 .comment-item:active{ transform: scale(0.98); }
-.comment-item:hover{ border-color: var(--accent); box-shadow: 0 4px 16px rgba(243,156,18,0.1); }
+.comment-item:hover{ border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .comment-main{
   display:flex; gap:10px; align-items:flex-start;
 }
@@ -1060,7 +1054,7 @@
 }
 .comment-av{
   width:36px !important; height:36px !important; border-radius:50% !important; object-fit:cover !important; flex-shrink:0 !important; border:2px solid var(--accent) !important;
-  box-shadow: 0 2px 8px rgba(243,156,18,0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .comment-content{ flex:1; min-width:0; }
 .comment-bubble{
@@ -1690,8 +1684,8 @@
 .card:active, .card-padded:active { transform: scale(.99); }
 .btn { position:relative; overflow:hidden; transition: transform .18s cubic-bezier(0.34,1.56,0.64,1), opacity .18s, box-shadow .2s; }
 .btn:active { transform: scale(.96); }
-.btn-accent { box-shadow: 0 4px 14px rgba(243,156,18,.25); }
-.btn-accent:hover { box-shadow: 0 6px 18px rgba(243,156,18,.35); transform: translateY(-1px); }
+.btn-accent { box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+.btn-accent:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.12); transform: translateY(-1px); }
 
 /* comments panel animation */
 .comments-panel { transition: transform .42s cubic-bezier(0.32,0.72,0,1) !important; }
@@ -2069,7 +2063,7 @@ input:focus, textarea:focus{outline-color:var(--accent) !important;}
         .cp-avatar-scroll{display:flex; gap:10px; overflow-x:auto; padding:10px 2px 4px; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
         .cp-avatar-scroll::-webkit-scrollbar{display:none;}
         .cp-av-item{width:56px; height:56px; border-radius:50%; border:2px solid transparent; overflow:hidden; flex-shrink:0; cursor:pointer; transition:all .2s; background:var(--bg3);}
-        .cp-av-item.active{border-color:var(--accent); transform:scale(1.08); box-shadow:0 0 0 3px rgba(243,156,18,.18);}
+        .cp-av-item.active{border-color:var(--accent); transform:scale(1.08); box-shadow:0 0 0 2px var(--border);}
         .cp-av-item img{width:100%;height:100%;object-fit:cover;}
 
         /* Post loading fix */
@@ -2085,7 +2079,45 @@ input:focus, textarea:focus{outline-color:var(--accent) !important;}
 
 
         #screen-force-avatar{ display:none !important; }
-        </style>
+        
+/* === FINAL CLEAN FIX === */
+#screen-auth.onb-mode.active{
+  position:fixed !important; inset:0 !important;
+  z-index:9999 !important; display:flex !important;
+  flex-direction:column !important; background:var(--bg) !important;
+  overflow:hidden !important;
+}
+.onb-root{ flex:1 !important; min-height:0 !important; display:flex !important; flex-direction:column !important; overflow:hidden !important; }
+.onb-topbar{ position:relative !important; z-index:10 !important; flex-shrink:0 !important; pointer-events:auto !important; }
+.onb-slider-viewport{ flex:1 !important; min-height:0 !important; overflow:hidden !important; touch-action:pan-y !important; position:relative !important; z-index:1 !important; }
+.onb-slider-track{ will-change:transform !important; height:100% !important; }
+.onb-slide{ min-width:100% !important; }
+.onb-dots{ position:relative !important; z-index:10 !important; flex-shrink:0 !important; pointer-events:auto !important; }
+.onb-dot{ pointer-events:auto !important; cursor:pointer !important; }
+.onb-bottom{
+  flex-shrink:0 !important; position:relative !important; z-index:20 !important;
+  background:var(--bg) !important; mask-image:none !important; -webkit-mask-image:none !important;
+  pointer-events:auto !important;
+}
+.onb-bottom::before, .onb-bottom::after{ display:none !important; }
+.onb-bottom .btn{ pointer-events:auto !important; cursor:pointer !important; touch-action:manipulation !important; position:relative !important; z-index:21 !important; }
+#onb-theme-toggle{ pointer-events:auto !important; cursor:pointer !important; position:relative !important; z-index:30 !important; touch-action:manipulation !important; }
+
+/* nav block - transparent, no fade */
+.nav{ z-index:101 !important; pointer-events:auto !important; isolation:isolate !important; }
+.nav-hitblock{position:fixed;left:0;right:0;bottom:0;height:calc(110px + env(safe-area-inset-bottom));z-index:99;pointer-events:auto;background:transparent;}
+#screen-auth.onb-mode.active ~ .nav-hitblock{position:fixed;left:0;right:0;bottom:0;height:calc(110px + env(safe-area-inset-bottom));z-index:99;pointer-events:auto;background:transparent;}
+
+/* remove yellow shadows */
+.btn-accent, .btn-accent:hover{ box-shadow:none !important; }
+.ni-icon-create{ box-shadow:none !important; }
+.settings-row:hover{ box-shadow:0 2px 8px rgba(0,0,0,0.06) !important; border-color:var(--border) !important; }
+.comment-item:hover{ box-shadow:none !important; border-color:var(--border) !important; }
+.post-card.active-track{ box-shadow:0 4px 12px rgba(0,0,0,0.08) !important; border-color:var(--border) !important; }
+.field:focus{ box-shadow:0 0 0 2px var(--border) !important; }
+.group-carousel-item.active{ box-shadow:none !important; }
+
+</style>
 </head>
 <body>
 <div id="splash">
@@ -8961,175 +8993,245 @@ auth.onAuthStateChanged(user=>{
 
 
 <script>
-// === FINAL FIX FOR ONBOARDING BUTTONS + THEME ===
+// === ULTIMATE ONBOARDING FIX - buttons + swipe + theme ===
 (function(){
-  // Ensure toggleTheme exists and calls applyColoredBg
-  window.toggleTheme = window.toggleTheme || function(){
-    const cur = document.documentElement.getAttribute('data-theme') || (localStorage.getItem('under_theme')||'light');
-    const next = cur === 'dark' ? 'light' : 'dark';
+  console.log('[ultimate fix] start');
+  const COLORED_KEY='under_colored_bg';
+  if(typeof window.onbIdx==='undefined') window.onbIdx=0;
+
+  window.toggleTheme = function(){
+    const cur = document.documentElement.getAttribute('data-theme') || localStorage.getItem('under_theme') || localStorage.getItem('akanchik_theme') || 'light';
+    const next = cur==='dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('under_theme', next);
     localStorage.setItem('akanchik_theme', next);
     document.getElementById('btn-theme-light')?.classList.toggle('active', next==='light');
     document.getElementById('btn-theme-dark')?.classList.toggle('active', next==='dark');
-    if(typeof applyLang==='function') try{applyLang()}catch(e){}
-    if(typeof applyColoredBg==='function') setTimeout(()=>applyColoredBg(), 20);
+    try{ if(typeof applyLang==='function') applyLang(); }catch(e){}
+    if(typeof window.applyColoredBg==='function') setTimeout(()=>window.applyColoredBg(),20);
   };
 
-  // Robust showAuthMode - final version
   window.showAuthMode = function(mode){
-    console.log('[FINAL showAuthMode]', mode);
-    const root = document.getElementById('onb-root');
-    const loginForm = document.getElementById('auth-login-form');
-    const regForm = document.getElementById('auth-register-form');
-    const authScreen = document.getElementById('screen-auth');
-    const forgotScreen = document.getElementById('screen-forgot');
-    const verifyScreen = document.getElementById('screen-verify');
-
-    // hide/show root
-    if(root){
-      root.style.display = (mode==='onboarding' ? 'flex' : 'none');
-      root.style.pointerEvents = (mode==='onboarding' ? 'auto' : 'none');
+    console.log('[showAuthMode]', mode);
+    const root=document.getElementById('onb-root');
+    const login=document.getElementById('auth-login-form');
+    const reg=document.getElementById('auth-register-form');
+    const auth=document.getElementById('screen-auth');
+    const forgot=document.getElementById('screen-forgot');
+    if(root){ root.style.display=mode==='onboarding'?'flex':'none'; root.style.pointerEvents=mode==='onboarding'?'auto':'none'; }
+    if(login){
+      if(mode==='login'){ login.classList.remove('hidden'); login.style.display='flex'; }
+      else { login.classList.add('hidden'); login.style.display='none'; }
     }
-
-    // toggle forms
-    if(loginForm){
-      if(mode==='login'){
-        loginForm.classList.remove('hidden');
-        loginForm.style.display='flex';
-      } else {
-        loginForm.classList.add('hidden');
-        loginForm.style.display='none';
-      }
+    if(reg){
+      if(mode==='register'){ reg.classList.remove('hidden'); reg.style.display='flex'; }
+      else { reg.classList.add('hidden'); reg.style.display='none'; }
     }
-    if(regForm){
-      if(mode==='register'){
-        regForm.classList.remove('hidden');
-        regForm.style.display='flex';
-      } else {
-        regForm.classList.add('hidden');
-        regForm.style.display='none';
-      }
+    if(forgot){
+      if(mode==='forgot'){ forgot.classList.add('active'); forgot.style.display='flex'; if(auth){ auth.classList.remove('active'); auth.style.display='none'; } }
+      else { forgot.classList.remove('active'); forgot.style.display='none'; }
     }
-
-    if(authScreen){
-      authScreen.classList.add('active');
-      authScreen.style.display='flex';
-      authScreen.style.pointerEvents='auto';
-      if(mode==='onboarding'){
-        authScreen.classList.add('onb-mode');
-      } else if(mode==='forgot'){
-        // forgot will be handled
-      } else {
-        // login/register keep auth screen active but not onb-mode for background?
-        // keep onb-mode to keep styles, but root hidden
-        authScreen.classList.add('onb-mode');
-      }
+    if(auth && mode!=='forgot'){
+      auth.classList.add('active'); auth.style.display='flex';
+      if(mode==='onboarding') auth.classList.add('onb-mode');
     }
-
-    if(forgotScreen){
-      if(mode==='forgot'){
-        forgotScreen.classList.add('active');
-        forgotScreen.style.display='flex';
-        if(authScreen){ authScreen.classList.remove('active'); authScreen.style.display='none'; }
-      } else {
-        forgotScreen.classList.remove('active');
-        forgotScreen.style.display='none';
-      }
-    }
-
-    if(verifyScreen && mode!=='verify'){
-      // keep as is
-    }
-
-    // hide other screens
-    if(mode==='login' || mode==='register' || mode==='onboarding'){
+    if(mode==='onboarding' || mode==='login' || mode==='register'){
       document.querySelectorAll('.screen').forEach(s=>{
         if(s.id!=='screen-auth' && s.id!=='screen-forgot' && s.id!=='screen-verify' && s.id!=='screen-force-avatar'){
-          if(s.id!=='screen-auth') s.classList.remove('active');
+          s.classList.remove('active');
         }
       });
+      const a=document.getElementById('screen-auth');
+      if(a){ a.classList.add('active'); a.style.display='flex'; }
     }
-
-    // re-apply colored bg
-    if(typeof applyColoredBg==='function') setTimeout(()=>applyColoredBg(), 30);
   };
 
-  // Delegated click handler - works even if buttons are cloned later
-  function delegatedClick(e){
-    const authScreen = document.getElementById('screen-auth');
-    if(!authScreen || !authScreen.classList.contains('active')) return;
+  window.updateOnboardingSlider = function(){
+    const track=document.getElementById('onb-track');
+    if(!track) return;
+    track.style.transition='transform .38s cubic-bezier(0.32,0.72,0,1)';
+    track.style.transform=`translateX(-${window.onbIdx*100}%)`;
+    document.querySelectorAll('#onb-dots .onb-dot').forEach((d,i)=>d.classList.toggle('active', i===window.onbIdx));
+  };
 
-    // theme toggle
-    const themeBtn = e.target.closest('#onb-theme-toggle, .onb-theme-btn');
+  function initAll(){
+    const vp=document.getElementById('onb-viewport');
+    const track=document.getElementById('onb-track');
+    const hit=document.getElementById('nav-hitblock');
+    const nav=document.getElementById('nav-bar');
+
+    // hide hitblock on onboarding
+    function updHit(){
+      const auth=document.getElementById('screen-auth');
+      if(auth && auth.classList.contains('active') && auth.classList.contains('onb-mode')){
+        if(hit){ hit.style.display='none'; hit.style.pointerEvents='none'; }
+      }else{
+        if(hit){
+          if(nav && nav.classList.contains('hidden')){ hit.style.display='none'; }
+          else { hit.style.display=''; hit.style.pointerEvents='auto'; }
+        }
+      }
+    }
+    setInterval(updHit, 500);
+    updHit();
+
+    // nav block posts
+    if(nav){
+      ['click','touchstart'].forEach(ev=>{
+        nav.addEventListener(ev, e=>{ e.stopPropagation(); }, {passive:true});
+      });
+    }
+    if(hit){
+      hit.addEventListener('click', e=>{ e.stopPropagation(); e.preventDefault(); }, {passive:false});
+    }
+    document.addEventListener('click', e=>{
+      const navEl=document.getElementById('nav-bar');
+      if(!navEl || navEl.classList.contains('hidden')) return;
+      const auth=document.getElementById('screen-auth');
+      if(auth && auth.classList.contains('onb-mode') && auth.classList.contains('active')) return;
+      const rect=navEl.getBoundingClientRect();
+      if(e.clientY>=rect.top-8){
+        const isNav=e.target.closest('#nav-bar');
+        const isPost=e.target.closest('.post-card, .feed-post, [data-post-id]');
+        if(!isNav && isPost && e.clientY>rect.top-15){
+          e.stopPropagation(); e.preventDefault();
+        }
+      }
+    }, true);
+
+    if(!vp || !track) return;
+
+    // Remove old listeners by cloning track? Keep simple, add fresh listeners with flag
+    if(vp.dataset.fixed==='1') return;
+    vp.dataset.fixed='1';
+
+    let startX=0, dragging=false;
+    vp.addEventListener('touchstart', e=>{
+      if(e.target.closest('.onb-bottom, .onb-topbar, .btn, #onb-theme-toggle, .onb-theme-btn')) return;
+      startX=e.touches[0].clientX; dragging=true; track.style.transition='none';
+    }, {passive:true});
+    vp.addEventListener('touchmove', e=>{
+      if(!dragging) return;
+      const dx=e.touches[0].clientX-startX;
+      const pct=(dx/vp.clientWidth)*100;
+      track.style.transform=`translateX(calc(-${window.onbIdx*100}% + ${pct}%))`;
+    }, {passive:true});
+    vp.addEventListener('touchend', e=>{
+      if(!dragging) return; dragging=false; track.style.transition='';
+      const dx=e.changedTouches[0].clientX-startX;
+      if(Math.abs(dx)>50){
+        if(dx<0 && window.onbIdx<2) window.onbIdx++;
+        else if(dx>0 && window.onbIdx>0) window.onbIdx--;
+      }
+      window.updateOnboardingSlider();
+    }, {passive:true});
+
+    let mDown=false, mStart=0;
+    vp.addEventListener('mousedown', e=>{
+      if(e.target.closest('.onb-bottom, .onb-topbar, .btn, #onb-theme-toggle')) return;
+      mDown=true; mStart=e.clientX; track.style.transition='none'; e.preventDefault();
+    });
+    window.addEventListener('mousemove', e=>{
+      if(!mDown) return;
+      const dx=e.clientX-mStart;
+      const pct=(dx/vp.clientWidth)*100;
+      track.style.transform=`translateX(calc(-${window.onbIdx*100}% + ${pct}%))`;
+    });
+    window.addEventListener('mouseup', e=>{
+      if(!mDown) return; mDown=false; track.style.transition='';
+      const dx=e.clientX-mStart;
+      if(Math.abs(dx)>60){
+        if(dx<0 && window.onbIdx<2) window.onbIdx++;
+        else if(dx>0 && window.onbIdx>0) window.onbIdx--;
+      }
+      window.updateOnboardingSlider();
+    });
+  }
+
+  // Delegated clicks for onboarding
+  document.addEventListener('click', function(e){
+    const auth=document.getElementById('screen-auth');
+    if(!auth || !auth.classList.contains('active') || !auth.classList.contains('onb-mode')) return;
+
+    const themeBtn=e.target.closest('#onb-theme-toggle, .onb-theme-btn');
     if(themeBtn){
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('[theme click]');
+      e.preventDefault(); e.stopPropagation();
       window.toggleTheme();
       return;
     }
 
-    // bottom buttons
-    const bottomBtn = e.target.closest('.onb-bottom .btn');
+    const dot=e.target.closest('#onb-dots .onb-dot');
+    if(dot){
+      const dots=[...document.querySelectorAll('#onb-dots .onb-dot')];
+      const idx=dots.indexOf(dot);
+      if(idx>=0){ window.onbIdx=idx; window.updateOnboardingSlider(); }
+      e.preventDefault(); e.stopPropagation();
+      return;
+    }
+
+    const bottomBtn=e.target.closest('.onb-bottom .btn');
     if(bottomBtn){
-      e.preventDefault();
-      e.stopPropagation();
-      const txt = (bottomBtn.textContent||'').toLowerCase();
-      console.log('[bottom btn]', txt);
-      if(txt.includes('войти') || txt.includes('login')){
-        window.showAuthMode('login');
-      } else if(txt.includes('создать') || txt.includes('аккаунт') || txt.includes('register') || txt.includes('sign')){
-        window.showAuthMode('register');
-      }
+      e.preventDefault(); e.stopPropagation();
+      const txt=(bottomBtn.textContent||'').toLowerCase();
+      if(txt.includes('войти')) window.showAuthMode('login');
+      else window.showAuthMode('register');
       return;
     }
+  }, true);
 
-    // back buttons in auth forms
-    const backBtn = e.target.closest('.auth-form-back');
-    if(backBtn){
-      e.preventDefault();
-      e.stopPropagation();
-      window.showAuthMode('onboarding');
+  // Colored bg
+  window.applyColoredBg=function(){
+    const enabled=localStorage.getItem(COLORED_KEY)==='1';
+    const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+    const root=document.documentElement;
+    const tog=document.getElementById('toggle-colored-bg');
+    if(tog) tog.checked=enabled;
+    if(!enabled){
+      root.removeAttribute('data-colored-bg');
+      ['--bg','--bg2','--bg3','--bg4','--input-bg','--nav-bg','--loader-bg','--border','--border2'].forEach(v=>root.style.removeProperty(v));
       return;
     }
-  }
-
-  document.addEventListener('click', delegatedClick, true);
-  document.addEventListener('touchend', (e)=>{
-    // for mobile, trigger click via touchend if target is button
-    const t = e.target.closest('.onb-bottom .btn, #onb-theme-toggle, .onb-theme-btn, .auth-form-back');
-    if(t){
-      // let click handler handle, but prevent ghost
-      // we call delegatedClick with same event
-      // convert touchend to click logic
-      // do not prevent default here to allow click to fire, just ensure
+    root.setAttribute('data-colored-bg','1');
+    if(isDark){
+      root.style.setProperty('--bg','color-mix(in srgb, var(--accent) 18%, #0d0d0f)');
+      root.style.setProperty('--bg2','color-mix(in srgb, var(--accent) 14%, #1c1c1e)');
+      root.style.setProperty('--bg3','color-mix(in srgb, var(--accent) 16%, #2c2c2e)');
+      root.style.setProperty('--bg4','color-mix(in srgb, var(--accent) 20%, #3a3a3c)');
+      root.style.setProperty('--input-bg','color-mix(in srgb, var(--accent) 12%, #1c1c1e)');
+      root.style.setProperty('--nav-bg','color-mix(in srgb, var(--accent) 12%, #1c1c1e)');
+      root.style.setProperty('--loader-bg','color-mix(in srgb, var(--accent) 16%, #0d0d0f)');
+      root.style.setProperty('--border','color-mix(in srgb, var(--accent) 14%, #38383a)');
+      root.style.setProperty('--border2','color-mix(in srgb, var(--accent) 10%, #2c2c2e)');
+    }else{
+      root.style.setProperty('--bg','color-mix(in srgb, var(--accent) 16%, #f0f0f2)');
+      root.style.setProperty('--bg2','color-mix(in srgb, var(--accent) 12%, #ffffff)');
+      root.style.setProperty('--bg3','color-mix(in srgb, var(--accent) 14%, #f5f5f7)');
+      root.style.setProperty('--bg4','color-mix(in srgb, var(--accent) 16%, #e8e8eb)');
+      root.style.setProperty('--input-bg','color-mix(in srgb, var(--accent) 10%, #ffffff)');
+      root.style.setProperty('--nav-bg','color-mix(in srgb, var(--accent) 10%, #ffffff)');
+      root.style.setProperty('--loader-bg','color-mix(in srgb, var(--accent) 14%, #f0f0f2)');
+      root.style.setProperty('--border','color-mix(in srgb, var(--accent) 14%, #e0e0e0)');
+      root.style.setProperty('--border2','color-mix(in srgb, var(--accent) 12%, #d0d0d0)');
     }
-  }, {passive:true});
+  };
+  window.toggleColoredBg=function(c){ localStorage.setItem(COLORED_KEY, c?'1':'0'); window.applyColoredBg(); };
+  const origSetTheme=window.setTheme;
+  window.setTheme=function(t){
+    if(typeof origSetTheme==='function') origSetTheme(t);
+    else { localStorage.setItem('akanchik_theme', t); document.documentElement.setAttribute('data-theme', t); }
+    setTimeout(()=>window.applyColoredBg(),20);
+  };
+  const origSetAccent=window.setAccentColor;
+  window.setAccentColor=function(h){
+    if(typeof origSetAccent==='function') origSetAccent(h);
+    else { localStorage.setItem('akanchik_accent', h); document.documentElement.style.setProperty('--accent', h); }
+    setTimeout(()=>window.applyColoredBg(),20);
+  };
 
-  // Force enable pointer events on all onboarding controls
-  function forceEnable(){
-    document.querySelectorAll('#onb-theme-toggle, .onb-theme-btn, .onb-bottom .btn, .auth-form-back, #onb-dots .onb-dot').forEach(el=>{
-      el.style.pointerEvents='auto';
-      el.style.zIndex='50';
-      el.style.position='relative';
-      el.style.cursor='pointer';
-      el.style.touchAction='manipulation';
-    });
-    const auth = document.getElementById('screen-auth');
-    if(auth){
-      auth.style.pointerEvents='auto';
-    }
-    document.querySelectorAll('#screen-auth.onb-mode, .onb-root, .onb-topbar, .onb-dots, .onb-bottom').forEach(el=>{
-      el.style.pointerEvents='auto';
-    });
-  }
-  setTimeout(forceEnable, 200);
-  setTimeout(forceEnable, 1000);
-  setTimeout(forceEnable, 2000);
-  document.addEventListener('DOMContentLoaded', ()=>setTimeout(forceEnable, 800));
-
-  console.log('[FINAL FIX] installed');
+  setTimeout(initAll, 200);
+  setTimeout(initAll, 1000);
+  setTimeout(()=>{ window.applyColoredBg(); window.updateOnboardingSlider(); }, 400);
+  document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(initAll, 500); setTimeout(()=>{ window.applyColoredBg(); window.updateOnboardingSlider(); }, 800); });
 })();
 </script>
 
