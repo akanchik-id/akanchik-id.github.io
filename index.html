@@ -3960,7 +3960,7 @@ function declineRequest(fromUid){
 }
     function goBackFromView(){history.replaceState({type:'section', section:'explore'},'','/');showSection('explore');}
     function goBackFromList(){showSection(previousSection||'account');}
-    function openSettingsSection(id){
+        function openSettingsSection(id){
         try{
             const main = document.getElementById('cabinet-main');
             if(main) main.style.display='none';
@@ -3969,12 +3969,10 @@ function declineRequest(fromUid){
             if(sub) sub.classList.add('active');
             if(id==='s-account' && typeof initCarousel==='function'){initCarousel();}
             if(id==='s-notifs'){
-                setTimeout(()=>{ 
-                    try{ 
-                        if(typeof checkTelegramLinkStatus==='function') checkTelegramLinkStatus(); 
-                        if(typeof loadPrivacySettings==='function') loadPrivacySettings();
-                    }catch(e){ console.log('s-notifs open err', e); }
-                }, 150);
+                setTimeout(()=>{ try{ if(typeof checkTelegramLinkStatus==='function') checkTelegramLinkStatus(); }catch(e){} }, 200);
+            }
+            if(id==='s-notifs'){
+                setTimeout(()=>{ try{ if(typeof checkTelegramLinkStatus==='function') checkTelegramLinkStatus(); }catch(e){} }, 200);
             }
         }catch(e){ console.log('openSettingsSection err', e); }
     }
@@ -8991,48 +8989,28 @@ function showAuthMode(mode){
         const forgotScreen = document.getElementById('screen-forgot');
         const authScreen = document.getElementById('screen-auth');
         const verifyScreen = document.getElementById('screen-verify');
-        
         if(root) root.style.display = (mode==='onboarding' ? '' : 'none');
-        
         if(loginForm){
-            if(mode==='login'){
-                loginForm.classList.remove('hidden');
-                loginForm.style.display = '';
-            } else {
-                loginForm.classList.add('hidden');
-            }
+            if(mode==='login'){ loginForm.classList.remove('hidden'); loginForm.style.display=''; }
+            else { loginForm.classList.add('hidden'); }
         }
         if(regForm){
-            if(mode==='register'){
-                regForm.classList.remove('hidden');
-                regForm.style.display = '';
-            } else {
-                regForm.classList.add('hidden');
-            }
+            if(mode==='register'){ regForm.classList.remove('hidden'); regForm.style.display=''; }
+            else { regForm.classList.add('hidden'); }
         }
-        
         if(forgotScreen){
             if(mode==='forgot') forgotScreen.classList.add('active');
             else forgotScreen.classList.remove('active');
         }
-        
         if(authScreen){
-            if(mode==='forgot'){
-                authScreen.classList.remove('active');
-            } else {
+            if(mode==='forgot'){ authScreen.classList.remove('active'); }
+            else {
                 authScreen.classList.add('active');
-                if(mode==='onboarding'){
-                    authScreen.classList.add('onb-mode');
-                } else {
-                    authScreen.classList.remove('onb-mode');
-                }
+                if(mode==='onboarding') authScreen.classList.add('onb-mode');
+                else authScreen.classList.remove('onb-mode');
             }
         }
-        
-        if(verifyScreen && mode!=='verify'){
-            verifyScreen.classList.remove('active');
-        }
-        
+        if(verifyScreen && mode!=='verify') verifyScreen.classList.remove('active');
         if(mode==='forgot'){
             if(forgotScreen) forgotScreen.classList.add('active');
             if(authScreen) authScreen.classList.remove('active');
@@ -9042,9 +9020,7 @@ function showAuthMode(mode){
         if(mode==='login' || mode==='register' || mode==='onboarding'){
             if(typeof showSection==='function') showSection('auth');
         }
-    }catch(e){
-        console.error('showAuthMode error', e);
-    }
+    }catch(e){ console.error('showAuthMode err', e); }
 }
 
 // Override showSection to handle new screens
@@ -9059,15 +9035,6 @@ function showAuthMode(mode){
             if(!fromPop && !window._isPop) {
                 try{ history.pushState({type:'section', section}, '', ''); }catch(e){}
             }
-            return;
-        }
-        if(section==='telegram-link'){
-            document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-            const el = document.getElementById('screen-telegram-link');
-            if(el) el.classList.add('active');
-            window.currentSection='telegram-link';
-            const navBar=document.getElementById('nav-bar');
-            if(navBar){ navBar.classList.add('hidden'); navBar.style.display='none'; }
             return;
         }
         if(section==='complete-profile'){
@@ -9805,6 +9772,30 @@ auth.onAuthStateChanged(user=>{
     }
   }, true);
 
+  
+  // FIXED onboarding buttons - position based (added fix)
+  (function(){
+    const handler = (e)=>{
+      const target = e.target;
+      const bottomBtn = target.closest('.onb-bottom .btn');
+      if(!bottomBtn) return;
+      // Only handle if inside auth onboarding
+      const authScreen = document.getElementById('screen-auth');
+      if(!authScreen || !authScreen.classList.contains('onb-mode')) return;
+      e.preventDefault(); e.stopPropagation();
+      const allBtns = document.querySelectorAll('.onb-bottom .btn');
+      console.log('onb-bottom click', bottomBtn, allBtns.length);
+      if(allBtns.length >= 2){
+        if(bottomBtn === allBtns[0]){
+          window.showAuthMode('login');
+        } else {
+          window.showAuthMode('register');
+        }
+      }
+    };
+    document.addEventListener('click', handler, true);
+  })();
+
   // Colored bg
   window.applyColoredBg=function(){
     const enabled=localStorage.getItem(COLORED_KEY)==='1';
@@ -9869,123 +9860,159 @@ auth.onAuthStateChanged(user=>{
 
 
 
-// ================= TELEGRAM BOT INTEGRATION - страница вместо алерта (FIXED) =================
-window.TELEGRAM_BOT_USERNAME = window.TELEGRAM_BOT_USERNAME || 'under_notify_bot'; // ЗАМЕНИ на свой @юзернейм бота без @
+// ================= TELEGRAM BOT INTEGRATION - WORKING VERSION (как когда все работало) =================
+window.TELEGRAM_BOT_USERNAME = window.TELEGRAM_BOT_USERNAME || 'under_notify_bot';
 window.TELEGRAM_APP_URL = window.TELEGRAM_APP_URL || 'https://akanchik-id.github.io';
 window._tgLinkCode = null;
 window._tgLinkUrl = null;
 
 window.linkTelegramBot = async function(){
-    console.log('linkTelegramBot clicked - START');
+    console.log('linkTelegramBot CLICKED - working version');
     try{
         let uid = null;
-        try{
-            if(typeof currentUser !== 'undefined' && currentUser && currentUser.uid) uid = currentUser.uid;
-            else if(typeof auth !== 'undefined' && auth && auth.currentUser) uid = auth.currentUser.uid;
-            else if(typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) uid = firebase.auth().currentUser.uid;
-        }catch(e){ console.log('get uid err', e); }
+        // Get UID from all possible sources
+        if(typeof currentUser !== 'undefined' && currentUser && currentUser.uid){
+            uid = currentUser.uid;
+        } else if(typeof auth !== 'undefined' && auth && auth.currentUser && auth.currentUser.uid){
+            uid = auth.currentUser.uid;
+        } else if(window.firebase && firebase.auth && firebase.auth().currentUser){
+            uid = firebase.auth().currentUser.uid;
+        }
+        
+        // Also try global
+        if(!uid && typeof window.currentUser !== 'undefined' && window.currentUser && window.currentUser.uid){
+            uid = window.currentUser.uid;
+        }
+        
+        console.log('UID found:', uid);
         
         if(!uid){
-            const msg = (typeof L !== 'undefined' ? L('need_login') : 'Войди в аккаунт') || 'Войди в аккаунт';
-            alert(msg);
-            console.log('linkTelegramBot: no uid');
+            alert('Сначала войди в аккаунт!
+
+UID не найден');
             return;
         }
         
-        const code = Math.random().toString(36).substring(2,10) + Math.random().toString(36).substring(2,6);
+        // Generate code
+        const code = Math.random().toString(36).substring(2,8).toUpperCase() + Math.random().toString(36).substring(2,4).toUpperCase();
         window._tgLinkCode = code;
         const botUsername = window.TELEGRAM_BOT_USERNAME || 'under_notify_bot';
         const link = `https://t.me/${botUsername}?start=${code}`;
         window._tgLinkUrl = link;
         
-        console.log('Generated code', code, link);
+        console.log('Generated:', code, link);
         
+        // Update UI BEFORE firebase
         const codeEl = document.getElementById('tg-link-code-display');
         const urlEl = document.getElementById('tg-link-url-display');
         const successEl = document.getElementById('tg-link-success');
-        if(codeEl) codeEl.textContent = code.toUpperCase();
+        if(codeEl) codeEl.textContent = code;
         if(urlEl) urlEl.textContent = link;
         if(successEl) successEl.style.display='none';
         
-        // Show telegram-link screen - FIXED to use showSection
-        try{
-            if(typeof showSection === 'function'){
-                showSection('telegram-link');
-            } else {
-                document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-                const tgScreen = document.getElementById('screen-telegram-link');
-                if(tgScreen) tgScreen.classList.add('active');
-            }
+        // SHOW SCREEN - FORCE DISPLAY
+        console.log('Showing telegram link screen...');
+        const tgScreen = document.getElementById('screen-telegram-link');
+        if(tgScreen){
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(s=>{ s.classList.remove('active'); });
+            // Hide cabinet
             const cabMain = document.getElementById('cabinet-main');
             if(cabMain) cabMain.style.display='none';
             document.querySelectorAll('.settings-sub').forEach(s=>s.classList.remove('active'));
-        }catch(e){ 
-            console.log('show screen err', e); 
+            // Show telegram screen
+            tgScreen.classList.add('active');
+            tgScreen.style.display = 'flex';
+            console.log('Screen shown!');
+        } else {
+            console.error('screen-telegram-link NOT FOUND!');
+            alert('Экран подключения не найден, но код: ' + code + '
+Ссылка: ' + link);
         }
         
-        // Save to Firebase
+        // Save to Firebase - with error handling
         try{
             if(typeof db !== 'undefined' && db && db.ref){
+                console.log('Saving to Firebase...');
                 await db.ref(`Users/${uid}`).update({
-                    telegramLinkCode: code,
+                    telegramLinkCode: code.toLowerCase(),
                     telegramLinkCreated: Date.now(),
                     telegramLinkExpires: Date.now() + 10*60*1000
                 });
-                console.log('code saved to firebase');
+                console.log('Saved to Firebase OK');
+            } else {
+                console.log('db not available, trying firebase.database()');
+                if(firebase && firebase.database){
+                    await firebase.database().ref(`Users/${uid}`).update({
+                        telegramLinkCode: code.toLowerCase(),
+                        telegramLinkCreated: Date.now(),
+                        telegramLinkExpires: Date.now() + 10*60*1000
+                    });
+                    console.log('Saved via firebase.database OK');
+                }
             }
         }catch(e){
-            console.log('firebase save err (non critical)', e);
+            console.error('Firebase save failed:', e);
+            alert('Код создан: ' + code + '
+Но не сохранен в базу: ' + e.message + '
+Попробуй еще раз или проверь правила Firebase');
         }
         
-        if(typeof listenForTelegramLink==='function') listenForTelegramLink();
+        // Listen for success
+        if(typeof listenForTelegramLink === 'function'){
+            listenForTelegramLink();
+        }
+        
     }catch(e){
-        console.error('linkTelegramBot error', e);
-        alert('Ошибка: '+e.message);
+        console.error('linkTelegramBot FATAL error:', e);
+        alert('Ошибка подключения: ' + e.message + '
+
+Попробуй перезагрузить страницу');
     }
 };
 
-window.openTelegramBotLinkwindow.openTelegramBotLink = function(){
-    console.log('openTelegramBotLink', window._tgLinkUrl);
-    if(!window._tgLinkUrl){
+window.openTelegramBotLink = function(){
+    console.log('openTelegramBotLink clicked', window._tgLinkUrl);
+    let url = window._tgLinkUrl;
+    if(!url){
         const codeEl = document.getElementById('tg-link-code-display');
         const code = codeEl ? codeEl.textContent.trim() : null;
-        if(code){
+        if(code && code !== '------'){
             const botUsername = window.TELEGRAM_BOT_USERNAME || 'under_notify_bot';
-            window._tgLinkUrl = `https://t.me/${botUsername}?start=${code.toLowerCase()}`;
+            url = `https://t.me/${botUsername}?start=${code.toLowerCase()}`;
+            window._tgLinkUrl = url;
         }
     }
-    if(window._tgLinkUrl){
-        window.open(window._tgLinkUrl, '_blank');
+    if(url){
+        console.log('Opening:', url);
+        window.open(url, '_blank');
     } else {
-        alert('Сначала нажми Подключить');
+        alert('Сначала нажми "Подключить Telegram" чтобы получить код');
     }
 };
 
 window.copyTelegramLink = function(){
-    if(!window._tgLinkUrl){
-        alert('Нет ссылки');
+    const url = window._tgLinkUrl || document.getElementById('tg-link-url-display')?.textContent;
+    if(!url || url.includes('CODE') || url.includes('------')){
+        alert('Нет ссылки для копирования');
         return;
     }
     if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(window._tgLinkUrl).then(()=>{
-            if(typeof showToast === 'function') showToast('','Скопировано ✓', typeof avatarUrl !== 'undefined' ? avatarUrl(1) : '');
-            else alert('Скопировано ✓');
+        navigator.clipboard.writeText(url).then(()=>{
+            alert('Скопировано: ' + url);
         }).catch(()=>{
-            fallbackCopy(window._tgLinkUrl);
+            prompt('Скопируй ссылку:', url);
         });
     } else {
-        fallbackCopy(window._tgLinkUrl);
+        prompt('Скопируй ссылку:', url);
     }
 };
 
-function fallbackCopy(text){
-    const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); alert('Скопировано ✓'); }catch(e){ alert(text); } document.body.removeChild(ta);
-}
-
 window.shareTelegramLink = function(){
-    if(!window._tgLinkUrl) return;
+    const url = window._tgLinkUrl;
+    if(!url) return;
     if(navigator.share){
-        navigator.share({title:'Under Telegram', text: 'Подключи Telegram для Under', url: window._tgLinkUrl}).catch(()=>{});
+        navigator.share({title:'Under Telegram', text:'Подключи Telegram', url:url}).catch(()=>{});
     } else {
         window.copyTelegramLink();
     }
@@ -9994,43 +10021,125 @@ window.shareTelegramLink = function(){
 window.closeTelegramLinkScreen = function(){
     console.log('closeTelegramLinkScreen');
     try{
-        document.getElementById('screen-telegram-link')?.classList.remove('active');
-        // show cabinet again
+        const screen = document.getElementById('screen-telegram-link');
+        if(screen){
+            screen.classList.remove('active');
+            screen.style.display = '';
+        }
+        // Show cabinet again
         if(typeof showSection === 'function'){
             showSection('cabinet');
             setTimeout(()=>{
                 try{
-                    document.getElementById('cabinet-main').style.display='';
+                    const cabMain = document.getElementById('cabinet-main');
+                    if(cabMain) cabMain.style.display='';
                     document.querySelectorAll('.settings-sub').forEach(s=>s.classList.remove('active'));
                     const notifs = document.getElementById('s-notifs');
                     if(notifs) notifs.classList.add('active');
-                    checkTelegramLinkStatus();
+                    if(typeof checkTelegramLinkStatus === 'function') checkTelegramLinkStatus();
                 }catch(e){}
             }, 100);
+        } else {
+            // fallback
+            document.getElementById('cabinet-main').style.display='';
+            document.getElementById('s-notifs')?.classList.add('active');
         }
-    }catch(e){ console.log(e); }
+    }catch(e){ console.log('close err', e); }
 };
 
 function listenForTelegramLink(){
     let uid = null;
-    if(typeof currentUser !== 'undefined' && currentUser && currentUser.uid) uid = currentUser.uid;
-    else if(typeof auth !== 'undefined' && auth.currentUser) uid = auth.currentUser.uid;
-    else return;
-    
     try{
-        const ref = db.ref(`Users/${uid}/telegramChatId`);
+        if(typeof currentUser !== 'undefined' && currentUser && currentUser.uid) uid = currentUser.uid;
+        else if(typeof auth !== 'undefined' && auth && auth.currentUser) uid = auth.currentUser.uid;
+        else if(firebase && firebase.auth && firebase.auth().currentUser) uid = firebase.auth().currentUser.uid;
+    }catch(e){}
+    if(!uid) return;
+    
+    console.log('Listening for telegram link for', uid);
+    try{
+        const ref = (typeof db !== 'undefined' && db.ref) ? db.ref(`Users/${uid}/telegramChatId`) : firebase.database().ref(`Users/${uid}/telegramChatId`);
         const handler = ref.on('value', snap=>{
-            if(snap.exists()){
+            if(snap.exists() && snap.val()){
+                console.log('Telegram linked detected!', snap.val());
                 ref.off('value', handler);
                 const successEl = document.getElementById('tg-link-success');
                 if(successEl) successEl.style.display='block';
-                try{ if(window.playSound) playSound('receive'); }catch(e){}
-                setTimeout(()=>{ checkTelegramLinkStatus(); }, 500);
+                try{ if(typeof playSound === 'function') playSound('receive'); }catch(e){}
+                setTimeout(()=>{ 
+                    if(typeof checkTelegramLinkStatus === 'function') checkTelegramLinkStatus();
+                }, 500);
             }
         });
         setTimeout(()=>{ try{ ref.off('value', handler); }catch(e){} }, 10*60*1000);
     }catch(e){ console.log('listen err', e); }
 }
+
+window.checkTelegramLinkStatus = async function(){
+    console.log('checkTelegramLinkStatus called');
+    let uid = null;
+    try{
+        if(typeof currentUser !== 'undefined' && currentUser && currentUser.uid) uid = currentUser.uid;
+        else if(typeof auth !== 'undefined' && auth && auth.currentUser) uid = auth.currentUser.uid;
+        else if(firebase && firebase.auth && firebase.auth().currentUser) uid = firebase.auth().currentUser.uid;
+    }catch(e){}
+    if(!uid){
+        console.log('check status: no uid');
+        return;
+    }
+    
+    try{
+        const ref = (typeof db !== 'undefined' && db.ref) ? db.ref(`Users/${uid}`) : firebase.database().ref(`Users/${uid}`);
+        const snap = await ref.once('value');
+        const data = snap.val() || {};
+        console.log('check status data:', data.telegramChatId, data.telegramUsername);
+        
+        const notLinkedEl = document.getElementById('tg-not-linked');
+        const linkedEl = document.getElementById('tg-linked');
+        const usernameEl = document.getElementById('tg-username-display');
+        
+        if(data.telegramChatId){
+            console.log('Status: LINKED');
+            if(notLinkedEl) notLinkedEl.style.display='none';
+            if(linkedEl) linkedEl.style.display='block';
+            if(usernameEl) usernameEl.textContent = data.telegramUsername ? '@'+data.telegramUsername : 'ID: '+data.telegramChatId;
+        }else{
+            console.log('Status: NOT LINKED');
+            if(notLinkedEl) notLinkedEl.style.display='block';
+            if(linkedEl) linkedEl.style.display='none';
+        }
+    }catch(e){ console.log('tg status err', e); }
+};
+
+window.unlinkTelegramBot = async function(){
+    if(!confirm('Отключить Telegram уведомления?')) return;
+    let uid = null;
+    try{
+        if(typeof currentUser !== 'undefined' && currentUser && currentUser.uid) uid = currentUser.uid;
+        else if(typeof auth !== 'undefined' && auth && auth.currentUser) uid = auth.currentUser.uid;
+        else if(firebase && firebase.auth && firebase.auth().currentUser) uid = firebase.auth().currentUser.uid;
+    }catch(e){}
+    if(!uid) return;
+    try{
+        const ref = (typeof db !== 'undefined' && db.ref) ? db.ref(`Users/${uid}`) : firebase.database().ref(`Users/${uid}`);
+        await ref.update({
+            telegramChatId: null,
+            telegramUsername: null,
+            telegramLinkedAt: null,
+            telegramEnabled: null,
+            telegramLinkCode: null,
+            telegramLinkCreated: null,
+            telegramLinkExpires: null
+        });
+        console.log('Unlinked OK');
+        alert('Отключено');
+        if(typeof checkTelegramLinkStatus === 'function') checkTelegramLinkStatus();
+    }catch(e){ 
+        console.error('unlink err', e);
+        alert('Ошибка: ' + e.message); 
+    }
+};
+
 
 window.checkTelegramLinkStatus = async function(){
     let uid = null;
