@@ -2347,32 +2347,7 @@ input:focus, textarea:focus{outline-color:var(--accent) !important;}
         .system-row .msg .sender-name{color:var(--accent);font-weight:bold;}
 
 
-        /* Stone pet - free drag anywhere */
-        .stone-pet-container{
-            position:absolute;
-            width:80px;
-            height:80px;
-            z-index:10;
-            cursor:grab;
-            user-select:none;
-            touch-action:none;
-            filter: drop-shadow(3px 6px 8px rgba(0,0,0,0.85));
-        }
-        .stone-pet-container:active{cursor:grabbing;}
-        .stone-pet-container.dragging{cursor:grabbing;filter: drop-shadow(4px 8px 12px rgba(0,0,0,0.9));transition:none!important;}
-        .stone-pet-container img{
-            width:100%;
-            height:100%;
-            object-fit:contain;
-            animation:stoneDance 2.8s ease-in-out infinite;
-            pointer-events:none;
-        }
-        @keyframes stoneDance{
-            0%,100%{transform:scaleX(1) scaleY(1);}
-            25%{transform:scaleX(1.12) scaleY(0.92);}
-            50%{transform:scaleX(0.96) scaleY(1.06);}
-            75%{transform:scaleX(1.08) scaleY(0.94);}
-        }
+        
         .stone-pet-shadow{
             position:absolute;
             bottom:-6px;
@@ -2459,6 +2434,37 @@ input:focus, textarea:focus{outline-color:var(--accent) !important;}
             justify-content:space-between;
             align-items:center;
         }
+
+
+        /* Stone pet - free drag anywhere, Russian */
+        .stone-pet-container{
+            position:absolute;
+            width:80px;
+            height:80px;
+            z-index:10;
+            cursor:grab;
+            user-select:none;
+            touch-action:none;
+            filter: drop-shadow(3px 6px 8px rgba(0,0,0,0.85));
+        }
+        .stone-pet-container.dragging{cursor:grabbing;filter: drop-shadow(4px 8px 12px rgba(0,0,0,0.9));transition:none!important;}
+        .stone-pet-container img{width:100%;height:100%;object-fit:contain;animation:stoneDance 2.8s ease-in-out infinite;pointer-events:none;}
+        @keyframes stoneDance{0%,100%{transform:scaleX(1) scaleY(1);}25%{transform:scaleX(1.12) scaleY(0.92);}50%{transform:scaleX(0.96) scaleY(1.06);}75%{transform:scaleX(1.08) scaleY(0.94);}}
+        .stone-pet-shadow{position:absolute;bottom:-6px;left:12%;width:76%;height:10px;background:rgba(0,0,0,0.65);border-radius:50%;filter:blur(5px);z-index:-1;}
+        .stone-invite-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:12px;margin:8px 12px;text-align:center;}
+        .stone-menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+        .stone-menu-overlay.open{opacity:1;pointer-events:auto;}
+        .stone-menu{background:var(--bg2);border-radius:24px;padding:20px;width:92%;max-width:360px;text-align:center;transform:scale(0.92);transition:transform 0.25s;max-height:85vh;overflow-y:auto;}
+        .stone-menu-overlay.open .stone-menu{transform:scale(1);}
+        .stone-menu-img{width:130px;height:130px;margin:0 auto 12px;animation:stoneDance 2.8s ease-in-out infinite;filter:drop-shadow(0 6px 14px rgba(0,0,0,0.5));}
+        .stone-menu-img img{width:100%;height:100%;object-fit:contain;}
+        .stone-name-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;}
+        .stone-name-row #stone-name-display{font-size:20px;font-weight:bold;}
+        .stone-name-edit{width:30px;height:30px;border:none;background:var(--bg3);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+        .stone-task{background:var(--bg3);border-radius:12px;padding:10px 12px;margin:8px 0;text-align:left;display:flex;justify-content:space-between;align-items:center;}
+        .chat-row-name-with-stone{display:flex;align-items:center;gap:6px;}
+        .chat-stone-badge{display:inline-flex;align-items:center;gap:3px;background:var(--bg3);border-radius:10px;padding:2px 6px;font-size:11px;font-weight:bold;}
+        .chat-stone-badge img{width:14px;height:14px;object-fit:contain;}
 
 </style>
 </head>
@@ -3261,7 +3267,7 @@ input:focus, textarea:focus{outline-color:var(--accent) !important;}
             <span onclick="addReaction('❤️',activeMenuMsg?.key);closeMsgModal()">❤️</span>
             <span onclick="addReaction('😂',activeMenuMsg?.key);closeMsgModal()">😂</span>
             <span onclick="addReaction('👍',activeMenuMsg?.key);closeMsgModal()">👍</span>
-            <span onclick="addReaction('🔥',activeMenuMsg?.key);closeMsgModal()">🔥</span>
+            <span onclick="addReaction('🪨',activeMenuMsg?.key);closeMsgModal()">🪨</span>
             <span onclick="addReaction('😍',activeMenuMsg?.key);closeMsgModal()">😍</span>
             <span onclick="addReaction('😭',activeMenuMsg?.key);closeMsgModal()">😭</span>
             <span onclick="addReaction('🙏',activeMenuMsg?.key);closeMsgModal()">🙏</span>
@@ -7935,11 +7941,11 @@ function openSharePost(postId, authorUid){
             list.innerHTML='';
             if(!snap.exists()){list.innerHTML=`<div class="empty-state"><div style="font-size:24px;margin-bottom:8px;">💭</div>${L('no_comments')||'Нет комментариев'}</div>`;return;}
             const allComments={};snap.forEach(s=>{if(s.val())allComments[s.key]=s.val();});
-            const topLevel=Object.entries(allComments).filter(([,c])=>!c.parentId);
+            const topУровень=Object.entries(allComments).filter(([,c])=>!c.parentId);
             const replies=Object.entries(allComments).filter(([,c])=>c.parentId);
             const replyMap={};replies.forEach(([k,c])=>{if(!replyMap[c.parentId])replyMap[c.parentId]=[];replyMap[c.parentId].push([k,c]);});
-            topLevel.sort((a,b)=>(a[1].time||0)-(b[1].time||0));
-            topLevel.forEach(([cid,c],ci)=>{
+            topУровень.sort((a,b)=>(a[1].time||0)-(b[1].time||0));
+            topУровень.forEach(([cid,c],ci)=>{
                 const replyCount = replyMap[cid]?.length||0;
                 const row=_buildCommentRow(cid,c,false,ci,replyCount);
                 list.appendChild(row);
@@ -10890,43 +10896,78 @@ window.openSystemChat = openSystemChat;
 </script>
 
 
-    <div id="stone-menu-overlay" class="stone-menu-overlay" onclick="if(event.target===this) closeStoneMenu()">
+        <div id="stone-menu-overlay" class="stone-menu-overlay" onclick="if(event.target===this) closeStoneMenu()">
         <div class="stone-menu">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <div style="font-weight:bold;font-size:16px;">Stone Pet</div>
+                <div style="font-weight:bold;font-size:16px;">Питомец Камень</div>
                 <button onclick="closeStoneMenu()" style="width:32px;height:32px;border:none;background:var(--bg3);border-radius:50%;cursor:pointer;">✕</button>
             </div>
             <div class="stone-menu-img"><img id="stone-menu-img" src="https://akanchik-id.github.io/stone-baby.png" onerror="this.src='https://akanchik-id.github.io/logo.png'"></div>
             <div class="stone-name-row">
                 <div id="stone-name-display">Rocky</div>
-                <button class="stone-name-edit" onclick="openStoneNameEdit()" title="Edit name">
+                <button class="stone-name-edit" onclick="openStoneNameEdit()" title="Изменить имя">
                     <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--text);fill:none;stroke-width:2;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
             </div>
-            <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Streak: <b id="stone-streak-count">0</b> 🔥</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;">Уровень: <b id="stone-level-count">0</b> <img src="https://akanchik-id.github.io/stone-baby.png" style="width:18px;height:18px;object-fit:contain;"></div>
             <div id="stone-name-edit-wrap" class="hidden" style="margin-bottom:12px;display:none;gap:6px;">
                 <input id="stone-name-input" class="field" placeholder="Rocky" style="flex:1;" maxlength="20">
-                <button class="btn btn-accent" onclick="setStoneName()" style="width:auto;padding:8px 12px;">Save</button>
+                <button class="btn btn-accent" onclick="setStoneName()" style="width:auto;padding:8px 12px;">Сохранить</button>
             </div>
             <div style="text-align:left;">
-                <div style="font-size:12px;font-weight:bold;margin-bottom:6px;">Tasks to grow faster</div>
-                <div class="stone-task"><div><b>Send 5 messages daily</b><br><span style="font-size:10px;color:var(--text3);">Both need 5 msgs</span></div><div id="stone-task-progress">0/5</div></div>
-                <div class="stone-task"><div><b>Send sticker</b><br><span style="font-size:10px;">+1 bonus</span></div><button class="btn btn-ghost" style="width:auto;padding:4px 8px;font-size:10px;" onclick="closeStoneMenu(); if(window.openStickerPanel) openStickerPanel();">Do</button></div>
-                <div class="stone-task"><div><b>Send photo</b><br><span style="font-size:10px;">+1 bonus</span></div><button class="btn btn-ghost" style="width:auto;padding:4px 8px;font-size:10px;" onclick="closeStoneMenu();">Do</button></div>
+                <div style="font-size:12px;font-weight:bold;margin-bottom:6px;">Задания чтобы быстрее расти</div>
+                <div class="stone-task"><div><b>Отправь 5 сообщений ежедневно</b><br><span style="font-size:10px;color:var(--text3);">Обоим нужно по 5 сообщений</span></div><div id="stone-task-progress">0/5</div></div>
+                <div class="stone-task"><div><b>Отправь стикер</b><br><span style="font-size:10px;">+1 бонус к уровню</span></div><button class="btn btn-ghost" style="width:auto;padding:4px 8px;font-size:10px;" onclick="closeStoneMenu(); if(window.openStickerPanel) openStickerPanel();">Сделать</button></div>
+                <div class="stone-task"><div><b>Отправь фото</b><br><span style="font-size:10px;">+1 бонус к уровню</span></div><button class="btn btn-ghost" style="width:auto;padding:4px 8px;font-size:10px;" onclick="closeStoneMenu();">Сделать</button></div>
             </div>
-            <div style="margin-top:16px;font-size:10px;color:var(--text3);">0-10 Baby, 11-30 Teen, 31+ Adult • Drag stone anywhere</div>
+            <div style="margin-top:16px;font-size:10px;color:var(--text3);">0-10 Малыш, 11-30 Подросток, 31+ Взрослый • Тащи камень куда хочешь</div>
+        </div>
+    </div>
+
+
+
+
+
+
+    <div id="stone-menu-overlay" class="stone-menu-overlay" onclick="if(event.target===this) closeStoneMenu()">
+        <div class="stone-menu">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div style="font-weight:bold;font-size:16px;">Питомец Камень</div>
+                <button onclick="closeStoneMenu()" style="width:32px;height:32px;border:none;background:var(--bg3);border-radius:50%;cursor:pointer;">✕</button>
+            </div>
+            <div class="stone-menu-img"><img id="stone-menu-img" src="https://akanchik-id.github.io/stone-baby.png" onerror="this.src='https://akanchik-id.github.io/logo.png'"></div>
+            <div class="stone-name-row">
+                <div id="stone-name-display">Rocky</div>
+                <button class="stone-name-edit" onclick="openStoneNameEdit()" title="Изменить имя">
+                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--text);fill:none;stroke-width:2;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+            </div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;">Уровень: <b id="stone-level-count">0</b> <img src="https://akanchik-id.github.io/stone-baby.png" style="width:18px;height:18px;object-fit:contain;"></div>
+            <div id="stone-name-edit-wrap" class="hidden" style="margin-bottom:12px;display:none;gap:6px;">
+                <input id="stone-name-input" class="field" placeholder="Rocky" style="flex:1;" maxlength="20">
+                <button class="btn btn-accent" onclick="setStoneName()" style="width:auto;padding:8px 12px;">Сохранить</button>
+            </div>
+            <div style="text-align:left;">
+                <div style="font-size:12px;font-weight:bold;margin-bottom:6px;">Задания чтобы быстрее расти</div>
+                <div class="stone-task"><div><b>Отправь 5 сообщений ежедневно</b><br><span style="font-size:10px;color:var(--text3);">Обоим нужно по 5 сообщений</span></div><div id="stone-task-progress">0/5</div></div>
+                <div class="stone-task"><div><b>Отправь стикер</b><br><span style="font-size:10px;">+1 к уровню</span></div><button class="btn btn-ghost" style="width:auto;padding:4px 8px;font-size:10px;" onclick="closeStoneMenu(); if(window.openStickerPanel) openStickerPanel();">Сделать</button></div>
+                <div class="stone-task"><div><b>Отправь фото</b><br><span style="font-size:10px;">+1 к уровню</span></div><button class="btn btn-ghost" style="width:auto;padding:4px 8px;font-size:10px;" onclick="closeStoneMenu();">Сделать</button></div>
+            </div>
+            <div style="margin-top:16px;font-size:10px;color:var(--text3);">0-10 Малыш, 11-30 Подросток, 31+ Взрослый • Тащи камень куда хочешь</div>
         </div>
     </div>
 
 
 <script>
-// ============ STONE PET - FREE DRAG FIXED CLICK ============
+// ============ STONE PET - RUSSIAN, LEVEL INSTEAD OF STREAK, STONE ICON ============
 let stoneData = null;
 let stoneListener = null;
-let stoneDrag = {dragging:false, startX:0, startY:0, offsetX:0, offsetY:0, hasMoved:false, movedDist:0};
+let stoneDrag = {dragging:false, startX:0, startY:0, offsetX:0, offsetY:0, hasMoved:false};
+let stoneCache = {}; // chatId -> stone data for list
+let stoneListListeners = {};
 
 function getTodayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function getStoneImageByStreak(s){ if(s<=10) return 'https://akanchik-id.github.io/stone-baby.png'; if(s<=30) return 'https://akanchik-id.github.io/stone-teen.png'; return 'https://akanchik-id.github.io/stone-adult.png'; }
+function getStoneImageByLevel(l){ if(l<=10) return 'https://akanchik-id.github.io/stone-baby.png'; if(l<=30) return 'https://akanchik-id.github.io/stone-teen.png'; return 'https://akanchik-id.github.io/stone-adult.png'; }
 
 function initStoneForChat(chatId){
     if(stoneListener){ try{ stoneListener.ref.off('value', stoneListener.cb); }catch(e){} stoneListener=null; }
@@ -10938,23 +10979,22 @@ function initStoneForChat(chatId){
         if(typeof activeChatId!=='undefined' && activeChatId!==chatId) return;
         const data=snap.val();
         stoneData=data;
+        stoneCache[chatId]=data;
+        updateChatRowStoneBadge(chatId, data);
         if(!data){ el.classList.add('hidden'); return; }
         if(data.status==='active'){
-            const streak=data.streak||0;
-            document.getElementById('stone-pet-img').src=getStoneImageByStreak(streak);
+            const level=data.level||data.streak||0;
+            document.getElementById('stone-pet-img').src=getStoneImageByLevel(level);
             const menuImg=document.getElementById('stone-menu-img');
-            if(menuImg) menuImg.src=getStoneImageByStreak(streak);
+            if(menuImg) menuImg.src=getStoneImageByLevel(level);
             const nameEl=document.getElementById('stone-name-display');
             if(nameEl) nameEl.textContent=data.name||'Rocky';
-            const streakEl=document.getElementById('stone-streak-count');
-            if(streakEl) streakEl.textContent=streak;
+            const levelEl=document.getElementById('stone-level-count');
+            if(levelEl) levelEl.textContent=level;
             if(data.pos && typeof data.pos.x==='number'){
                 el.style.left=data.pos.x+'px';
                 el.style.top=data.pos.y+'px';
                 el.style.right='auto';
-            } else {
-                el.style.left='12px';
-                el.style.top='50%';
             }
             el.classList.remove('hidden');
             const today=getTodayStr();
@@ -10972,9 +11012,41 @@ function initStoneForChat(chatId){
     };
     ref.on('value', cb);
     stoneListener={ref, cb};
+    // Also listen for list
+    listenStoneForList(chatId);
 }
-function hideStone(){ const el=document.getElementById('stone-pet-container'); if(el) el.classList.add('hidden'); }
 
+function listenStoneForList(chatId){
+    if(stoneListListeners[chatId]) return;
+    const ref=db.ref(`Chats/${chatId}/stone`);
+    const cb=snap=>{
+        const data=snap.val();
+        stoneCache[chatId]=data;
+        updateChatRowStoneBadge(chatId, data);
+    };
+    ref.on('value', cb);
+    stoneListListeners[chatId]={ref, cb};
+}
+
+function updateChatRowStoneBadge(chatId, data){
+    // Find chat row in list
+    const cont=document.getElementById('chats-list');
+    if(!cont) return;
+    // We need to find row with this chatId - rows don't have id, but we can re-render or update via data attribute
+    // Simplest: if data active, add badge to row by finding chat row index
+    // We will store level in dataset and update on next renderChatsList
+    if(typeof renderChatsList==='function'){
+        // If stone active, ensure render shows badge
+        // We will trigger render if data changed and we are in chats view
+        if(typeof currentSection!=='undefined' && currentSection==='chats'){
+            // Debounce render
+            if(window._stoneRenderTimeout) clearTimeout(window._stoneRenderTimeout);
+            window._stoneRenderTimeout=setTimeout(()=>{ if(typeof renderChatsList==='function') renderChatsList(); }, 300);
+        }
+    }
+}
+
+function hideStone(){ const el=document.getElementById('stone-pet-container'); if(el) el.classList.add('hidden'); }
 function openStoneMenu(){
     if(stoneDrag.hasMoved) return;
     if(!stoneData || stoneData.status!=='active') return;
@@ -11002,21 +11074,21 @@ function setStoneName(){
     });
 }
 function inviteToGrowStone(){
-    if(typeof chatTargetUid==='undefined' || !chatTargetUid || (typeof chatIsGroup!=='undefined' && chatIsGroup)){ alert('Only in private chats'); return; }
+    if(typeof chatTargetUid==='undefined' || !chatTargetUid || (typeof chatIsGroup!=='undefined' && chatIsGroup)){ alert('Только в личных чатах'); return; }
     const chatId= (typeof activeChatId!=='undefined')? activeChatId : null;
     if(!chatId) return;
     const today=getTodayStr();
     const ref=db.ref(`Chats/${chatId}/stone`);
     ref.once('value').then(snap=>{
-        if(snap.exists() && snap.val().status==='active'){ alert('Stone already active'); return; }
-        if(snap.exists() && snap.val().status==='pending'){ alert('Invitation already sent'); return; }
-        const data={ users:{[currentUser.uid]:true, [chatTargetUid]:true}, invitedBy:currentUser.uid, invitedTo:chatTargetUid, status:'pending', streak:0, name:'Rocky', createdAt:Date.now(), pos:{x:12, y:200}, messagesToday:{date:today, [currentUser.uid]:0, [chatTargetUid]:0}, lastStreakDate:today };
+        if(snap.exists() && snap.val().status==='active'){ alert('Камень уже растет'); return; }
+        if(snap.exists() && snap.val().status==='pending'){ alert('Приглашение уже отправлено'); return; }
+        const data={ users:{[currentUser.uid]:true, [chatTargetUid]:true}, invitedBy:currentUser.uid, invitedTo:chatTargetUid, status:'pending', level:0, streak:0, name:'Rocky', createdAt:Date.now(), pos:{x:12, y:200}, messagesToday:{date:today, [currentUser.uid]:0, [chatTargetUid]:0}, lastLevelDate:today, lastStreakDate:today };
         ref.set(data).then(()=>{
             const msgKey=db.ref(`Chats/${chatId}/messages`).push().key;
-            db.ref(`Chats/${chatId}/messages/${msgKey}`).set({ type:'stone_invite', from:currentUser.uid, fromName:(typeof currentUserData!=='undefined'&&currentUserData.DisplayName)?currentUserData.DisplayName:'Player', text:'Stone invite', time:Date.now(), status:'pending' });
+            db.ref(`Chats/${chatId}/messages/${msgKey}`).set({ type:'stone_invite', from:currentUser.uid, fromName:(typeof currentUserData!=='undefined'&&currentUserData.DisplayName)?currentUserData.DisplayName:'Игрок', text:'Приглашение вырастить камень', time:Date.now(), status:'pending' });
             const notifKey=db.ref(`Notifications/${chatTargetUid}`).push().key;
-            db.ref(`Notifications/${chatTargetUid}/${notifKey}`).set({ type:'stone_invite', from:currentUser.uid, fromName:(typeof currentUserData!=='undefined'&&currentUserData.DisplayName)?currentUserData.DisplayName:'Player', fromAvatar:(typeof currentUserData!=='undefined'&&currentUserData.Avatar)?currentUserData.Avatar:1, text:'invited you to grow a stone!', chatId:chatId, time:Date.now(), read:false });
-            alert('Invitation sent in chatroom!');
+            db.ref(`Notifications/${chatTargetUid}/${notifKey}`).set({ type:'stone_invite', from:currentUser.uid, fromName:(typeof currentUserData!=='undefined'&&currentUserData.DisplayName)?currentUserData.DisplayName:'Игрок', fromAvatar:(typeof currentUserData!=='undefined'&&currentUserData.Avatar)?currentUserData.Avatar:1, text:'пригласил вырастить камень вместе! 🪨', chatId:chatId, time:Date.now(), read:false });
+            alert('Приглашение отправлено в чат!');
             if(typeof closeChatInfo==='function') closeChatInfo();
         });
     });
@@ -11024,9 +11096,9 @@ function inviteToGrowStone(){
 function acceptStoneInvite(){
     if(typeof activeChatId==='undefined' || !activeChatId) return;
     const today=getTodayStr();
-    db.ref(`Chats/${activeChatId}/stone`).update({ status:'active', acceptedAt:Date.now(), streak:0, lastStreakDate:today, messagesToday:{date:today} }).then(()=>{
+    db.ref(`Chats/${activeChatId}/stone`).update({ status:'active', acceptedAt:Date.now(), level:0, streak:0, lastLevelDate:today, lastStreakDate:today, messagesToday:{date:today} }).then(()=>{
         const msgKey=db.ref(`Chats/${activeChatId}/messages`).push().key;
-        db.ref(`Chats/${activeChatId}/messages/${msgKey}`).set({ type:'action', text:'🪨 Stone pet is now active! Streak 0', time:Date.now() });
+        db.ref(`Chats/${activeChatId}/messages/${msgKey}`).set({ type:'action', text:'🪨 Питомец камень теперь растет! Уровень 0', time:Date.now() });
     });
 }
 function declineStoneInvite(){
@@ -11047,26 +11119,24 @@ function updateStoneCount(chatId, senderUid){
         const otherUid=Object.keys(data.users||{}).find(u=>u!==senderUid);
         const my=msgs[senderUid]||0;
         const other=otherUid? (msgs[otherUid]||0):0;
-        if(my>=5 && other>=5 && data.lastStreakDate!==today){
-            const newStreak=(data.streak||0)+1;
-            ref.update({streak:newStreak, lastStreakDate:today});
+        const lastDate=data.lastLevelDate||data.lastStreakDate;
+        if(my>=5 && other>=5 && lastDate!==today){
+            const newLevel=(data.level||data.streak||0)+1;
+            ref.update({level:newLevel, streak:newLevel, lastLevelDate:today, lastStreakDate:today});
             const msgKey=db.ref(`Chats/${chatId}/messages`).push().key;
-            db.ref(`Chats/${chatId}/messages/${msgKey}`).set({ type:'action', text:`🔥 Streak ${newStreak}! Your stone grew!`, time:Date.now() });
+            db.ref(`Chats/${chatId}/messages/${msgKey}`).set({ type:'action', text:`🪨 Уровень вырос! Теперь уровень ${newLevel}! Камень вырос!`, time:Date.now() });
         }
     });
 }
 
-// Free drag implementation - fixed to not block click
+// Free drag - fixed click
 (function(){
     function initDrag(){
         const stoneEl=document.getElementById('stone-pet-container');
-        const chatRoom=document.getElementById('screen-chat-room') || document.getElementById('chat-room') || document.body;
+        const chatRoom=document.getElementById('screen-chat-room');
         if(!stoneEl || !chatRoom) return false;
-        
         function getPos(e){ if(e.touches && e.touches[0]) return {x:e.touches[0].clientX, y:e.touches[0].clientY}; return {x:e.clientX, y:e.clientY}; }
-        
-        function onPointerDown(e){
-            // Ignore if clicking button inside
+        function onDown(e){
             if(e.target.closest('button')) return;
             const pos=getPos(e);
             const rect=stoneEl.getBoundingClientRect();
@@ -11076,22 +11146,16 @@ function updateStoneCount(chatId, senderUid){
             stoneDrag.offsetY=pos.y - rect.top;
             stoneDrag.dragging=true;
             stoneDrag.hasMoved=false;
-            stoneDrag.movedDist=0;
             stoneEl.classList.add('dragging');
-            // Don't preventDefault here to allow click to fire later
         }
-        function onPointerMove(e){
+        function onMove(e){
             if(!stoneDrag.dragging) return;
             const pos=getPos(e);
             const dx=pos.x - stoneDrag.startX;
             const dy=pos.y - stoneDrag.startY;
             const dist=Math.sqrt(dx*dx+dy*dy);
-            if(dist>5){
-                stoneDrag.hasMoved=true;
-                stoneDrag.movedDist=dist;
-            }
+            if(dist>5) stoneDrag.hasMoved=true;
             if(!stoneDrag.hasMoved) return;
-            // Now we are dragging
             const roomRect=chatRoom.getBoundingClientRect();
             let newLeft=pos.x - roomRect.left - stoneDrag.offsetX;
             let newTop=pos.y - roomRect.top - stoneDrag.offsetY;
@@ -11104,51 +11168,42 @@ function updateStoneCount(chatId, senderUid){
             stoneEl.style.right='auto';
             if(e.cancelable) e.preventDefault();
         }
-        function onPointerUp(e){
+        function onUp(e){
             if(!stoneDrag.dragging) return;
             stoneDrag.dragging=false;
             stoneEl.classList.remove('dragging');
-            stoneEl.style.transition='left 0.2s ease, top 0.2s ease';
-            setTimeout(()=>{ stoneEl.style.transition=''; }, 250);
             if(stoneDrag.hasMoved && typeof activeChatId!=='undefined' && activeChatId && stoneData){
                 const left=parseInt(stoneEl.style.left)||0;
                 const top=parseInt(stoneEl.style.top)||0;
                 db.ref(`Chats/${activeChatId}/stone/pos`).set({x:left, y:top});
-                // Reset hasMoved after short delay to allow click prevention
                 setTimeout(()=>{ stoneDrag.hasMoved=false; }, 300);
             } else {
-                // It was a click, not drag - open menu
                 if(!stoneDrag.hasMoved){
                     setTimeout(()=>{ openStoneMenu(); }, 10);
                 }
                 stoneDrag.hasMoved=false;
             }
         }
-        // Use pointer events
-        stoneEl.addEventListener('pointerdown', onPointerDown);
-        document.addEventListener('pointermove', onPointerMove, {passive:false});
-        document.addEventListener('pointerup', onPointerUp);
-        // Fallback mouse/touch
-        stoneEl.addEventListener('mousedown', onPointerDown);
-        document.addEventListener('mousemove', onPointerMove);
-        document.addEventListener('mouseup', onPointerUp);
-        stoneEl.addEventListener('touchstart', onPointerDown, {passive:true});
-        document.addEventListener('touchmove', onPointerMove, {passive:false});
-        document.addEventListener('touchend', onPointerUp);
-        
-        // Also handle click directly
+        stoneEl.addEventListener('pointerdown', onDown);
+        document.addEventListener('pointermove', onMove, {passive:false});
+        document.addEventListener('pointerup', onUp);
+        stoneEl.addEventListener('mousedown', onDown);
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        stoneEl.addEventListener('touchstart', onDown, {passive:true});
+        document.addEventListener('touchmove', onMove, {passive:false});
+        document.addEventListener('touchend', onUp);
         stoneEl.addEventListener('click', (e)=>{
             if(stoneDrag.hasMoved){ e.stopPropagation(); e.preventDefault(); return; }
             openStoneMenu();
         });
-        
         return true;
     }
     let attempts=0;
     const iv=setInterval(()=>{ if(initDrag() || attempts>20){ clearInterval(iv); } attempts++; }, 500);
 })();
 
-// Patch openChat to init stone
+// Patch openChat to init stone and listen for list
 (function(){
     const check=setInterval(()=>{
         if(window.openChat){
@@ -11167,6 +11222,66 @@ function updateStoneCount(chatId, senderUid){
                     return res;
                 };
             }
+            // Patch renderChatsList to show stone badge with level and photo
+            const origRender=window.renderChatsList;
+            if(origRender){
+                window.renderChatsList=function(){
+                    const cont=document.getElementById('chats-list');
+                    if(!cont) return origRender.apply(this, arguments);
+                    const items=Object.entries(chatsCache).map(([id,c])=>({id,...c})).sort((a,b)=>(b.lastTime||0)-(a.lastTime||0));
+                    if(!items.length){cont.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>${L('empty_chats')}</div>`;return;}
+                    let pinned=[]; try{ pinned=JSON.parse(localStorage.getItem('pinned_chats')||'[]'); }catch(e){} pinned=pinned.filter(pid=>chatsCache[pid]);
+                    const pinnedSet=new Set(pinned);
+                    const sorted=[...items.filter(c=>pinnedSet.has(c.id)), ...items.filter(c=>!pinnedSet.has(c.id))];
+                    cont.innerHTML='';
+                    sorted.forEach((c,i)=>{
+                        const isGroup=c.type==='group'||c.type==='channel';
+                        const u=usersCache[c.with]||{};
+                        const displayName=isGroup?(c.name||'GROUP'):(u.DisplayName||'PLAYER');
+                        let av;
+                        const isSystem=c.id && c.id.startsWith('system_');
+                        if(isSystem){ av='https://akanchik-id.github.io/logo.png'; }
+                        else if(isGroup){ const cached=groupAvatarsCache[c.id]; av=avatarUrl(cached?.Avatar||c.Avatar); }
+                        else { av=avatarUrl(u.Avatar); }
+                        const unread=c.unread||0;
+                        const isPinned=pinnedSet.has(c.id);
+                        const row=document.createElement('div'); row.className='chat-row'+(isPinned?' pinned':'');
+                        // Stone badge logic
+                        const stone=stoneCache[c.id];
+                        let stoneBadgeHtml='';
+                        if(stone && stone.status==='active'){
+                            const lvl=stone.level||stone.streak||0;
+                            const img=getStoneImageByLevel(lvl);
+                            stoneBadgeHtml=`<span class="chat-stone-badge"><img src="${img}" onerror="this.src='https://akanchik-id.github.io/stone-baby.png'"><span>${lvl}</span> <span>🪨</span></span>`;
+                        } else if(stone && stone.status==='pending'){
+                            stoneBadgeHtml=`<span class="chat-stone-badge"><span>🪨 Приглашение</span></span>`;
+                        }
+                        // Listen for stone if not yet
+                        if(!stoneListListeners[c.id]) listenStoneForList(c.id);
+                        const verifyBadge=(!isGroup&&u.Verify===1)?'<img src="/verify.png" style="width:12px;height:12px;vertical-align:middle;margin-left:3px;">':'';
+                        const lastPreview=escapeHtml((c.lastText||'').substring(0,50));
+                        const pinIcon=isPinned?' <span style="font-size:10px;">📌</span>':'';
+                        row.innerHTML=`
+      <div class="chat-row-av-wrap">
+        <img src="${escapeHtml(av)}" class="chat-row-av" onerror="this.src='https://akanchik-id.github.io/avatar1.png'">
+      </div>
+      <div class="chat-row-info">
+        <div class="chat-row-top">
+          <span class="chat-row-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(displayName.toUpperCase())}${verifyBadge}${pinIcon} ${stoneBadgeHtml}</span>
+          <span class="chat-row-time">${fmtChatTime(c.lastTime)}</span>
+        </div>
+        <div class="chat-row-bottom">
+          <span class="chat-row-last">${lastPreview}</span>
+          ${unread>0?`<span class="chat-unread">${unread>99?'99+':unread}</span>`:''}
+        </div>
+      </div>`;
+                        const isSystemClick=c.id && c.id.startsWith('system_');
+                        row.onclick=()=>{ if(isSystemClick){ openSystemChat(c.id); } else { isGroup?openGroupChat(c.id,c):openChat(c.with,u); } };
+                        cont.appendChild(row);
+                        if(typeof attachChatLongPress==='function') attachChatLongPress(row,c);
+                    });
+                };
+            }
         }
     }, 500);
 })();
@@ -11179,7 +11294,7 @@ function updateStoneCount(chatId, senderUid){
         if(menu.querySelector('#ci-stone-btn')) return;
         const btn=document.createElement('button');
         btn.id='ci-stone-btn';
-        btn.textContent='🪨 Grow Stone Together';
+        btn.textContent='🪨 Вырастить камень вместе';
         btn.onclick=inviteToGrowStone;
         const blockBtn=document.getElementById('ci-block-btn');
         if(blockBtn) menu.insertBefore(btn, blockBtn);
@@ -11198,7 +11313,7 @@ function updateStoneCount(chatId, senderUid){
     }, 500);
 })();
 
-// Handle stone_invite message type in buildMsgRow
+// Handle stone_invite and action messages
 (function(){
     const check=setInterval(()=>{
         if(window.buildMsgRow){
@@ -11209,15 +11324,14 @@ function updateStoneCount(chatId, senderUid){
                     const wrap=document.createElement('div');
                     wrap.className='msg-row';
                     wrap.style.justifyContent='center';
-                    wrap.dataset.key=m.key;
                     const card=document.createElement('div');
                     card.className='stone-invite-card';
-                    const canAccept = m.from!==currentUser.uid;
-                    card.innerHTML=`<div style="font-size:28px;">🪨</div><b>Grow Stone Together?</b><div style="font-size:11px;color:var(--text2);margin:6px 0;">Send 5 msgs each daily to keep streak!</div><div style="display:flex;gap:8px;">${canAccept?`<button class="btn btn-accent" onclick="acceptStoneInvite()" style="flex:1;">Accept</button><button class="btn btn-ghost" onclick="declineStoneInvite()" style="flex:1;">Decline</button>`:`<div style="font-size:11px;color:var(--text3);">Waiting...</div>`}</div>`;
+                    const canAccept=m.from!==currentUser.uid;
+                    card.innerHTML=`<div style="font-size:28px;">🪨</div><b>Вырастить камень вместе?</b><div style="font-size:11px;color:var(--text2);margin:6px 0;">Отправляйте по 5 сообщений каждый день чтобы сохранить уровень!</div><div style="display:flex;gap:8px;">${canAccept?`<button class="btn btn-accent" onclick="acceptStoneInvite()" style="flex:1;">Принять</button><button class="btn btn-ghost" onclick="declineStoneInvite()" style="flex:1;">Отклонить</button>`:`<div style="font-size:11px;color:var(--text3);">Ожидание...</div>`}</div>`;
                     wrap.appendChild(card);
                     return wrap;
                 }
-                if(m.type==='action' && m.text && (m.text.includes('Stone') || m.text.includes('Streak') || m.text.includes('🪨') || m.text.includes('🔥') || m.text.includes('💔'))){
+                if(m.type==='action' && m.text && (m.text.includes('камень') || m.text.includes('Уровень') || m.text.includes('🪨'))){
                     const wrap=document.createElement('div');
                     wrap.className='msg-row action';
                     const act=document.createElement('div');
