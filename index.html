@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Under</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#101114; --panel:#1c1e22; --panel2:#24272c; --line:#34383f;
+  --text:#edeef2; --muted:#8b909b; --soft:#b8bdc7; --light:#e7e9ee;
+  --cell:clamp(38px,10.6vw,48px); --gap:clamp(6px,2vw,10px);
+  --ease:cubic-bezier(.22,.8,.25,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:Manrope,system-ui,sans-serif;color:var(--text);background:var(--bg);
+  display:grid;place-items:center;min-height:100dvh;padding:18px;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+button:disabled{cursor:not-allowed}
+:focus-visible{outline:2px solid var(--soft);outline-offset:4px}
+
+/* ── фон ── */
+.bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.bg::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 80% at 50% -10%,#2b2e34 0%,#151619 55%,#0c0d0f 100%)}
+.orb{position:absolute;border-radius:46% 54% 60% 40%/50% 44% 56% 50%;filter:blur(70px);opacity:.16}
+.o1{width:420px;height:420px;background:#6b7280;left:-140px;top:-80px;animation:drift 22s ease-in-out infinite}
+.o2{width:360px;height:360px;background:#9aa1ad;right:-120px;bottom:-60px;animation:drift 28s ease-in-out infinite reverse}
+.grain{position:absolute;inset:0;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Cpath filter='url(%23n)' d='M0 0h140v140H0z'/%3E%3C/svg%3E")}
+@keyframes drift{50%{transform:translate(40px,60px) rotate(25deg)}}
+
+/* ── сцена ── */
+.stage{
+  position:relative;width:min(430px,100%);height:min(880px,100dvh);
+  background:linear-gradient(180deg,#212328 0%,#191b1f 60%,#151619 100%);
+  border:1px solid #2c2f35;border-radius:30px;overflow:hidden;
+  box-shadow:0 40px 100px #0009,inset 0 1px 0 #ffffff08;
+}
+.fx{position:absolute;inset:0;pointer-events:none;z-index:20;overflow:hidden}
+.screen{
+  position:absolute;inset:0;padding:24px 26px calc(24px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;opacity:0;transform:translateY(18px) scale(.985);
+  pointer-events:none;transition:opacity .5s var(--ease),transform .6s var(--ease);
+  visibility:hidden;
+}
+.screen.active{opacity:1;transform:none;pointer-events:auto;visibility:visible}
+.top{display:flex;align-items:center;justify-content:space-between;height:36px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.02em;color:var(--muted)}
+.brand i{width:6px;height:6px;border-radius:50%;background:var(--soft);box-shadow:0 0 12px #c8ccd455}
+.steps{display:flex;gap:5px}
+.steps i{width:5px;height:5px;border-radius:50%;background:#3a3e46;transition:.4s}
+.steps i.on{width:18px;border-radius:4px;background:var(--soft)}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.bottom{flex-shrink:0}
+.eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+h1,h2{font-family:Unbounded,Manrope,sans-serif;font-weight:500;letter-spacing:-.03em;margin:0}
+h1{font-size:29px;line-height:1.25}
+h1 span{color:var(--muted)}
+h2{font-size:27px;line-height:1.3}
+.sub{font-size:13px;line-height:1.7;color:var(--muted);margin:12px 0 0}
+.fine{font-size:11px;line-height:1.6;color:#6f747e;text-align:center;margin:14px 0 0}
+
+/* ── кнопки ── */
+.btn{
+  width:100%;height:56px;border-radius:17px;display:flex;align-items:center;justify-content:center;gap:10px;
+  font-size:14px;font-weight:700;transition:transform .25s var(--ease),background .25s,box-shadow .3s,opacity .3s;
+}
+.btn svg{width:18px;height:18px;flex-shrink:0}
+.btn.primary{background:var(--light);color:#17181b;box-shadow:0 8px 24px #0004,inset 0 1px 0 #fff}
+.btn.primary:hover{background:#fff;box-shadow:0 10px 30px #0006}
+.btn.primary:active{transform:scale(.975)}
+.btn.ghost{background:#26292f;border:1px solid var(--line);color:var(--text)}
+.btn.ghost:hover{background:#2e3239}
+.btn:disabled{opacity:.35;box-shadow:none}
+.icon-btn{width:38px;height:38px;border-radius:12px;background:#26292f;border:1px solid var(--line);
+  display:grid;place-items:center;transition:.25s}
+.icon-btn:hover{background:#31353c;transform:translateX(-2px)}
+.icon-btn svg{width:17px;height:17px}
+
+/* ── онбординг / логотип ── */
+.onboard-center{align-items:center;text-align:center}
+.logo-scene{position:relative;width:180px;height:186px;display:grid;place-items:center}
+.halo{position:absolute;width:230px;height:230px;border-radius:50%;
+  background:radial-gradient(circle,#c9ced822,transparent 68%);filter:blur(6px)}
+.logo-btn{position:relative;width:128px;height:128px;border-radius:32px;padding:0;will-change:transform;z-index:2}
+.logo-float{display:block;width:100%;height:100%;position:relative;border-radius:32px;
+  animation:levitate 5s ease-in-out infinite;
+  box-shadow:0 18px 40px #0007,inset 0 1px 0 #ffffff30,0 0 0 1px #ffffff12}
+.logo-float img{position:relative;z-index:2;width:100%;height:100%;object-fit:cover;border-radius:32px;display:block}
+.logo-mark{position:absolute;inset:0;display:grid;place-items:center;border-radius:32px;
+  background:linear-gradient(145deg,#3b3f46,#22252a)}
+.logo-mark svg{width:52%;height:52%;opacity:.85}
+@keyframes levitate{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-12px) rotate(1.5deg)}}
+.logo-shadow{position:absolute;bottom:8px;left:50%;width:88px;height:12px;border-radius:50%;
+  background:#000;filter:blur(9px);opacity:.55;animation:shadowPulse 5s ease-in-out infinite}
+@keyframes shadowPulse{0%,100%{transform:translateX(-50%) scaleX(1);opacity:.55}50%{transform:translateX(-50%) scaleX(.72);opacity:.3}}
+.tap-hint{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#767b85;margin:2px 0 0;transition:opacity .6s}
+.tap-hint.used{opacity:0}
+.onboard-center h1{margin-top:22px}
+.onboard-center .sub{margin-top:10px}
+.onboard-bottom{margin-top:26px}
+
+/* летящие фигурки */
+.particle{position:absolute;left:0;top:0;will-change:transform,opacity}
+.p-circle{border-radius:50%}
+.p-pill{border-radius:99px}
+.p-square{border-radius:30%}
+.p-blob{border-radius:42% 58% 63% 37%/45% 42% 58% 55%}
+.p-ring{border-radius:50%;background:transparent!important}
+
+/* ── почта ── */
+.form-center{align-items:stretch}
+.field-wrap{position:relative;margin-top:30px}
+.mail-badge{
+  position:absolute;top:-19px;left:18px;width:38px;height:38px;border-radius:12px;z-index:3;
+  background:#3a3e46;border:1px solid #4a4f58;display:grid;place-items:center;
+  box-shadow:0 8px 18px #0005;opacity:0;transform:translateY(-16px) rotate(-12deg) scale(.6);
+  transition:opacity .5s var(--ease),transform .6s var(--ease);
+}
+.mail-badge svg{width:19px;height:19px}
+.screen.active .mail-badge{opacity:1;transform:none;transition-delay:.25s}
+.field{
+  width:100%;height:64px;border-radius:18px;background:#14161a;border:1px solid var(--line);
+  padding:0 18px;font-size:15px;transition:border-color .3s,box-shadow .3s,background .3s;
+}
+.field::placeholder{color:#5f646e}
+.field:focus{outline:none;border-color:#8b909b;background:#17191d;box-shadow:0 0 0 4px #b8bdc710}
+.error{font-size:11px;color:#d3a3a3;min-height:16px;margin:9px 2px 0}
+.form-center .btn{margin-top:6px}
+
+/* ── верификация ── */
+.verify-center{align-items:center;text-align:center}
+.verify-center .sub{font-size:12px;margin-top:10px;word-break:break-all}
+.linkish{color:var(--soft);text-decoration:underline;text-underline-offset:3px;font-size:12px;padding:2px 4px}
+.demo-code{margin-top:12px;font-size:11px;color:var(--muted);border:1px dashed #3d424a;
+  border-radius:10px;padding:7px 12px;background:#ffffff03}
+.demo-code b{color:var(--text);letter-spacing:.2em;font-weight:700}
+.morph-stage{display:flex;gap:var(--gap);justify-content:center;height:76px;margin-top:22px;align-items:flex-start}
+.morph{width:var(--cell);height:42px;position:relative;
+  transition:transform .6s var(--ease),opacity .45s ease,filter .45s ease}
+.screen.active .morph{animation:enterShape .8s var(--ease) backwards;animation-delay:calc(var(--i)*70ms + .2s)}
+@keyframes enterShape{from{opacity:0;transform:translateY(26px) scale(.3)}to{opacity:1;transform:none}}
+.blob{width:100%;height:100%;background:linear-gradient(145deg,#454a53,#2a2d33);
+  box-shadow:inset 0 1px 0 #ffffff18,0 6px 14px #0003;
+  animation:blobby 7s ease-in-out infinite;animation-delay:calc(var(--i)*-.6s)}
+@keyframes blobby{
+  0%,100%{border-radius:44% 56% 58% 42%/52% 42% 58% 48%;transform:translateY(0) rotate(0)}
+  33%{border-radius:60% 40% 34% 66%/44% 62% 38% 56%;transform:translateY(-5px) rotate(9deg)}
+  66%{border-radius:38% 62% 66% 34%/60% 38% 62% 40%;transform:translateY(3px) rotate(-8deg)}
+}
+.morph.landed{transform:translateY(78px) scale(.2) rotate(35deg);opacity:0;filter:blur(5px)}
+.otp-row{display:flex;gap:var(--gap);justify-content:center}
+.otp-cell{
+  width:var(--cell);height:62px;border-radius:14px;background:#14161a;border:1px solid var(--line);
+  text-align:center;font-size:27px;font-weight:700;color:var(--text);caret-color:transparent;
+  padding:0;transition:border-color .25s,box-shadow .25s,background .25s;
+}
+.otp-cell:focus{outline:none;border-color:#a7adb8;box-shadow:0 0 0 4px #b8bdc70e;background:#191c21}
+.otp-cell.filled{border-color:#565c66;background:#22252b}
+.otp-cell.pop{animation:digitIn .42s var(--ease)}
+@keyframes digitIn{
+  from{transform:translateY(-12px) scale(1.3);filter:blur(7px);opacity:0}
+  to{transform:none;filter:blur(0);opacity:1}
+}
+.otp-status{font-size:11px;color:var(--muted);height:16px;margin-top:14px}
+.resend{font-size:12px;color:var(--soft);margin-top:10px;padding:6px 10px;border-radius:9px;transition:.2s}
+.resend:hover:not(:disabled){background:#ffffff08}
+.resend:disabled{color:#636873}
+.verify-bottom{display:flex;gap:12px;margin-top:24px}
+.verify-bottom .btn{height:56px}
+.btn.erase{background:#24272c;border:1px solid var(--line);color:var(--soft)}
+.btn.erase:hover{background:#2c3037}
+.btn.check{background:var(--light);color:#17181b}
+.btn.check.ready{animation:ready 2.4s ease-in-out infinite}
+@keyframes ready{50%{box-shadow:0 0 0 5px #e7e9ee12,0 8px 26px #0005}}
+.spin{width:17px;height:17px;border-radius:50%;border:2px solid #0003;border-top-color:#17181b;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── аккаунт ── */
+.account-center{align-items:center;text-align:center}
+.avatar{width:80px;height:80px;border-radius:22px;overflow:hidden;position:relative;
+  box-shadow:0 14px 30px #0006,inset 0 1px 0 #ffffff25;margin-bottom:20px}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;
+  padding:7px 12px;border-radius:99px;background:#ffffff08;border:1px solid var(--line);color:var(--soft);margin-top:16px}
+.pill svg{width:13px;height:13px}
+.info{width:100%;margin-top:26px;text-align:left}
+.info-row{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:13px 0;border-bottom:1px solid #2c2f35}
+.info-row .k{font-size:11px;color:var(--muted);flex-shrink:0}
+.info-row .v{font-size:12px;color:var(--text);text-align:right;word-break:break-all;max-width:64%;display:flex;align-items:center;gap:6px}
+.copy{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:var(--muted);flex-shrink:0}
+.copy:hover{background:#ffffff0a;color:var(--text)}
+.copy svg{width:13px;height:13px}
+
+/* ── тост ── */
+.toast{
+  position:absolute;left:20px;right:20px;bottom:20px;z-index:40;
+  background:#30343b;border:1px solid #454a53;color:var(--text);
+  padding:13px 16px;border-radius:14px;font-size:12px;line-height:1.5;
+  box-shadow:0 16px 40px #0007;opacity:0;transform:translateY(20px);pointer-events:none;
+  transition:opacity .35s,transform .45s var(--ease);
+}
+.toast.show{opacity:1;transform:none}
+.toast.error{border-color:#6b4a4a;background:#33282b}
+
+.shake{animation:shake .4s ease}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+@media (max-width:480px){
+  body{padding:0}
+  .stage{border-radius:0;border:0;width:100%;height:100dvh;max-height:none}
+  .screen{padding:20px 22px calc(22px + env(safe-area-inset-bottom))}
+}
+@media (max-height:720px){
+  .logo-scene{height:150px;width:150px}
+  .logo-btn,.logo-float{width:106px;height:106px;border-radius:27px}
+  .logo-float img,.logo-mark{border-radius:27px}
+  h1{font-size:24px} h2{font-size:23px}
+  .tap-hint,.onboard-center .sub{display:none}
+  .morph-stage{height:64px;margin-top:14px}
+  .morph.landed{transform:translateY(66px) scale(.2) rotate(35deg)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.1s!important}
+}
+</style>
+</head>
+<body>
+
+<div class="bg"><span class="orb o1"></span><span class="orb o2"></span><div class="grain"></div></div>
+
+<main class="stage" id="stage">
+  <div class="fx" id="fx"></div>
+
+  <!-- 0. ОНБОРДИНГ -->
+  <section class="screen active" id="s-onboard">
+    <header class="top">
+      <span class="brand"><i></i> аккаунт · без паролей</span>
+      <span class="steps"><i class="on"></i><i></i><i></i></span>
+    </header>
+
+    <div class="center onboard-center">
+      <div class="logo-scene">
+        <div class="halo"></div>
+        <button class="logo-btn" id="logoBtn" aria-label="Логотип — нажми меня">
+          <span class="logo-float">
+            <span class="logo-mark">
+              <svg viewBox="0 0 64 64" fill="none"><path d="M14 40c0-14 8-24 18-24s18 10 18 24c0 8-5 12-11 9-4-2-5-7-7-7s-3 5-7 7c-6 3-11-1-11-9Z" fill="#c9ced8"/></svg>
+            </span>
+            <img src="logo.png" alt="Логотип" id="logoImg">
+          </span>
+        </button>
+        <div class="logo-shadow" id="logoShadow"></div>
+      </div>
+      <p class="tap-hint" id="tapHint">нажми на логотип</p>
+      <h1>Твой аккаунт.<br><span>Без паролей.</span></h1>
+      <p class="sub">Одна почта — код — и ты внутри.</p>
+    </div>
+
+    <footer class="bottom onboard-bottom">
+      <button class="btn primary" id="toEmail">
+        Войти по почте
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <p class="fine">Вход и регистрация — одна кнопка</p>
+    </footer>
+  </section>
+
+  <!-- 1. ПОЧТА -->
+  <section class="screen" id="s-email">
+    <header class="top">
+      <button class="icon-btn" data-back="onboard" aria-label="Назад">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 12H5m6-6-6 6 6 6"/></svg>
+      </button>
+      <span class="steps"><i></i><i class="on"></i><i></i></span>
+    </header>
+
+    <div class="center form-center">
+      <span class="eyebrow">01 — почта</span>
+      <h2>Куда прислать<br>код?</h2>
+      <p class="sub">Пришлём 6 цифр. Никаких паролей и лишних вопросов.</p>
+
+      <div class="field-wrap" id="fieldWrap">
+        <div class="mail-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#e7e9ee" stroke-width="1.6">
+            <rect x="3" y="5" width="18" height="14" rx="3"/>
+            <path d="m4 7 8 6 8-6"/>
+          </svg>
+        </div>
+        <input class="field" id="emailInput" type="email" inputmode="email" autocomplete="email"
+               placeholder="you@example.com" spellcheck="false" aria-label="Электронная почта">
+      </div>
+      <p class="error" id="emailError" role="alert"></p>
+
+      <button class="btn primary" id="sendBtn">
+        <span class="btn-label">Войти</span>
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+      </button>
+      <p class="fine">Если аккаунта ещё нет — создадим его автоматически.</p>
+    </div>
+  </section>
+
+  <!-- 2. КОД -->
+  <section class="screen" id="s-verify">
+    <header class="top">
+      <button class="icon-btn" data-back="email" aria-label="Назад">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 12H5m6-6-6 6 6 6"/></svg>
+      </button>
+      <span class="steps"><i></i><i></i><i class="on"></i></span>
+    </header>
+
+    <div class="center verify-center">
+      <span class="eyebrow">02 — подтверждение</span>
+      <h2>Проверим почту</h2>
+      <p class="sub">Код отправлен на <b id="verifyEmail" style="color:var(--soft);font-weight:600"></b><br>
+        <button class="linkish" id="changeEmail">изменить почту</button>
+      </p>
+
+      <div class="demo-code" id="demoBox" hidden>Демо-режим · код: <b id="demoCode"></b></div>
+
+      <!-- плавные фигурки, которые превращаются в цифры -->
+      <div class="morph-stage" id="morphStage" aria-hidden="true"></div>
+
+      <div class="otp-row" id="otpRow"></div>
+
+      <p class="otp-status" id="otpStatus">6 цифр из письма</p>
+      <button class="resend" id="resendBtn" disabled>Отправить ещё раз</button>
+    </div>
+
+    <footer class="bottom verify-bottom">
+      <button class="btn erase" id="eraseBtn" aria-label="Стереть код">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-7-7 7-7Z"/><path d="m12 9 6 6m0-6-6 6"/>
+        </svg>
+        Стереть
+      </button>
+      <button class="btn check" id="checkBtn" disabled aria-label="Подтвердить код">
+        <span class="btn-label">Готово</span>
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 5 5L20 7"/></svg>
+      </button>
+    </footer>
+  </section>
+
+  <!-- 3. АККАУНТ -->
+  <section class="screen" id="s-account">
+    <header class="top">
+      <span class="brand"><i></i> твой аккаунт</span>
+      <span class="steps"><i class="on"></i><i class="on"></i><i class="on"></i></span>
+    </header>
+
+    <div class="center account-center">
+      <div class="avatar" id="avatar">
+        <span class="logo-mark"><svg viewBox="0 0 64 64" fill="none"><path d="M14 40c0-14 8-24 18-24s18 10 18 24c0 8-5 12-11 9-4-2-5-7-7-7s-3 5-7 7c-6 3-11-1-11-9Z" fill="#c9ced8"/></svg></span>
+        <img src="logo.png" alt="" id="avatarImg">
+      </div>
+      <h2>Ты внутри.</h2>
+      <p class="sub" style="margin-top:8px">Аккаунт создан. Почта подтверждена.</p>
+      <span class="pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 5 5L20 7"/></svg>
+        Email подтверждён
+      </span>
+
+      <div class="info">
+        <div class="info-row"><span class="k">Почта</span><span class="v" id="accEmail">—</span></div>
+        <div class="info-row"><span class="k">ID пользователя</span>
+          <span class="v"><span id="accId">—</span>
+            <button class="copy" id="copyId" aria-label="Скопировать ID">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            </button>
+          </span>
+        </div>
+        <div class="info-row"><span class="k">Создан</span><span class="v" id="accCreated">—</span></div>
+        <div class="info-row"><span class="k">Способ входа</span><span class="v">Email · OTP</span></div>
+        <div class="info-row"><span class="k">Сессия до</span><span class="v" id="accExpires">—</span></div>
+      </div>
+    </div>
+
+    <footer class="bottom" style="margin-top:24px">
+      <button class="btn ghost" id="logoutBtn">Выйти из аккаунта</button>
+    </footer>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</main>
+
+<script type="module">
+/* ───────────────────────── SUPABASE ───────────────────────── */
+const SUPABASE_URL    = 'YOUR_SUPABASE_URL';   // httpsxxxx.supabase.co
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+/* ──────────────────────────────────────────────────────────── */
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const stage = $('#stage'), fx = $('#fx');
+
+const demo = SUPABASE_URL.includes('YOUR_') || !SUPABASE_ANON_KEY.startsWith('eyJ');
+let supabase = null;
+if (!demo) {
+  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+let current = 'onboard', session = null, pendingEmail = '', demoCode = '';
+let toastTimer, resendTimer;
+
+/* ── навигация ── */
+function go(name){
+  current = name;
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id === 's-' + name));
+}
+function toast(text, type = ''){
+  const t = $('#toast');
+  t.textContent = text; t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3400);
+}
+function shake(el){ el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+function busy(btn, on, label){
+  btn.disabled = on;
+  btn.querySelector('.btn-label').textContent = on ? label : (btn.id === 'sendBtn' ? 'Войти' : 'Готово');
+  const icon = btn.querySelector('.btn-icon');
+  if(on){ icon.style.display = 'none'; if(!btn.querySelector('.spin')){ const s = document.createElement('span'); s.className='spin'; btn.appendChild(s);} }
+  else { icon.style.display = ''; btn.querySelector('.spin')?.remove(); }
+}
+function friendly(e){
+  const m = (e?.message || '').toLowerCase();
+  if(m.includes('invalid') || m.includes('expired')) return 'Код не подошёл или истёк. Попроси новый.';
+  if(m.includes('rate') || m.includes('too many')) return 'Слишком много попыток. Подожди минуту.';
+  if(m.includes('network') || m.includes('failed to fetch')) return 'Нет связи с сервером. Проверь подключение.';
+  return e?.message || 'Что-то пошло не так. Попробуй ещё раз.';
+}
+
+/* ── фигурки-частицы ── */
+const palette = ['#e7e9ee','#b8bdc7','#7c828d','#4b505a','#9aa1ad'];
+const shapes  = ['p-circle','p-pill','p-square','p-blob','p-ring'];
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function burst(x, y, count = 24){
+  if(reduced) count = 8;
+  for(let i=0;i<count;i++){
+    const p = document.createElement('span');
+    const size = 7 + Math.random()*17;
+    const shape = shapes[Math.floor(Math.random()*shapes.length)];
+    p.className = 'particle ' + shape;
+    const w = shape === 'p-pill' ? size*1.9 : size;
+    p.style.cssText = `width:${w}px;height:${size}px;background:${palette[i%palette.length]};
+      border-color:${palette[i%palette.length]};`;
+    fx.appendChild(p);
+    const angle = Math.random()*Math.PI*2;
+    const dist  = 70 + Math.random()*150;
+    const dx = Math.cos(angle)*dist, dy = Math.sin(angle)*dist - 30;
+    const anim = p.animate([
+      { transform:'translate(-50%,-50%) scale(.2) rotate(0deg)', opacity:0 },
+      { transform:`translate(calc(-50% + ${dx*.65}px),calc(-50% + ${dy*.65}px)) scale(1) rotate(120deg)`, opacity:1, offset:.45 },
+      { transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy+50}px)) scale(.15) rotate(280deg)`, opacity:0 }
+    ], { duration: 850 + Math.random()*750, easing:'cubic-bezier(.17,.67,.3,1)' });
+    anim.onfinish = () => p.remove();
+  }
+}
+function burstAt(el, count){
+  const a = el.getBoundingClientRect(), b = stage.getBoundingClientRect();
+  burst(a.left - b.left + a.width/2, a.top - b.top + a.height/2, count);
+}
+
+/* логотип: прыжок + взрыв фигур при КАЖДОМ нажатии */
+$('#logoBtn').addEventListener('click', () => {
+  $('#logoBtn').animate([
+    { transform:'translateY(0) scale(1)' },
+    { transform:'translateY(6px) scale(.9)' },
+    { transform:'translateY(-16px) scale(1.13)' },
+    { transform:'translateY(0) scale(.97)' },
+    { transform:'translateY(0) scale(1)' }
+  ], { duration:680, easing:'cubic-bezier(.3,.7,.3,1)' });
+  $('#logoShadow').animate([
+    { transform:'translateX(-50%) scaleX(1)', opacity:.55 },
+    { transform:'translateX(-50%) scaleX(.6)', opacity:.25 },
+    { transform:'translateX(-50%) scaleX(1)', opacity:.55 }
+  ], { duration:680, easing:'ease-out' });
+  burstAt($('#logoBtn'), 26);
+  $('#tapHint').classList.add('used');
+});
+$('#logoImg').addEventListener('error', e => e.target.style.display = 'none');
+$('#avatarImg').addEventListener('error', e => e.target.style.display = 'none');
+
+/* ── экраны 0 → 1 ── */
+$('#toEmail').onclick = () => { go('email'); setTimeout(()=>$('#emailInput').focus({preventScroll:true}), 450); };
+$$('[data-back]').forEach(b => b.onclick = () => go(b.dataset.back));
+$('#emailInput').addEventListener('input', () => $('#emailError').textContent = '');
+$('#emailInput').addEventListener('keydown', e => { if(e.key === 'Enter') $('#sendBtn').click(); });
+
+/* ── генерация OTP-полей и фигурок ── */
+const N = 6, morphs = [], cells = [];
+const row = $('#otpRow'), morphStage = $('#morphStage');
+for(let i=0;i<N;i++){
+  const m = document.createElement('div');
+  m.className = 'morph'; m.style.setProperty('--i', i);
+  m.innerHTML = '<div class="blob"></div>';
+  morphStage.appendChild(m); morphs.push(m);
+
+  const c = document.createElement('input');
+  c.className = 'otp-cell'; c.type = 'text'; c.inputMode = 'numeric';
+  c.maxLength = 1; c.pattern = '[0-9]*'; c.autocomplete = i === 0 ? 'one-time-code' : 'off';
+  c.setAttribute('aria-label', `Цифра ${i+1}`);
+  row.appendChild(c); cells.push(c);
+}
+const isComplete = () => cells.every(c => c.value.length === 1);
+
+function setCell(i, v){
+  if(i < 0 || i >= N) return;
+  v = (v || '').replace(/\D/g,'').slice(0,1);
+  cells[i].value = v;
+  cells[i].classList.toggle('filled', !!v);
+  morphs[i].classList.toggle('landed', !!v);
+  if(v){ cells[i].classList.remove('pop'); void cells[i].offsetWidth; cells[i].classList.add('pop'); }
+  updateCheck();
+}
+function updateCheck(){
+  const ok = isComplete();
+  $('#checkBtn').disabled = !ok;
+  $('#checkBtn').classList.toggle('ready', ok);
+  $('#otpStatus').textContent = ok ? 'Код готов — жми галочку' : `${cells.filter(c=>c.value).length} / 6 — введи код из письма`;
+}
+function fillFrom(start, str){
+  let k = start;
+  for(const ch of str.replace(/\D/g,'')){ if(k >= N) break; setCell(k++, ch); }
+  cells[Math.min(k, N-1)].focus();
+}
+function clearCode(){ cells.forEach((_,i)=>setCell(i,'')); }
+
+cells.forEach((c,i) => {
+  c.addEventListener('focus', () => c.select());
+  c.addEventListener('input', () => {
+    const raw = c.value.replace(/\D/g,'');
+    if(raw.length > 1){ fillFrom(i, raw); return; }
+    setCell(i, raw);
+    if(raw && i < N-1) cells[i+1].focus();
+  });
+  c.addEventListener('keydown', e => {
+    if(e.key === 'Backspace'){
+      e.preventDefault();
+      if(c.value) setCell(i,'');
+      else if(i>0){ setCell(i-1,''); cells[i-1].focus(); }
+    } else if(e.key === 'Delete'){ e.preventDefault(); setCell(i,''); }
+    else if(e.key === 'ArrowLeft' && i>0){ e.preventDefault(); cells[i-1].focus(); }
+    else if(e.key === 'ArrowRight' && i<N-1){ e.preventDefault(); cells[i+1].focus(); }
+    else if(e.key === 'Enter'){ $('#checkBtn').click(); }
+  });
+  c.addEventListener('paste', e => {
+    e.preventDefault();
+    const digits = (e.clipboardData.getData('text') || '').replace(/\D/g,'');
+    if(digits) fillFrom(digits.length >= N ? 0 : i, digits);
+  });
+});
+
+$('#eraseBtn').onclick = () => { clearCode(); cells[0].focus(); };
+$('#changeEmail').onclick = () => go('email');
+
+/* ── отправка кода ── */
+async function sendCode(email){
+  pendingEmail = email;
+  $('#verifyEmail').textContent = email;
+  clearCode();
+
+  if(demo){
+    demoCode = String(Math.floor(100000 + Math.random()*900000));
+    $('#demoBox').hidden = false;
+    $('#demoCode').textContent = demoCode;
+  } else {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true }
+    });
+    if(error) throw error;
+  }
+
+  go('verify');
+  cells[0].focus({preventScroll:true});
+  startResend();
+  toast(demo ? 'Демо-письмо отправлено. Код выше 👆' : 'Письмо с кодом отправлено');
+}
+
+function startResend(){
+  clearInterval(resendTimer);
+  let left = 30;
+  const b = $('#resendBtn');
+  const tick = () => {
+    b.disabled = left > 0;
+    b.textContent = left > 0 ? `Ещё раз через ${left} с` : 'Отправить ещё раз';
+    if(left <= 0) clearInterval(resendTimer);
+    left--;
+  };
+  tick(); resendTimer = setInterval(tick, 1000);
+}
+
+$('#sendBtn').onclick = async () => {
+  const email = $('#emailInput').value.trim().toLowerCase();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    $('#emailError').textContent = 'Похоже, в почте опечатка. Проверь адрес.';
+    shake($('#fieldWrap')); $('#emailInput').focus(); return;
+  }
+  $('#emailError').textContent = '';
+  const btn = $('#sendBtn'); busy(btn,true,'Отправляем');
+  try { await wait(350); await sendCode(email); }
+  catch(e){ toast(friendly(e),'error'); shake($('#fieldWrap')); }
+  finally { busy(btn,false); }
+};
+
+$('#resendBtn').onclick = async () => {
+  const b = $('#resendBtn'); b.disabled = true;
+  try { await sendCode(pendingEmail); }
+  catch(e){ toast(friendly(e),'error'); startResend(); }
+};
+
+/* ── проверка кода ── */
+$('#checkBtn').onclick = async () => {
+  if(!isComplete()){ shake(row); toast('Введи все 6 цифр','error'); return; }
+  const code = cells.map(c=>c.value).join('');
+  const btn = $('#checkBtn'); busy(btn,true,'Проверяем');
+
+  try{
+    await wait(450);
+    if(demo){
+      if(code !== demoCode) throw new Error('Код не подошёл. Посмотри демо-код над цифрами.');
+      const now = new Date().toISOString();
+      session = {
+        user: { id:'demo-user', email:pendingEmail, created_at:now, email_confirmed_at:now,
+                app_metadata:{role:'user'}, user_metadata:{} },
+        expires_at: Math.floor(Date.now()/1000) + 3600
+      };
+    } else {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: pendingEmail, token: code, type: 'email'
+      });
+      if(error) throw error;
+      session = data.session;
+    }
+    renderAccount();
+    go('account');
+    burstAt($('#avatar'), 30);
+    setTimeout(()=>burstAt($('#avatar'), 16), 220);
+    toast('Готово. Почта подтверждена ✓');
+  } catch(e){
+    toast(friendly(e),'error'); shake(row); clearCode(); cells[0].focus();
+  } finally { busy(btn,false); }
+};
+
+/* ── аккаунт ── */
+function fmt(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return isNaN(d) ? '—' : d.toLocaleString('ru-RU',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function renderAccount(){
+  const u = session?.user; if(!u) return;
+  $('#accEmail').textContent = u.email || '—';
+  $('#accId').textContent = u.id || '—';
+  $('#accCreated').textContent = fmt(u.created_at);
+  $('#accExpires').textContent = session.expires_at
+    ? fmt(new Date(session.expires_at*1000).toISOString()) : '—';
+}
+$('#copyId').onclick = async () => {
+  try{ await navigator.clipboard.writeText(session?.user?.id || ''); toast('ID скопирован'); }
+  catch{ toast('Не удалось скопировать','error'); }
+};
+$('#logoutBtn').onclick = async () => {
+  try{
+    if(!demo) await supabase.auth.signOut();
+    session = null; clearCode(); $('#emailInput').value = '';
+    go('onboard'); toast('Ты вышел из аккаунта');
+  }catch(e){ toast(friendly(e),'error'); }
+};
+
+/* ── сессия / авто-вход ── */
+if(!demo){
+  const { data } = await supabase.auth.getSession();
+  if(data.session){ session = data.session; renderAccount(); go('account'); }
+  supabase.auth.onAuthStateChange((event, s) => {
+    if(s){
+      session = s;
+      if(current !== 'account'){ renderAccount(); go('account'); }
+    } else if(event === 'SIGNED_OUT'){
+      session = null; go('onboard');
+    }
+  });
+}
+updateCheck();
+</script>
+</body>
+</html>
